@@ -4,7 +4,8 @@
   <!-- Pi SDK (must load before any Pi.* calls) -->
   <script src="https://sdk.minepi.com/pi-sdk.js">
   </script>
-  <script>
+  <!-- JavaScript: Game logic, UI handling, Pi SDK integration -->
+<script>
    Pi.init({ version: "2.0", sandbox: true });
   </script>
   <meta charset="utf-8"/>
@@ -16,7 +17,8 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
   </script>
   <!-- Poppins Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
+  <!-- Load Poppins font from Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
    * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; }
@@ -403,7 +405,8 @@
       console.log('Incomplete payment found:', payment);
     }
 
-    async function initAuth() {
+    // Handles Pi authentication flow and user high score retrieval from server
+async function initAuth() {
       try {
         const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
         piUsername = auth.user.username;
@@ -428,7 +431,8 @@
     document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 
-    function fadeIn(callback, duration = 600) {
+    // Smoothly fades the screen to black, then executes callback
+function fadeIn(callback, duration = 600) {
   const fade = document.getElementById('fade-screen');
   fade.classList.add('fade-in');
   setTimeout(() => {
@@ -436,6 +440,7 @@
   }, duration);
 }
 
+// Reverses fadeIn effect to reveal screen content
 function fadeOut(callback, duration = 600) {
   const fade = document.getElementById('fade-screen');
   fade.classList.remove('fade-in');
@@ -446,7 +451,8 @@ function fadeOut(callback, duration = 600) {
 
 
     // —— Show Home Leaderboard ——
-    async function showHomeLeaderboard() {
+    // Fetch and display the top 100 leaderboard on the start screen
+async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
       list.innerHTML = '';
       const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
@@ -472,7 +478,8 @@ function fadeOut(callback, duration = 600) {
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
 
-    const config={
+    // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
+const config={
       type:Phaser.AUTO,
       transparent:true,
       scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
@@ -481,7 +488,8 @@ function fadeOut(callback, duration = 600) {
     };
     new Phaser.Game(config);
 
-    function preload() {
+    // Preload audio assets used throughout the game (SFX)
+function preload() {
       this.load.audio('explode','assets/explode.wav');
       this.load.audio('move','assets/move.wav');
       this.load.audio('point','assets/point.wav');
@@ -490,7 +498,8 @@ function fadeOut(callback, duration = 600) {
       this.load.audio('pauseWhoosh','assets/pause_whoosh_subtle.wav');
     }
 
-    function create() {
+    // Main game setup: initialize UI, player orbs, physics, input, and scheduling
+function create() {
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
       LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
