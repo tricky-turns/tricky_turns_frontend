@@ -375,11 +375,13 @@
       const list = document.getElementById('leaderboardEntriesHome');
       list.innerHTML = '';
       const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
-      data.forEach(e=>{
-        const li = document.createElement('li');
-        li.textContent = `${e.username}: ${e.score}`;
-        list.appendChild(li);
-      });
+      data.forEach((e, i) => {
+  const li = document.createElement('li');
+  li.setAttribute('data-rank', `#${i + 1}`);
+  li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
+  list.appendChild(li);
+});
+
       document.getElementById('leaderboard-screen').style.display = 'flex';
     }
     document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
@@ -670,11 +672,13 @@
           .then(r=>r.json()).then(data=>{
             const list=document.getElementById('leaderboardEntries');
             list.innerHTML = '';
-            data.forEach(e=>{
-              const li = document.createElement('li');
-              li.textContent = `${e.username}: ${e.score}`;
-              list.appendChild(li);
-            });
+data.forEach((e, i) => {
+  const li = document.createElement('li');
+  li.setAttribute('data-rank', `#${i + 1}`);
+  li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
+  list.appendChild(li);
+});
+
             document.getElementById('leaderboard').style.display = 'block';
           }).catch(console.error);
 
