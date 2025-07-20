@@ -243,6 +243,43 @@
       color:#fff; list-style-position:inside;
       width:100%; max-width:400px;
     }
+    #leaderboard ol,
+  #leaderboardEntriesHome {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  #leaderboard li,
+  #leaderboardEntriesHome li {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.4rem;
+    margin-bottom: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    position: relative;
+  }
+
+  #leaderboard li::before,
+  #leaderboardEntriesHome li::before {
+    content: attr(data-rank);
+    background: #FF4A4A;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 1rem;
+    margin-right: 0.8rem;
+    position: absolute;
+    left: -2.5rem;
+  }
   </style>
 </head>
 <body>
