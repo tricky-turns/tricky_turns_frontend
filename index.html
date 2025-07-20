@@ -75,6 +75,31 @@
     }
   }
 
+    .btn-primary {
+    background: #3EAFF6;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    padding: 0.8rem 2.5rem;
+    border: none;
+    border-radius: 2rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+  .btn-primary:hover {
+    background: #318EE6;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+  }
+  @media (max-width:600px) {
+    .btn-primary {
+      font-size: 1.1rem;
+      padding: 0.6rem 1.8rem;
+    }
+  }
+
     .start-button {
       background: #3EAFF6;
       color: #fff;
@@ -214,7 +239,7 @@
     <!-- User info & login on home screen -->
     <div id="user-info">
       User: <strong id="username">Guest</strong>
-      <button id="loginBtn">Login</button>
+      <button class="btn-primary" id="loginBtn">Login</button>
     </div>
 
     <div class="start-cloud one"></div>
@@ -223,8 +248,8 @@
     <div class="start-cloud four"></div>
 
     <h1>TRICKY<br/>TURNS</h1>
-    <button class="start-button" id="startBtn">TAP TO START</button>
-    <button class="start-button" id="viewLeaderboardBtn" >VIEW LEADERBOARD</button>
+      <button class="btn-primary" id="startBtn">TAP TO START</button>
+      <button class="btn-primary" id="viewLeaderboardBtn">VIEW LEADERBOARD</button>
     <div class="orbit">
       <div class="ring"></div>
       <div class="circle top"></div>
@@ -234,7 +259,7 @@
 
   <!-- Full-screen Leaderboard Overlay -->
   <div id="leaderboard-screen">
-    <button id="closeLeaderboardBtn">Close</button>
+    <button class="btn-primary" id="closeLeaderboardBtn">Close</button>
     <h2>Top 100 Leaderboard</h2>
     <ol id="leaderboardEntriesHome"></ol>
   </div>
