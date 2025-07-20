@@ -280,6 +280,19 @@
     position: absolute;
     left: -2.5rem;
   }
+
+  #fade-screen {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.6s ease-in-out;
+}
+#fade-screen.fade-in {
+  opacity: 1;
+}
   </style>
 </head>
 <body>
@@ -369,6 +382,24 @@
 
     // If not signed in, show login prompt
     document.getElementById('loginBtn').addEventListener('click', initAuth);
+
+
+    function fadeIn(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.add('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+
+function fadeOut(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.remove('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+
 
     // —— Show Home Leaderboard ——
     async function showHomeLeaderboard() {
@@ -586,23 +617,27 @@
       }
 
       // START
-      document.getElementById('startBtn').addEventListener('click',()=>{
-        sfx.uiClick.play();
-        document.getElementById('user-info').style.display='none';
-        document.getElementById('viewLeaderboardBtn').style.display='none';
-        document.getElementById('start-screen').style.display='none';
-        gameStarted=true;
-        document.querySelector('canvas').style.visibility='visible';
-        scoreText.setVisible(true);
-        pauseIcon.setVisible(true);
-        muteIcon.setVisible(true);
-        scheduleSpawn();
-      });
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  sfx.uiClick.play();
+  fadeIn(() => {
+    document.getElementById('user-info').style.display='none';
+    document.getElementById('viewLeaderboardBtn').style.display='none';
+    document.getElementById('start-screen').style.display='none';
+    gameStarted=true;
+    document.querySelector('canvas').style.visibility='visible';
+    scoreText.setVisible(true);
+    pauseIcon.setVisible(true);
+    muteIcon.setVisible(true);
+    scheduleSpawn();
+    fadeOut();
+  });
+});
+
 
       // RESTART
-      document.getElementById('game-over-screen').addEventListener('pointerdown',()=>{
-        location.reload();
-      });
+document.getElementById('game-over-screen').addEventListener('pointerdown',()=>{
+  fadeIn(() => location.reload());
+});
     }
 
     function update(){
@@ -698,5 +733,6 @@ data.forEach((e, i) => {
       });
     }
   </script>
+  <div id="fade-screen"></div>
 </body>
 </html>
