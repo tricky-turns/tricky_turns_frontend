@@ -414,28 +414,11 @@ async function initAuth() {
         document.getElementById('loginBtn').style.display = 'none';
         useLocalHighScore = false;
         // fetch user’s server high score
-let highScoreData;
-try {
-  // First, try to find user in top 100
-  const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
-  highScoreData = data.find(e => e.username === piUsername);
-
-  // If not found in top 100, try fetching directly by username
-  if (!highScoreData) {
-    highScoreData = await fetch(`/api/leaderboard/${piUsername}`).then(r => {
-      if (!r.ok) throw new Error("User not found");
-      return r.json();
-    });
-  }
-
-  highScore = highScoreData.score || 0;
-} catch (e) {
-  console.warn("Failed to fetch persistent high score:", e);
-  highScore = 0; // fallback if error occurs
-}
-
-// Store high score locally
-localStorage.setItem('tricky_high_score', highScore);
+        const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
+        const entry = data.find(e=>e.username === piUsername);
+        highScore = entry ? entry.score : 0;
+        // persist locally as well
+        localStorage.setItem('tricky_high_score', highScore);
       } catch (e) {
         console.log('Not signed in:', e);
       }
@@ -490,7 +473,7 @@ async function showHomeLeaderboard() {
     // —— Game & Leaderboard logic ——
     const LANES = [];
     let gameStarted=false, gameOver=false, gamePaused=false;
-    let direction=1, angle=0, radius=100, speed=3, maxSpeed=20;
+    let direction=1, angle=0, radius=100, speed=3, maxSpeed=6;
     let circle1,circle2,obstacles,points,score=0;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
@@ -766,13 +749,11 @@ document.getElementById('game-over-screen').addEventListener('pointerdown',()=>{
         }
 
         // POST score
-        if (!userLocalHighScore){
         fetch('/api/leaderboard', {
           method:'POST',
           headers:{ 'Content-Type':'application/json' },
           body: JSON.stringify({ username: piUsername, score: highScore })
         }).catch(console.error);
-      }
 
         // GET top-100 for game-over screen
         fetch('/api/leaderboard?top=100')
