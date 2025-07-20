@@ -1,25 +1,26 @@
 <!DOCTYPE html>
+
 <html lang="en">
- <head>
-  <!-- Pi SDK (must load before any Pi.* calls) -->
-  <script src="https://sdk.minepi.com/pi-sdk.js">
-  </script>
-  <!-- JavaScript: Game logic, UI handling, Pi SDK integration -->
+<head>
+<!-- Pi SDK (must load before any Pi.* calls) -->
+<script src="https://sdk.minepi.com/pi-sdk.js">
+</script>
+<!-- JavaScript: Game logic, UI handling, Pi SDK integration -->
 <script>
    Pi.init({ version: "2.0", sandbox: true });
   </script>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width,initial-scale=1" name="viewport"/>
-  <title>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>
    Tricky Turns
   </title>
-  <!-- Phaser 3 -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
-  </script>
-  <!-- Poppins Font -->
-  <!-- Load Poppins font from Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
-  <style>
+<!-- Phaser 3 -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
+</script>
+<!-- Poppins Font -->
+<!-- Load Poppins font from Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<style>
    * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; }
     body {
@@ -299,102 +300,96 @@
   opacity: 1;
 }
   </style>
- </head>
- <body>
-  <div class="bg-cloud one">
-  </div>
-  <div class="bg-cloud two">
-  </div>
-  <div class="bg-cloud three">
-  </div>
-  <div class="bg-cloud four">
-  </div>
-  <div id="start-screen">
-   <!-- User info & login on home screen -->
-   <div id="user-info">
+</head>
+<body>
+<div class="bg-cloud one">
+</div>
+<div class="bg-cloud two">
+</div>
+<div class="bg-cloud three">
+</div>
+<div class="bg-cloud four">
+</div>
+<div id="start-screen">
+<!-- User info & login on home screen -->
+<div id="user-info">
     User:
     <strong id="username">
      Guest
     </strong>
-    <button class="btn-secondary" id="loginBtn">
+<button class="btn-secondary" id="loginBtn">
      Login
     </button>
-   </div>
-   <div class="start-cloud one">
-   </div>
-   <div class="start-cloud two">
-   </div>
-   <div class="start-cloud three">
-   </div>
-   <div class="start-cloud four">
-   </div>
-   <h1>
+</div>
+<div class="start-cloud one">
+</div>
+<div class="start-cloud two">
+</div>
+<div class="start-cloud three">
+</div>
+<div class="start-cloud four">
+</div>
+<h1>
     TRICKY
     <br/>
     TURNS
    </h1>
-   <button class="btn-primary" id="startBtn">
+<button class="btn-primary" id="startBtn">
     TAP TO START
    </button>
-   <button class="btn-primary" id="viewLeaderboardBtn">
+<button class="btn-primary" id="viewLeaderboardBtn">
     VIEW LEADERBOARD
    </button>
-   <div class="orbit">
-    <div class="ring">
-    </div>
-    <div class="circle top">
-    </div>
-    <div class="circle bottom">
-    </div>
-   </div>
-  </div>
-  <!-- Full-screen Leaderboard Overlay -->
-  <div id="leaderboard-screen">
-   <button class="btn-primary" id="closeLeaderboardBtn">
+<div class="orbit">
+<div class="ring">
+</div>
+<div class="circle top">
+</div>
+<div class="circle bottom">
+</div>
+</div>
+</div>
+<!-- Full-screen Leaderboard Overlay -->
+<div id="leaderboard-screen">
+<button class="btn-primary" id="closeLeaderboardBtn">
     Close
    </button>
-   <h2>
+<h2>
     Top 100 Leaderboard
    </h2>
-   <ol id="leaderboardEntriesHome">
-   </ol>
-  </div>
-  <div id="pause-overlay">
-   <div class="paused-text">
+<ol id="leaderboardEntriesHome">
+</ol>
+</div>
+<div id="pause-overlay">
+<div class="paused-text">
     Paused
    </div>
-  </div>
-  <div id="game-over-screen">
-   <h2>
+</div>
+<div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
+<h2>
     Game Over
    </h2>
-   <div class="result-wrapper">
-    <div class="orb-bg">
-    </div>
-    <div class="results">
+<div class="result-wrapper">
+<div class="orb-bg">
+</div>
+<div class="results">
      SCORE:
      <span id="finalScore">
       0
      </span>
-     <br/>
+<br/>
      BEST:
      <span id="bestScore">
       0
      </span>
-    </div>
-   </div>
-   <div class="restart">
+</div>
+</div>
+<div class="restart">
     Tap to Restart
    </div>
-   <div id="leaderboard" style="display:none;">
-    <h3>
-     Top 100 Leaderboard
-    </h3>
-    <ol id="leaderboardEntries">
-    </ol>
-   </div>
-  </div>
-  <script>
+
+<button class="btn-primary" id="homeBtn">HOME</button></div>
+<script>
    // —— Pi Authentication setup ——
     const scopes = ['username'];
     let piUsername = 'Guest';
@@ -692,9 +687,14 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
       // RESTART
-document.getElementById('game-over-screen').addEventListener('pointerdown',()=>{
+
+document.querySelector('.restart').addEventListener('click', () => {
   fadeIn(() => location.reload());
 });
+document.getElementById('homeBtn').addEventListener('click', () => {
+  fadeIn(() => location.href = location.href);
+});
+
     }
 
     function update(){
@@ -792,7 +792,7 @@ data.forEach((e, i) => {
       });
     }
   </script>
-  <div id="fade-screen">
-  </div>
- </body>
+<div id="fade-screen">
+</div>
+</body>
 </html>
