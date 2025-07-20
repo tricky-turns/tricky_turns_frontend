@@ -100,6 +100,22 @@
     }
   }
 
+  .btn-secondary {
+  background: rgba(255,255,255,0.8);
+  color: #000;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,1);
+}
+
+
     .start-button {
       background: #3EAFF6;
       color: #fff;
@@ -239,7 +255,7 @@
     <!-- User info & login on home screen -->
     <div id="user-info">
       User: <strong id="username">Guest</strong>
-      <button class="btn-primary" id="loginBtn">Login</button>
+      <button class="btn-secondary" id="loginBtn">Login</button>
     </div>
 
     <div class="start-cloud one"></div>
