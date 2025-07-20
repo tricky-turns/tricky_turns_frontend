@@ -2,7 +2,4 @@
 node_modules
 .vercel
 .env
-index.cleaned.linted.commented.html
-index.fully_annotated.html
-index.annotated.linted.html
-index.minified.production (1).html
+index_commented.html
