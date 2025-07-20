@@ -413,10 +413,14 @@ async function initAuth() {
         document.getElementById('username').innerText = piUsername;
         document.getElementById('loginBtn').style.display = 'none';
         useLocalHighScore = false;
-        // fetch user’s server high score
-        const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
-        const entry = data.find(e=>e.username === piUsername);
-        highScore = entry ? entry.score : 0;
+                // fetch user's high score via username endpoint
+        const res = await fetch(`/api/leaderboard/${piUsername}`);
+        if (res.ok) {
+          const entry = await res.json();
+          highScore = entry.score;
+        } else {
+          highScore = 0;
+        }
         // persist locally as well
         localStorage.setItem('tricky_high_score', highScore);
       } catch (e) {
@@ -748,12 +752,14 @@ document.getElementById('game-over-screen').addEventListener('pointerdown',()=>{
           localStorage.setItem('tricky_high_score', highScore);
         }
 
-        // POST score
-        fetch('/api/leaderboard', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify({ username: piUsername, score: highScore })
-        }).catch(console.error);
+        // POST score only if not guest
+        if (!useLocalHighScore) {
+          fetch('/api/leaderboard', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ username: piUsername, score: highScore })
+          }).catch(console.error);
+        }
 
         // GET top-100 for game-over screen
         fetch('/api/leaderboard?top=100')
