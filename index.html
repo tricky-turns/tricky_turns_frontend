@@ -366,13 +366,11 @@
    </div>
 </div>
 <div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
-<h2>
-    Game Over
-   </h2>
+<h1 style="color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;">GAME OVER</h1>
 <div class="result-wrapper">
-<div class="orb-bg">
+<div class="orb-bg" style="display:none;">
 </div>
-<div class="results">
+<div class="results" style="color: #fff; font-size: 2rem; font-weight: 600; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
      SCORE:
      <span id="finalScore">
       0
@@ -384,10 +382,7 @@
      </span>
 </div>
 </div>
-<div class="restart">
-    Tap to Restart
-   </div>
-
+<button class="btn-primary" id="restartBtn">RESTART</button>
 <button class="btn-primary" id="homeBtn">HOME</button></div>
 <script>
    // —— Pi Authentication setup ——
@@ -688,12 +683,16 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
       // RESTART
 
-document.querySelector('.restart').addEventListener('click', () => {
+
+document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => location.reload());
 });
 document.getElementById('homeBtn').addEventListener('click', () => {
-  fadeIn(() => location.href = location.href);
+  fadeIn(() => {
+    window.location.reload();  // Reloads back to home screen
+  });
 });
+
 
     }
 
