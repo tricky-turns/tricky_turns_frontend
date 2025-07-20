@@ -685,11 +685,21 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
 document.getElementById('restartBtn').addEventListener('click', () => {
-  fadeIn(() => location.reload());
+  fadeIn(() => {
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.querySelector('canvas').style.visibility = 'visible';
+    score = 0;
+    scoreText.setText('Score: 0');
+    scoreText.setVisible(true);
+    pauseIcon.setVisible(true);
+    gameOver = false;
+    this.scene.restart();
+    fadeOut();
+  });
 });
 document.getElementById('homeBtn').addEventListener('click', () => {
   fadeIn(() => {
-    window.location.reload();  // Reloads back to home screen
+    window.location.href = window.location.href;
   });
 });
 
