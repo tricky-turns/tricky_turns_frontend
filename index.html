@@ -243,7 +243,7 @@
         document.getElementById('loginBtn').style.display = 'none';
         useLocalHighScore = false;
         // fetch user’s server high score
-        const data = await fetch('http://localhost:3000/api/leaderboard?top=100').then(r=>r.json());
+        const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
         const entry = data.find(e=>e.username === piUsername);
         highScore = entry ? entry.score : 0;
         // persist locally as well
@@ -263,7 +263,7 @@
     async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
       list.innerHTML = '';
-      const data = await fetch('http://localhost:3000/api/leaderboard?top=100').then(r=>r.json());
+      const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
       data.forEach(e=>{
         const li = document.createElement('li');
         li.textContent = `${e.username}: ${e.score}`;
@@ -548,14 +548,14 @@
         }
 
         // POST score
-        fetch('http://localhost:3000/api/leaderboard', {
+        fetch('/api/leaderboard', {
           method:'POST',
           headers:{ 'Content-Type':'application/json' },
           body: JSON.stringify({ username: piUsername, score: highScore })
         }).catch(console.error);
 
         // GET top-100 for game-over screen
-        fetch('http://localhost:3000/api/leaderboard?top=100')
+        fetch('/api/leaderboard?top=100')
           .then(r=>r.json()).then(data=>{
             const list=document.getElementById('leaderboardEntries');
             list.innerHTML = '';
