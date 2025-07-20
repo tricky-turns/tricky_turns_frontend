@@ -58,22 +58,23 @@
       z-index:2; cursor:pointer;
     }
     #start-screen h1 {
-      color: #fff;
-      font-size: 5rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1rem;
-      text-align: center;
-      line-height: 1.1;
-      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-      -webkit-text-stroke: 1px #1e5c99;
+    color: #fff;
+    font-size: 5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    text-align: center;
+    line-height: 1.1;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+    -webkit-text-stroke: 0.7px #0F3D75;
+  }
+  @media (max-width: 600px) {
+    #start-screen h1 {
+      font-size: 3rem;
+      -webkit-text-stroke: 0.4px #0F3D75;
     }
-    @media (max-width: 600px) {
-      #start-screen h1 {
-        font-size: 3rem;
-        -webkit-text-stroke: 0.5px #1e5c99;
-      }
-    }
+  }
+
     .start-button {
       background:#3EAFF6; color:#fff;
       font-size:1.4rem; font-weight:700;
