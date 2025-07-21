@@ -694,8 +694,8 @@ document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
     document.getElementById('game-over-screen').style.display = 'none';
 
-    // Reset game state
-    gameStarted = false;
+    // Reset global game state BEFORE scene restarts
+    gameStarted = true;
     gameOver = false;
     gamePaused = false;
     direction = 1;
@@ -703,21 +703,21 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     speed = 3;
     score = 0;
 
-    // Restart scene
     const scene = game.scene.getScene('default');
+
+    // Resume physics before restart in case it's stuck
+    scene.physics.resume();
+
+    // Manually show the game canvas and required UI
+    document.querySelector('canvas').style.visibility = 'visible';
+    if (scoreText) scoreText.setVisible(true);
+    if (pauseIcon) pauseIcon.setVisible(true);
+
+    // Now restart
     scene.scene.restart();
 
-    setTimeout(() => {
-      gameStarted = true;
-      scene.physics.resume(); // ✅ resume physics engine
-
-      // Restore UI
-      document.querySelector('canvas').style.visibility = 'visible';
-      if (scoreText) scoreText.setVisible(true);
-      if (pauseIcon) pauseIcon.setVisible(true);
-
-      fadeOut();
-    }, 100);
+    // Fade back in
+    fadeOut();
   });
 });
 
