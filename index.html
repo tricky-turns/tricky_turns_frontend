@@ -478,7 +478,7 @@ const config={
       transparent:true,
       scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
       physics:{default:'arcade', arcade:{debug:false}},
-      scene:{preload,create,update}
+      scene: { key: 'default', preload, create, update }
     };
     const game = new Phaser.Game(config);
 
