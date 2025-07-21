@@ -480,7 +480,8 @@ const config={
       physics:{default:'arcade', arcade:{debug:false}},
       scene: { key: 'default', preload, create, update }
     };
-    const game = new Phaser.Game(config);
+    window.game = new Phaser.Game(config);
+
 
     // Preload audio assets used throughout the game (SFX)
 function preload() {
@@ -693,9 +694,12 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
     document.getElementById('game-over-screen').style.display = 'none';
+    
+    // Destroy the old game completely
+    game.destroy(true);
 
-    // Reset global game state BEFORE scene restarts
-    gameStarted = true;
+    // Reset all global game state variables
+    gameStarted = false;
     gameOver = false;
     gamePaused = false;
     direction = 1;
@@ -703,23 +707,18 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     speed = 3;
     score = 0;
 
-    const scene = game.scene.getScene('default');
+    // Clear old DOM canvas if any
+    const oldCanvas = document.querySelector('canvas');
+    if (oldCanvas) oldCanvas.remove();
 
-    // Resume physics before restart in case it's stuck
-    scene.physics.resume();
-
-    // Manually show the game canvas and required UI
-    document.querySelector('canvas').style.visibility = 'visible';
-    if (scoreText) scoreText.setVisible(true);
-    if (pauseIcon) pauseIcon.setVisible(true);
-
-    // Now restart
-    scene.scene.restart();
-
-    // Fade back in
-    fadeOut();
+    // Recreate new Phaser instance from scratch
+    setTimeout(() => {
+      window.game = new Phaser.Game(config); // Must assign to global so rest of code can access
+      fadeOut();
+    }, 50); // Let DOM settle
   });
 });
+
 
 
 
