@@ -626,7 +626,7 @@ function create() {
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
-        muteIcon.setTexture(isMuted?'muteOff':'muteOn');
+        muteIcon.setTexture(isMuted?'iconMute':'iconUnmute');
         if(!isMuted) sfx.uiClick.play();
       });
 
@@ -636,7 +636,7 @@ function create() {
         if(!gameStarted||gameOver) return;
         if(!gamePaused){
           gamePaused=true;
-          pauseIcon.setTexture('playIcon');
+          pauseIcon.setTexture('iconPlay');
           sfx.pauseWhoosh.play();
           this.physics.pause();
           pauseOverlay.style.display='flex';
@@ -652,7 +652,7 @@ function create() {
               else {
                 countdownText.setVisible(false);
                 gamePaused=false;
-                pauseIcon.setTexture('pauseIcon');
+                pauseIcon.setTexture('iconPause');
                 this.physics.resume();
                 pauseOverlay.style.display='none';
               }
