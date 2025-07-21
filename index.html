@@ -1,21 +1,20 @@
 <!DOCTYPE html>
-
 <html lang="en">
-<head>
-<script src="https://sdk.minepi.com/pi-sdk.js">
-</script>
-<script>
+ <head>
+  <script src="https://sdk.minepi.com/pi-sdk.js">
+  </script>
+  <script>
    Pi.init({ version: "2.0", sandbox: true });
   </script>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
    Tricky Turns
   </title>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
-<style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
+  <style>
    * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; }
     body {
@@ -350,93 +349,93 @@
   pointer-events: auto;            /* buttons now clickable again */ 
 }
   </style>
-</head>
-<body>
-<div class="bg-cloud one">
-</div>
-<div class="bg-cloud two">
-</div>
-<div class="bg-cloud three">
-</div>
-<div class="bg-cloud four">
-</div>
-<div id="start-screen">
-<div id="user-info">
+ </head>
+ <body>
+  <div class="bg-cloud one">
+  </div>
+  <div class="bg-cloud two">
+  </div>
+  <div class="bg-cloud three">
+  </div>
+  <div class="bg-cloud four">
+  </div>
+  <div id="start-screen">
+   <div id="user-info">
     User:
     <strong id="username">
      Guest
     </strong>
-<button class="btn-secondary" id="loginBtn">
+    <button class="btn-secondary" id="loginBtn">
      Login
     </button>
-<img id="muteBtnHome" src="assets/icon-unmute.svg" style="width:28px;height:28px;cursor:pointer;"/></div>
-<div class="start-cloud one">
-</div>
-<div class="start-cloud two">
-</div>
-<div class="start-cloud three">
-</div>
-<div class="start-cloud four">
-</div>
-<h1>
+   </div>
+   <div class="start-cloud one">
+   </div>
+   <div class="start-cloud two">
+   </div>
+   <div class="start-cloud three">
+   </div>
+   <div class="start-cloud four">
+   </div>
+   <h1>
     TRICKY
     <br/>
     TURNS
    </h1>
-<button class="btn-primary" id="startBtn">
+   <button class="btn-primary" id="startBtn">
     TAP TO START
    </button>
-<button class="btn-primary" id="viewLeaderboardBtn">
+   <button class="btn-primary" id="viewLeaderboardBtn">
     VIEW LEADERBOARD
    </button>
-<div class="orbit">
-<div class="ring">
-</div>
-<div class="circle top">
-</div>
-<div class="circle bottom">
-</div>
-</div>
-</div>
-<div id="leaderboard-screen">
-<button class="btn-primary" id="closeLeaderboardBtn">
+   <div class="orbit">
+    <div class="ring">
+    </div>
+    <div class="circle top">
+    </div>
+    <div class="circle bottom">
+    </div>
+   </div>
+  </div>
+  <div id="leaderboard-screen">
+   <button class="btn-primary" id="closeLeaderboardBtn">
     Close
    </button>
-<h2>
+   <h2>
     Top 100 Leaderboard
    </h2>
-<ol id="leaderboardEntriesHome">
-</ol>
-</div>
-<div id="pause-overlay">
-<div class="paused-text">
+   <ol id="leaderboardEntriesHome">
+   </ol>
+  </div>
+  <div id="pause-overlay">
+   <div class="paused-text">
     Paused
    </div>
-</div>
-<div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
-<h1 style="color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;">
+  </div>
+  <div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
+   <h1 style="color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;">
     GAME OVER
    </h1>
-<div class="result-wrapper">
-<div class="orb-bg" style="display:none;">
-</div>
-<div class="results" style="color: #fff; font-size: 2rem; font-weight: 600; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
+   <div class="result-wrapper">
+    <div class="orb-bg" style="display:none;">
+    </div>
+    <div class="results" style="color: #fff; font-size: 2rem; font-weight: 600; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
      SCORE:
      <span id="finalScore">
       0
      </span>
-<br/>
+     <br/>
      BEST:
      <span id="bestScore">
       0
      </span>
-</div>
-</div>
-<button class="btn-primary" id="homeBtn">
+    </div>
+   </div>
+   <button class="btn-primary" id="homeBtn">
     HOME
    </button>
-</div>
-<script>
+  </div>
+  <script>
    // —— Pi Authentication setup ——
     const scopes = ['username'];
     let piUsername = 'Guest';
@@ -603,28 +602,10 @@ function create() {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
       }
 
-      // generate UI icons
-      const gfx=this.make.graphics({add:false});
-      gfx.fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillRoundedRect(14,12,8,32,4).fillRoundedRect(34,12,8,32,4);
-      gfx.generateTexture('pauseIcon',56,56);
-      gfx.clear().fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillTriangle(20,16,20,40,40,28);
-      gfx.generateTexture('playIcon',56,56);
-      gfx.clear().fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillRect(16,18,8,20)
-         .beginPath().moveTo(24,18).lineTo(38,8).lineTo(38,52).lineTo(24,32).closePath().fillPath();
-      gfx.generateTexture('muteOn',56,56);
-      gfx.clear().fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillRect(16,18,8,20)
-         .beginPath().moveTo(24,18).lineTo(38,8).lineTo(38,52).lineTo(24,32).closePath().fillPath()
-         .lineStyle(4,0xffffff,1).beginPath().moveTo(20,20).lineTo(44,44).strokePath()
-         .beginPath().moveTo(44,20).lineTo(20,44).strokePath();
-      gfx.generateTexture('muteOff',56,56);
 
-      pauseIcon=this.add.image(cam.width-40,40,'pauseIcon')
+      pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
                     .setInteractive().setDepth(3).setVisible(false);
-      const muteIcon=this.add.image(cam.width-100,40,'muteOn')
+      const muteIcon=this.add.image(cam.width-100,40,'iconUnmute')
                        .setInteractive().setDepth(3).setVisible(false);
       pauseOverlay=document.getElementById('pause-overlay');
 
@@ -645,7 +626,7 @@ function create() {
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
-        muteIcon.setTexture(isMuted?'muteOff':'muteOn');
+        muteIcon.setTexture(isMuted?'iconMute':'iconUnmute');
         if(!isMuted) sfx.uiClick.play();
       });
 
@@ -655,7 +636,7 @@ function create() {
         if(!gameStarted||gameOver) return;
         if(!gamePaused){
           gamePaused=true;
-          pauseIcon.setTexture('playIcon');
+          pauseIcon.setTexture('iconPlay');
           sfx.pauseWhoosh.play();
           this.physics.pause();
           pauseOverlay.style.display='flex';
@@ -671,7 +652,7 @@ function create() {
               else {
                 countdownText.setVisible(false);
                 gamePaused=false;
-                pauseIcon.setTexture('pauseIcon');
+                pauseIcon.setTexture('iconPause');
                 this.physics.resume();
                 pauseOverlay.style.display='none';
               }
@@ -855,7 +836,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
       });
     }
   </script>
-<div id="fade-screen">
-</div>
-</body>
+  <div id="fade-screen">
+  </div>
+ </body>
 </html>
