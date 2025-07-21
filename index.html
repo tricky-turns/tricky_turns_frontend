@@ -299,6 +299,36 @@
 #fade-screen.fade-in {
   opacity: 1;
 }
+@media (max-width: 600px) {
+  /* let the container fill more of the screen */
+  #leaderboard {
+    width: 90%;
+  }
+
+  /* shift the rank badge in a bit so it never clips off the left edge */
+  #leaderboard li::before,
+  #leaderboardEntriesHome li::before {
+    left: -2rem;            /* was -2.5rem on desktop */ 
+    font-size: 0.8rem;      /* shrink slightly to fit */
+    padding: 0.2rem 0.4rem;
+  }
+
+  /* nudge the header down so it doesn’t collide with the close button */
+  #leaderboard-screen h2 {
+    margin-top: 3rem;
+    font-size: 1.5rem;      /* optional: scale header a touch smaller */
+    text-align: center;
+  }
+
+  /* shrink & reposition the “Close” button */
+  #leaderboard-screen button {
+    top: 0.5rem;            /* bring it in a bit */
+    right: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
   </style>
 </head>
 <body>
