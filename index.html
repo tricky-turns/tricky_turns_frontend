@@ -22,7 +22,6 @@
       position:relative;
     }
     canvas { display:block; margin:0 auto; visibility:hidden; z-index:1; }
-
     #user-info {
       display:flex; align-items:center; gap:0.5rem;
       color:#fff; font-size:1rem; text-shadow:0 0 4px #000;
@@ -47,7 +46,6 @@
     .bg-cloud.three, .start-cloud.three { width:300px; height:100px; top:48%;  left:18%;   animation-duration:45s; }
     .bg-cloud.four,  .start-cloud.four  { width:280px; height:95px;  bottom:18%; right:22%; animation-duration:55s; }
     @keyframes drift { from{transform:translateX(0);} to{transform:translateX(-150vw);} }
-
     #start-screen {
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4rem;
@@ -103,7 +101,6 @@
       transition: background 0.2s ease;
     }
     .btn-secondary:hover { background: rgba(255,255,255,1); }
-
     .orbit {
       position: relative;
       width: 240px;
@@ -116,7 +113,6 @@
     .circle.top { top:0; left:50%; transform:translate(-50%,-50%);}
     .circle.bottom { bottom:0; left:50%; transform:translate(-50%,50%);}
     @keyframes spin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
-
     #pause-overlay {
       position:absolute; inset:0; display:none;
       align-items:center; justify-content:center;
@@ -136,7 +132,6 @@
       color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;
     }
     @media (max-width:600px) { #game-over-screen h1 { font-size:4rem; } }
-
     #leaderboard, #leaderboardEntriesHome, #leaderboard-screen ol {
       width: 100%;
       max-width: 400px;
@@ -184,7 +179,6 @@
     #leaderboard-screen h2 { color:#fff; margin-bottom:1rem; }
     #leaderboard-screen button { position:absolute; top:1rem; right:1rem; background:#FF4A4A; color:#fff; border:none; border-radius:0.3rem; padding:0.5rem 1rem; font-weight:700; cursor:pointer; }
     #leaderboard-screen ol { color:#fff; }
-
     #fade-screen {
       position: absolute;
       inset: 0;
@@ -198,13 +192,10 @@
   </style>
 </head>
 <body>
-  <!-- Decorative clouds -->
   <div class="bg-cloud one"></div>
   <div class="bg-cloud two"></div>
   <div class="bg-cloud three"></div>
   <div class="bg-cloud four"></div>
-
-  <!-- Home/start screen -->
   <div id="start-screen">
     <div id="user-info">
       User: <strong id="username">Guest</strong>
@@ -223,20 +214,14 @@
       <div class="circle bottom"></div>
     </div>
   </div>
-
-  <!-- Leaderboard Overlay -->
   <div id="leaderboard-screen">
     <button class="btn-primary" id="closeLeaderboardBtn">Close</button>
     <h2>Top 100 Leaderboard</h2>
     <ol id="leaderboardEntriesHome"></ol>
   </div>
-
-  <!-- Pause Overlay -->
   <div id="pause-overlay">
     <div class="paused-text">Paused</div>
   </div>
-
-  <!-- Game Over Screen -->
   <div id="game-over-screen">
     <h1>GAME OVER</h1>
     <div class="result-wrapper">
@@ -249,22 +234,16 @@
     <button class="btn-primary" id="restartBtn">RESTART</button>
     <button class="btn-primary" id="homeBtn">HOME</button>
   </div>
-
-  <!-- Fade effect -->
   <div id="fade-screen"></div>
-
-  <!-- Main JS Game & UI Logic -->
   <script>
-    // ------ Pi Auth + High Score --------
+    // Pi Auth
     const scopes = ['username'];
     let piUsername = 'Guest';
     let highScore = 0;
     let useLocalHighScore = true;
-
     function onIncompletePaymentFound(payment) {
       console.log('Incomplete payment found:', payment);
     }
-
     async function initAuth() {
       try {
         const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
@@ -295,7 +274,6 @@
       fade.classList.remove('fade-in');
       setTimeout(() => { callback?.(); }, duration);
     }
-
     async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
       list.innerHTML = '';
@@ -312,16 +290,13 @@
     document.getElementById('closeLeaderboardBtn').addEventListener('click', ()=>{
       document.getElementById('leaderboard-screen').style.display = 'none';
     });
-
-    // ---------- Phaser Game Logic ----------
+    // Phaser Game
     const LANES = [];
     let gameStarted = false, gameOver = false, gamePaused = false;
     let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
     let circle1, circle2, obstacles, points, score = 0;
     let scoreText, pauseIcon, pauseOverlay, countdownText;
     let sfx = {}, isMuted = false;
-    let phaserScene = null; // Store reference to current Phaser scene
-
     const config = {
       type: Phaser.AUTO,
       transparent: true,
@@ -331,17 +306,6 @@
     };
     window.game = new Phaser.Game(config);
 
-    // Start or restart the game with full UI/HUD reset
-    function startPhaserGame() {
-      // Hide overlays, show canvas, reset Phaser state
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.querySelector('canvas').style.visibility = 'visible';
-      // Call scene's startGame if present
-      if (phaserScene && typeof phaserScene.startGame === 'function') {
-        phaserScene.startGame();
-      }
-    }
-
     function preload() {
       this.load.audio('explode','assets/explode.wav');
       this.load.audio('move','assets/move.wav');
@@ -350,25 +314,20 @@
       this.load.audio('uiClick','assets/ui_click_subtle.wav');
       this.load.audio('pauseWhoosh','assets/pause_whoosh_subtle.wav');
     }
-
     function create() {
-      phaserScene = this; // Save reference for global startPhaserGame
-      // Default state (hidden) for Phaser HUD
-      gameStarted = false;
+      // KEY: Reset ALL game state here
+      gameStarted = true;
       gameOver = false;
       gamePaused = false;
       direction = 1;
       angle = 0;
       speed = 3;
       score = 0;
-
       if (obstacles) obstacles.clear(true, true);
       if (points) points.clear(true, true);
-
       const cam = this.cameras.main;
       const cx = cam.centerX, cy = cam.centerY;
       LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
-
       this.make.graphics({add:false})
         .fillStyle(0xffffff,0.04).fillCircle(50,50,30)
         .fillStyle(0xffffff,1).fillCircle(50,50,20)
@@ -384,31 +343,25 @@
         .beginPath().moveTo(25,0).lineTo(50,25).lineTo(25,50).lineTo(0,25)
         .closePath().fillPath()
         .generateTexture('point',50,50).destroy();
-
       circle1 = this.add.image(0,0,'orb'); this.physics.add.existing(circle1);
       circle1.body.setCircle(22.5,27.5,27.5);
       circle2 = this.add.image(0,0,'orb'); this.physics.add.existing(circle2);
       circle2.body.setCircle(22.5,27.5,27.5);
-
       const trail = this.add.particles('orb');
       [circle1,circle2].forEach(c => trail.createEmitter({
         follow:c, lifespan:300, speed:0,
         scale:{start:0.3,end:0}, alpha:{start:0.4,end:0},
         frequency:50, blendMode:'ADD'
       }));
-
       obstacles = this.physics.add.group();
       points = this.physics.add.group();
-
       scoreText = this.add.text(16,16,'Score: 0',{
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
-      }).setDepth(2).setVisible(false);
-
+      }).setDepth(2).setVisible(true);
       if (useLocalHighScore) {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
       }
-
       const gfx = this.make.graphics({add:false});
       gfx.fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
          .fillStyle(0xffffff,1).fillRoundedRect(14,12,8,32,4).fillRoundedRect(34,12,8,32,4);
@@ -426,32 +379,27 @@
          .lineStyle(4,0xffffff,1).beginPath().moveTo(20,20).lineTo(44,44).strokePath()
          .beginPath().moveTo(44,20).lineTo(20,44).strokePath();
       gfx.generateTexture('muteOff',56,56);
-
       pauseIcon = this.add.image(cam.width-40,40,'pauseIcon')
-                    .setInteractive().setDepth(3).setVisible(false);
+                    .setInteractive().setDepth(3).setVisible(true);
       const muteIcon = this.add.image(cam.width-100,40,'muteOn')
-                       .setInteractive().setDepth(3).setVisible(false);
+                       .setInteractive().setDepth(3).setVisible(true);
       pauseOverlay = document.getElementById('pause-overlay');
-
       countdownText = this.add.text(cx,cy,'',{
         fontFamily:'Poppins', fontSize:'96px',
         color:'#fff', stroke:'#000', strokeThickness:6
       }).setOrigin(0.5).setDepth(5).setVisible(false);
-
       sfx.explode     = this.sound.add('explode');
       sfx.move        = this.sound.add('move');
       sfx.point       = this.sound.add('point');
       sfx.newBest     = this.sound.add('newBest');
       sfx.uiClick     = this.sound.add('uiClick');
       sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
-
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
         muteIcon.setTexture(isMuted?'muteOff':'muteOn');
         if(!isMuted) sfx.uiClick.play();
       });
-
       pauseIcon.on('pointerdown',(_,x,y,e)=>{
         e.stopPropagation();
         if(!gameStarted||gameOver) return;
@@ -481,7 +429,6 @@
           });
         }
       });
-
       this.input.on('pointerdown',()=>{
         if(gameStarted&&!gameOver&&!gamePaused){
           direction*=-1;
@@ -493,12 +440,10 @@
           });
         }
       });
-
       this.physics.add.overlap(circle1,obstacles,triggerGameOver,null,this);
       this.physics.add.overlap(circle2,obstacles,triggerGameOver,null,this);
       this.physics.add.overlap(circle1,points,collectPoint,null,this);
       this.physics.add.overlap(circle2,points,collectPoint,null,this);
-
       this.time.addEvent({
         delay:1000, loop:true,
         callback: ()=>{
@@ -508,7 +453,6 @@
           }
         }
       });
-
       const scene=this;
       function getSpawnInterval(){
         const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
@@ -520,25 +464,8 @@
           scheduleSpawn();
         },[],scene);
       }
-
-      // StartGame method for both start/restart
-      this.startGame = function() {
-        score = 0;
-        direction = 1;
-        angle = 0;
-        speed = 3;
-        gameStarted = true;
-        gameOver = false;
-        gamePaused = false;
-        scoreText.setText('Score: 0');
-        scoreText.setVisible(true);
-        pauseIcon.setVisible(true);
-        muteIcon.setVisible(true);
-        pauseOverlay.style.display = 'none';
-        scheduleSpawn();
-      };
+      scheduleSpawn();
     }
-
     function update(){
       if(!gameStarted||gameOver||gamePaused) return;
       angle+=0.05*direction;
@@ -549,7 +476,6 @@
       obstacles.children.iterate(o=>o.x-=speed);
       points.children.iterate(p=>p.x-=speed);
     }
-
     function spawnObjects(){
       const y=Phaser.Math.RND.pick(LANES);
       const fromLeft=Phaser.Math.Between(0,1)===0;
@@ -566,7 +492,6 @@
         obstacles.add(o);
       }
     }
-
     function triggerGameOver(){
       if(gameOver) return;
       gameOver=true;
@@ -603,7 +528,6 @@
         document.getElementById('game-over-screen').style.display='flex';
       });
     }
-
     function collectPoint(_,pt){
       pt.destroy();
       score++;
@@ -615,7 +539,6 @@
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-
     // ---- DOM EVENTS: Only attach once globally ----
     document.getElementById('startBtn').addEventListener('click', ()=>{
       sfx.uiClick?.play();
@@ -623,28 +546,16 @@
       document.getElementById('viewLeaderboardBtn').style.display='none';
       document.getElementById('start-screen').style.display='none';
       document.querySelector('canvas').style.visibility='visible';
-      if (phaserScene && typeof phaserScene.startGame === 'function') {
-        phaserScene.startGame();
-      }
     });
-
     document.getElementById('restartBtn').addEventListener('click', () => {
       sfx.uiClick?.play();
       document.getElementById('game-over-screen').style.display = 'none';
       document.querySelector('canvas').style.visibility='visible';
       window.game.scene.keys.default.scene.restart();
-      // After restart, Phaser will call create(), and we use startGame on the new scene:
-      setTimeout(() => {
-        if (window.game.scene.keys.default && typeof window.game.scene.keys.default.startGame === 'function') {
-          window.game.scene.keys.default.startGame();
-        }
-      }, 50); // Short delay to allow Phaser scene to re-init
     });
-
     document.getElementById('homeBtn').addEventListener('click', () => {
       fadeIn(() => window.location.href = window.location.href);
     });
-
   </script>
 </body>
 </html>
