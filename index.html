@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <!-- Pi SDK (must load before any Pi.* calls) -->
@@ -7,207 +6,264 @@
   <script>
     Pi.init({ version: "2.0", sandbox: true });
   </script>
+
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>Tricky Turns</title>
+
   <!-- Phaser 3 -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+
   <!-- Poppins Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; }
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family:'Poppins',sans-serif;
       background: linear-gradient(to bottom, #3199E4 0%, #58C0F2 100%);
-      position: relative;
+      position:relative;
     }
-    canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
+    canvas { display:block; margin:0 auto; visibility:hidden; z-index:1; }
 
     /* —— Pi Auth & User Display on Home Screen —— */
     #user-info {
-      display: flex; align-items: center; gap: 0.5rem;
-      color: #fff; font-size: 1rem; text-shadow: 0 0 4px #000;
+      display:flex; align-items:center; gap:0.5rem;
+      color:#fff; font-size:1rem; text-shadow:0 0 4px #000;
     }
     #user-info button {
-      background: rgba(255,255,255,0.8);
-      border: none; border-radius: 0.3rem;
-      padding: 0.2rem 0.6rem; font-weight: 700; cursor: pointer;
+      background:rgba(255,255,255,0.8);
+      border:none; border-radius:0.3rem;
+      padding:0.2rem 0.6rem; font-weight:700; cursor:pointer;
     }
 
     /* clouds visible but don’t catch taps */
     .bg-cloud, .start-cloud {
-      position: absolute;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><path d='M20,35 C20,25 35,20 45,25 C50,15 65,15 70,25 C85,25 90,35 80,45 C90,45 95,55 85,60 C75,65 55,60 50,50 C40,60 25,60 20,50 C10,50 5,40 20,35 Z' fill='%23FFFFFF'/></svg>");
-      background-size: contain;
-      background-repeat: no-repeat;
-      filter: blur(6px);
-      opacity: .8;
-      animation: drift linear infinite;
-      pointer-events: none;
+      position:absolute;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><path d='M20,35 C20,25 35,20 45,25 C50,15 65,15 70,25 C85,25 90,35 80,45 C90,45 95,55 85,60 C75,65 55,60 50,50 C40,60 25,60 20,50 C10,50 5,40 20,35 Z' fill='%23FFFFFF'/></svg>");
+      background-size:contain;
+      background-repeat:no-repeat;
+      filter:blur(6px);
+      opacity:.8;
+      animation:drift linear infinite;
+      pointer-events:none;
     }
-    .bg-cloud.one,   .start-cloud.one   { width: 260px; height: 90px;  top: 12%;  left: 10%;   animation-duration: 40s; }
-    .bg-cloud.two,   .start-cloud.two   { width: 200px; height: 70px;  top: 8%;   right: 12%;  animation-duration: 50s; }
-    .bg-cloud.three, .start-cloud.three { width: 300px; height: 100px; top: 48%;  left: 18%;   animation-duration: 45s; }
-    .bg-cloud.four,  .start-cloud.four  { width: 280px; height: 95px;  bottom: 18%; right: 22%; animation-duration: 55s; }
-    @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-150vw); } }
+    .bg-cloud.one,   .start-cloud.one   { width:260px; height:90px;  top:12%;  left:10%;   animation-duration:40s; }
+    .bg-cloud.two,   .start-cloud.two   { width:200px; height:70px;  top:8%;   right:12%;  animation-duration:50s; }
+    .bg-cloud.three, .start-cloud.three { width:300px; height:100px; top:48%;  left:18%;   animation-duration:45s; }
+    .bg-cloud.four,  .start-cloud.four  { width:280px; height:95px;  bottom:18%; right:22%; animation-duration:55s; }
+    @keyframes drift { from{transform:translateX(0);} to{transform:translateX(-150vw);} }
 
     #start-screen {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4rem;
-      z-index: 2; cursor: pointer;
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4rem;
+      z-index:2; cursor:pointer;
     }
     #start-screen h1 {
-      color: #fff;
-      font-size: 5rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1rem;
-      text-align: center;
-      line-height: 1.1;
-      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
-      -webkit-text-stroke: 0.7px #0F3D75;
+      color:#fff;
+      font-size:5rem;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.1rem;
+      text-align:center;
+      line-height:1.1;
+      text-shadow:1px 1px 4px rgba(0,0,0,0.3);
+      -webkit-text-stroke:0.7px #0F3D75;
     }
-    @media (max-width: 600px) {
+    @media (max-width:600px) {
       #start-screen h1 {
-        font-size: 3rem;
-        -webkit-text-stroke: 0.4px #0F3D75;
+        font-size:3rem;
+        -webkit-text-stroke:0.4px #0F3D75;
       }
     }
 
-    /* Primary Start Button – more prominent */
+    /* Primary Start Button */
     .btn-primary {
-      background: #3EAFF6;
-      color: #fff;
-      font-size: 1.6rem;
-      font-weight: 700;
-      padding: 1rem 3rem;
-      border: none;
-      border-radius: 2rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
+      background:#3EAFF6;
+      color:#fff;
+      font-size:1.4rem;
+      font-weight:700;
+      padding:0.8rem 2.5rem;
+      border:none;
+      border-radius:2rem;
+      box-shadow:0 8px 24px rgba(0,0,0,0.2);
+      cursor:pointer;
+      transition:all 0.2s ease;
+      text-align:center;
     }
     .btn-primary:hover {
-      background: #318EE6;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
-      transform: translateY(-2px);
+      background:#318EE6;
+      box-shadow:0 12px 32px rgba(0,0,0,0.3);
+      transform:translateY(-2px);
+    }
+    @media (max-width:600px) {
+      .btn-primary {
+        font-size:1.1rem;
+        padding:0.6rem 1.8rem;
+      }
+    }
+
+    /* Standard Secondary (login) */
+    .btn-secondary {
+      background:rgba(255,255,255,0.8);
+      color:#000;
+      font-weight:600;
+      padding:0.2rem 0.6rem;
+      font-size:0.9rem;
+      border:none;
+      border-radius:0.3rem;
+      cursor:pointer;
+      transition:background 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background:rgba(255,255,255,1);
     }
 
     /* Secondary Link-Style Button for Leaderboard */
     .btn-link {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      text-decoration: underline;
-      padding: 0;
-      cursor: pointer;
-      transition: color 0.2s ease;
+      background:none;
+      border:none;
+      color:#fff;
+      font-size:1rem;
+      font-weight:600;
+      text-decoration:underline;
+      padding:0;
+      cursor:pointer;
+      transition:color 0.2s ease;
     }
     .btn-link:hover {
-      color: #e0f7ff;
-      text-decoration: none;
-    }
-
-    /* Standard Secondary (used for login) */
-    .btn-secondary {
-      background: rgba(255,255,255,0.8);
-      color: #000;
-      font-weight: 600;
-      padding: 0.2rem 0.6rem;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: 0.3rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    .btn-secondary:hover {
-      background: rgba(255,255,255,1);
+      color:#e0f7ff;
+      text-decoration:none;
     }
 
     .orbit {
-      position: relative;
-      width: 240px;
-      height: 240px;
-      animation: pulse 2s ease-in-out infinite;
+      position:relative;
+      width:240px;
+      height:240px;
+      animation:pulse 2s ease-in-out infinite;
     }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
+    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
     .ring {
-      position: absolute; width: 100%; height: 100%;
-      border-radius: 50%; border: 8px solid rgba(255,255,255,0.6);
-      box-shadow: 0 0 20px rgba(255,255,255,0.8);
-      animation: spin 3.5s linear infinite;
+      position:absolute; width:100%; height:100%;
+      border-radius:50%; border:8px solid rgba(255,255,255,0.6);
+      box-shadow:0 0 20px rgba(255,255,255,0.8);
+      animation:spin 3.5s linear infinite;
     }
-    .circle { position: absolute; width: 60px; height: 60px; background: #fff; border-radius: 50%; box-shadow: 0 0 20px rgba(255,255,255,1); }
-    .circle.top    { top: 0;    left: 50%; transform: translate(-50%,-50%); }
-    .circle.bottom { bottom: 0; left: 50%; transform: translate(-50%,50%); }
-    @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .circle { position:absolute; width:60px; height:60px; background:#fff; border-radius:50%; box-shadow:0 0 20px rgba(255,255,255,1); }
+    .circle.top    { top:0;    left:50%; transform:translate(-50%,-50%); }
+    .circle.bottom { bottom:0; left:50%; transform:translate(-50%,50%); }
+    @keyframes spin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
 
     #pause-overlay {
-      position: absolute; inset: 0; display: none;
-      align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.4); z-index: 4; pointer-events: none;
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.4); z-index:4; pointer-events:none;
     }
     #pause-overlay .paused-text {
-      font-family: 'Poppins', sans-serif; font-size: 4rem; font-weight: 700;
-      color: #fff; text-transform: uppercase; letter-spacing: .1rem;
-      -webkit-text-stroke: 1px #000;
+      font-family:'Poppins',sans-serif; font-size:4rem; font-weight:700;
+      color:#fff; text-transform:uppercase; letter-spacing:.1rem;
+      -webkit-text-stroke:1px #000;
     }
 
     #game-over-screen {
-      position: absolute; inset: 0; display: none;
-      flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;
-      z-index: 3; cursor: pointer;
+      position:absolute; inset:0; display:none;
+      flex-direction:column; align-items:center; justify-content:center; gap:1.5rem;
+      z-index:3; cursor:pointer;
     }
+    #game-over-screen h2 {
+      font-family:'Poppins',sans-serif; color:#FF4A4A; font-size:6rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.1rem; -webkit-text-stroke:1px #000;
+    }
+    .result-wrapper { position:relative; width:300px; height:300px; }
+    .orb-bg {
+      position:absolute; inset:0; border-radius:50%;
+      background:radial-gradient(circle at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0) 70%);
+      backdrop-filter:blur(10px);
+    }
+    .results {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color:#fff; font-size:2.4rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.15rem;
+      -webkit-text-stroke:2px #000; text-align:center; line-height:1.3;
+    }
+    .restart {
+      font-family:'Poppins',sans-serif; color:rgba(255,255,255,0.8);
+      font-size:2rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.1rem;
+      -webkit-text-stroke:1px #000;
+    }
+    @media (max-width:600px) {
+      #game-over-screen h2 { font-size:4rem; }
+      .results        { font-size:1.8rem; }
+      .restart        { font-size:1.6rem; }
+    }
+
+    /* —— Leaderboard in Game Over —— */
+    #leaderboard {
+      margin-top:1rem;
+      background:rgba(0,0,0,0.6);
+      padding:1rem; border-radius:0.5rem;
+      max-height:300px; overflow-y:auto;
+      color:#fff; font-size:1rem;
+      text-align:left; line-height:1.4;
+      width:80%; max-width:400px;
+    }
+    #leaderboard h3 { margin-bottom:0.5rem; }
 
     /* —— Full-Screen Leaderboard Overlay —— */
     #leaderboard-screen {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,0.9);
-      display: none; flex-direction: column;
-      align-items: center; overflow-y: auto;
-      padding: 2rem; z-index: 5;
+      position:absolute; inset:0;
+      background:rgba(0,0,0,0.9);
+      display:none; flex-direction:column;
+      align-items:center; overflow-y:auto;
+      padding:2rem; z-index:5;
     }
     #leaderboard-screen h2 {
-      color: #fff; margin-bottom: 1rem;
+      color:#fff; margin-bottom:1rem;
     }
     #leaderboard-screen button {
-      position: absolute; top: 1rem; right: 1rem;
-      background: #FF4A4A; color: #fff;
-      border: none; border-radius: 0.3rem;
-      padding: 0.5rem 1rem; font-weight: 700;
-      cursor: pointer;
+      position:absolute; top:1rem; right:1rem;
+      background:none; border:none; color:#fff; font-size:1rem; font-weight:600;
+      text-decoration:underline; padding:0; cursor:pointer;
+      transition:color 0.2s ease;
     }
+    #leaderboard-screen button:hover { color:#e0f7ff; text-decoration:none; }
     #leaderboard-screen ol {
-      color: #fff; list-style-position: inside;
-      width: 100%; max-width: 400px;
+      color:#fff; list-style-position:inside;
+      width:100%; max-width:400px;
     }
     #leaderboard ol,
     #leaderboardEntriesHome {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+      list-style:none; padding:0; margin:0; width:100%; max-width:400px;
+    }
+    #leaderboard li,
+    #leaderboardEntriesHome li {
+      background:rgba(255,255,255,0.05);
+      border-radius:0.4rem; margin-bottom:0.4rem;
+      padding:0.5rem 0.8rem;
+      display:flex; align-items:center; justify-content:space-between;
+      color:#fff; font-family:'Poppins',sans-serif; font-size:1rem; position:relative;
+    }
+    #leaderboard li::before,
+    #leaderboardEntriesHome li::before {
+      content:attr(data-rank);
+      background:#FF4A4A; color:#fff; font-weight:700;
+      font-size:0.9rem; padding:0.25rem 0.6rem; border-radius:1rem;
+      margin-right:0.8rem; position:absolute; left:-2.5rem;
     }
 
     /* Fade overlay */
     #fade-screen {
-      position: absolute; inset: 0;
-      background: #000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.6s ease;
+      position:absolute; inset:0;
+      background:#000; opacity:0;
+      pointer-events:none; z-index:10;
+      transition:opacity 0.6s ease-in-out;
     }
-    #fade-screen.fade-in {
-      opacity: 1;
-    }
+    #fade-screen.fade-in { opacity:1; }
   </style>
 </head>
+
 <body>
   <div class="bg-cloud one"></div>
   <div class="bg-cloud two"></div>
@@ -217,8 +273,7 @@
   <div id="start-screen">
     <!-- User info & login on home screen -->
     <div id="user-info">
-      User:
-      <strong id="username">Guest</strong>
+      User: <strong id="username">Guest</strong>
       <button class="btn-secondary" id="loginBtn">Login</button>
     </div>
 
@@ -253,9 +308,9 @@
   </div>
 
   <div id="game-over-screen">
-    <h1>GAME OVER</h1>
+    <h2>GAME OVER</h2>
     <div class="result-wrapper">
-      <div class="orb-bg" style="display:none;"></div>
+      <div class="orb-bg"></div>
       <div class="results">
         SCORE: <span id="finalScore">0</span><br/>
         BEST: <span id="bestScore">0</span>
@@ -278,7 +333,6 @@
       console.log('Incomplete payment found:', payment);
     }
 
-    // Handles Pi authentication flow and user high score retrieval from server
     async function initAuth() {
       try {
         const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
@@ -299,11 +353,9 @@
       }
     }
 
-    // Attempt silent auth on load
     initAuth();
     document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-    // Fade helpers
     function fadeIn(callback, duration = 600) {
       const fade = document.getElementById('fade-screen');
       fade.classList.add('fade-in');
@@ -315,11 +367,10 @@
       setTimeout(() => callback?.(), duration);
     }
 
-    // Show Home Leaderboard
     async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
       list.innerHTML = '';
-      const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
+      const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
       data.forEach((e, i) => {
         const li = document.createElement('li');
         li.setAttribute('data-rank', `#${i + 1}`);
@@ -507,8 +558,8 @@
         delay:1000, loop:true,
         callback: ()=>{
           if (gameStarted && !gameOver && !gamePaused) {
-            if (speed > 1.5) speed += 0.006;
-            else if (speed >= 1.2) speed += 0.0015;
+            if (speed>1.5) speed += 0.006;
+            else if (speed>=1.2) speed += 0.0015;
           }
         }
       });
@@ -523,7 +574,7 @@
         scene.time.delayedCall(getSpawnInterval(), ()=>{
           if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
           scheduleSpawn();
-        }, [], scene);
+        },[],scene);
       }
 
       // START
@@ -543,7 +594,7 @@
         });
       });
 
-      // RESTART (fixed)
+      // RESTART
       {
         const scene = this;
         document.getElementById('restartBtn').addEventListener('click', () => {
@@ -575,7 +626,7 @@
       });
     }
 
-    function update(){
+    function update() {
       if (!gameStarted || gameOver || gamePaused) return;
       angle += 0.05 * direction;
       const o1 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(radius);
@@ -586,7 +637,7 @@
       points.children.iterate(p => p.x -= speed);
     }
 
-    function spawnObjects(){
+    function spawnObjects() {
       const y = Phaser.Math.RND.pick(LANES);
       const fromLeft = Phaser.Math.Between(0,1) === 0;
       const x = fromLeft ? -50 : this.cameras.main.width + 50;
@@ -603,7 +654,7 @@
       }
     }
 
-    function triggerGameOver(_, obstacle){
+    function triggerGameOver(_, obstacle) {
       if (gameOver) return;
       gameOver = true;
       [circle1, circle2].forEach(c => {
@@ -631,8 +682,8 @@
         }
         if (!useLocalHighScore) {
           fetch('/api/leaderboard', {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
             body: JSON.stringify({ username: piUsername, score: highScore })
           }).catch(console.error);
         }
@@ -640,7 +691,7 @@
           .then(r => r.json()).then(data => {
             const list = document.getElementById('leaderboardEntries');
             list.innerHTML = '';
-            data.forEach((e,i) => {
+            data.forEach((e, i) => {
               const li = document.createElement('li');
               li.setAttribute('data-rank', `#${i+1}`);
               li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
@@ -652,7 +703,7 @@
       });
     }
 
-    function collectPoint(_, pt){
+    function collectPoint(_, pt) {
       pt.destroy();
       score++;
       sfx.point.play();
