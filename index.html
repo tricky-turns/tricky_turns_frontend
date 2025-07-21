@@ -215,18 +215,6 @@
       .restart        { font-size:1.6rem; }
     }
 
-    /* —— Leaderboard in Game Over —— */
-    #leaderboard {
-      margin-top:1rem;
-      background:rgba(0,0,0,0.6);
-      padding:1rem; border-radius:0.5rem;
-      max-height:300px; overflow-y:auto;
-      color:#fff; font-size:1rem;
-      text-align:left; line-height:1.4;
-      width:80%; max-width:400px;
-    }
-    #leaderboard h3 { margin-bottom:0.5rem; }
-
     /* —— Full-Screen Leaderboard Overlay —— */
     #leaderboard-screen {
       position:absolute; inset:0;
@@ -798,20 +786,20 @@ document.getElementById('homeBtn').addEventListener('click', () => {
           }).catch(console.error);
         }
 
-        // GET top-100 for game-over screen
-        fetch('/api/leaderboard?top=100')
-          .then(r=>r.json()).then(data=>{
-            const list=document.getElementById('leaderboardEntries');
-            list.innerHTML = '';
-data.forEach((e, i) => {
-  const li = document.createElement('li');
-  li.setAttribute('data-rank', `#${i + 1}`);
-  li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
-  list.appendChild(li);
-});
+//         // GET top-100 for game-over screen
+//         fetch('/api/leaderboard?top=100')
+//           .then(r=>r.json()).then(data=>{
+//             const list=document.getElementById('leaderboardEntries');
+//             list.innerHTML = '';
+// data.forEach((e, i) => {
+//   const li = document.createElement('li');
+//   li.setAttribute('data-rank', `#${i + 1}`);
+//   li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
+//   list.appendChild(li);
+// });
 
-            document.getElementById('leaderboard').style.display = 'block';
-          }).catch(console.error);
+//             document.getElementById('leaderboard').style.display = 'block';
+//           }).catch(console.error);
 
         document.getElementById('game-over-screen').style.display='flex';
       });
