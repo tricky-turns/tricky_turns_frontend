@@ -103,6 +103,12 @@
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
 
+    /* Reduce size for leaderboard button */
+    #viewLeaderboardBtn {
+      font-size: 1.2rem;
+      padding: 0.6rem 2rem;
+    }
+
     /* User-info */
     #user-info {
       display: flex;
@@ -287,18 +293,6 @@
       margin-right: 0.8rem;
       position: absolute;
       left: -2.5rem;
-    }
-
-    /* Phaser Score Text Styling */
-    .score-text {
-      font-family: var(--font-primary);
-      font-size: 36px;
-      color: var(--color-white);
-      text-transform: uppercase;
-      letter-spacing: var(--letter-spacing);
-      text-shadow: { x: 1, y: 1, color: '#000', blur: 4 };
-      stroke: var(--color-accent);
-      strokeThickness: 1;
     }
   </style>
 </head>
@@ -673,7 +667,7 @@
         p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
         points.add(p);
       } else {
-        const o = this.physics.add.image(x, y, 'obstacle').setDepth(1);
+        const o = this.physics.add.image(x, y, 'obstacle')).setDepth(1);
         o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
         obstacles.add(o);
       }
