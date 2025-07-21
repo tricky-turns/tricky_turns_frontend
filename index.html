@@ -690,14 +690,26 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
     document.getElementById('game-over-screen').style.display = 'none';
-    document.querySelector('canvas')?.remove();
-    game.destroy(true); // clean up old Phaser instance
-    setTimeout(() => {
-      const newGame = new Phaser.Game(config);
-      fadeOut();
-    }, 50); // let DOM settle
+    
+    // Reset key game state variables
+    gameStarted = true;
+    gameOver = false;
+    gamePaused = false;
+    direction = 1;
+    angle = 0;
+    speed = 3;
+    score = 0;
+
+    // Hide canvas temporarily while restarting
+    document.querySelector('canvas').style.visibility = 'visible';
+
+    // Restart the scene
+    game.scene.keys.default.scene.restart();
+
+    fadeOut();
   });
 });
+
 
 
 
