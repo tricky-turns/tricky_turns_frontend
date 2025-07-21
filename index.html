@@ -692,29 +692,38 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
       // RESTART (fixed)
-      document.getElementById('restartBtn').addEventListener('click', ()=>{
-        sfx.uiClick.play(); fadeIn(() => {
-          document.getElementById('game-over-screen').style.display='none';
-          document.getElementById('user-info').style.display='none';
-          document.getElementById('viewLeaderboardBtn').style.display='none';
-          document.getElementById('start-screen').style.display='none';
-          // Destroy old game
-          game.destroy(true);
-          // Reset globals
-          gameStarted=false; gameOver=false; gamePaused=false; direction=1; angle=0; speed=3; score=0;
-          // Remove old canvas
-          const oldCanvas = document.querySelector('canvas'); if(oldCanvas) oldCanvas.remove();
-          // Recreate Phaser instance
-          setTimeout(()=>{
-            window.game = new Phaser.Game(config);
-            // After fade out, start gameplay
+      {
+        const scene = this;
+        document.getElementById('restartBtn').addEventListener('click', () => {
+          sfx.uiClick.play();
+          fadeIn(() => {
+            document.getElementById('game-over-screen').style.display = 'none';
+            // restart the scene in-place
+            scene.scene.restart();
+            // reset our globals
+            gameStarted = false;
+            gameOver = false;
+            gamePaused = false;
+            direction = 1;
+            angle = 0;
+            speed = 3;
+            score = 0;
             fadeOut(() => {
-              gameStarted=true; document.querySelector('canvas').style.visibility='visible';
-              scoreText.setVisible(true); pauseIcon.setVisible(true); muteIcon.setVisible(true);
-              scheduleSpawn.call(this);
+              // re-show canvas and HUD
+              gameStarted = true;
+              document.querySelector('canvas').style.visibility = 'visible';
+              scoreText.setText('Score: 0');
+              scoreText.setVisible(true);
+              pauseIcon.setVisible(true);
+              // re-start spawning
+              scheduleSpawn();
             });
-          },50);
+          });
         });
+      }
+
+      document.getElementById('homeBtn').addEventListener('click', () => {
+        fadeIn(() => window.location.href = window.location.href);
       });
 
 
