@@ -480,7 +480,7 @@ const config={
       physics:{default:'arcade', arcade:{debug:false}},
       scene:{preload,create,update}
     };
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
 
     // Preload audio assets used throughout the game (SFX)
 function preload() {
@@ -686,10 +686,19 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
 
+
 document.getElementById('restartBtn').addEventListener('click', () => {
-  // Simulate "Tap to Start" button press
-  document.getElementById('startBtn').click();
+  fadeIn(() => {
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.querySelector('canvas')?.remove();
+    game.destroy(true); // clean up old Phaser instance
+    setTimeout(() => {
+      const newGame = new Phaser.Game(config);
+      fadeOut();
+    }, 50); // let DOM settle
+  });
 });
+
 
 
 document.getElementById('homeBtn').addEventListener('click', () => {
