@@ -744,43 +744,6 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 });
 
 
-      // RESTART
-
-
-
-
-
-      // RESTART (fixed)
-      {
-        const scene = this;
-        document.getElementById('restartBtn').addEventListener('click', () => {
-          sfx.uiClick.play();
-          fadeIn(() => {
-            document.getElementById('game-over-screen').style.display = 'none';
-            // restart the scene in-place
-            scene.scene.restart();
-            // reset our globals
-            gameStarted = false;
-            gameOver = false;
-            gamePaused = false;
-            direction = 1;
-            angle = 0;
-            speed = 3;
-            score = 0;
-            fadeOut(() => {
-              // re-show canvas and HUD
-              gameStarted = true;
-              document.querySelector('canvas').style.visibility = 'visible';
-              scoreText.setText('Score: 0');
-              scoreText.setVisible(true);
-              pauseIcon.setVisible(true);
-              // re-start spawning
-              scheduleSpawn();
-            });
-          });
-        });
-      }
-
       document.getElementById('homeBtn').addEventListener('click', () => {
         fadeIn(() => window.location.href = window.location.href);
       });
