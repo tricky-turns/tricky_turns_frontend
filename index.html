@@ -215,6 +215,18 @@
       .restart        { font-size:1.6rem; }
     }
 
+    /* —— Leaderboard in Game Over —— */
+    #leaderboard {
+      margin-top:1rem;
+      background:rgba(0,0,0,0.6);
+      padding:1rem; border-radius:0.5rem;
+      max-height:300px; overflow-y:auto;
+      color:#fff; font-size:1rem;
+      text-align:left; line-height:1.4;
+      width:80%; max-width:400px;
+    }
+    #leaderboard h3 { margin-bottom:0.5rem; }
+
     /* —— Full-Screen Leaderboard Overlay —— */
     #leaderboard-screen {
       position:absolute; inset:0;
@@ -353,12 +365,12 @@
     Paused
    </div>
 </div>
-<div id="game-over-screen" style="position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:4rem; z-index:3; background: linear-gradient(to bottom, #3199E4 0%, #58C0F2 100%);">
+<div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
 <h1 style="color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;">GAME OVER</h1>
 <div class="result-wrapper">
 <div class="orb-bg" style="display:none;">
 </div>
-<div class="results" style="color: #fff; font-size: 2.2rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 0.1rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.3); -webkit-text-stroke: 1px #0F3D75;">
+<div class="results" style="color: #fff; font-size: 2rem; font-weight: 600; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
      SCORE:
      <span id="finalScore">
       0
@@ -751,38 +763,59 @@ document.getElementById('homeBtn').addEventListener('click', () => {
     }
 
     function triggerGameOver(){
-  if (gameOver) return;
-  gameOver = true;
-  // … your particle and sound code …
+      if(gameOver) return;
+      gameOver=true;
+      [circle1,circle2].forEach(c=>{
+        const px=c.x, py=c.y; c.destroy();
+        this.add.particles('orb').createEmitter({
+          x:px,y:py,
+          speed:{min:150,max:350},
+          angle:{min:0,max:360},
+          scale:{start:0.8,end:0},
+          lifespan:500,blendMode:'ADD',quantity:8
+        });
+      });
+      sfx.explode.play();
+      this.time.delayedCall(700,()=>{
+        this.physics.pause();
+        document.querySelector('canvas').style.visibility='hidden';
+        document.getElementById('finalScore').innerText=score;
+        if(score > highScore){
+          highScore = score;
+          sfx.newBest.play();
+        }
+        document.getElementById('bestScore').innerText = highScore;
+        if(useLocalHighScore) {
+          localStorage.setItem('tricky_high_score', highScore);
+        }
 
-  this.time.delayedCall(700, () => {
-    this.physics.pause();
-    document.querySelector('canvas').style.visibility = 'hidden';
-    document.getElementById('finalScore').innerText = score;
-    if (score > highScore) {
-      highScore = score;
-      sfx.newBest.play();
+        // POST score only if not guest
+        if (!useLocalHighScore) {
+          fetch('/api/leaderboard', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ username: piUsername, score: highScore })
+          }).catch(console.error);
+        }
+
+        // GET top-100 for game-over screen
+        fetch('/api/leaderboard?top=100')
+          .then(r=>r.json()).then(data=>{
+            const list=document.getElementById('leaderboardEntries');
+            list.innerHTML = '';
+data.forEach((e, i) => {
+  const li = document.createElement('li');
+  li.setAttribute('data-rank', `#${i + 1}`);
+  li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
+  list.appendChild(li);
+});
+
+            document.getElementById('leaderboard').style.display = 'block';
+          }).catch(console.error);
+
+        document.getElementById('game-over-screen').style.display='flex';
+      });
     }
-    document.getElementById('bestScore').innerText = highScore;
-
-    if (useLocalHighScore) {
-      localStorage.setItem('tricky_high_score', highScore);
-    }
-
-    // POST score only if not guest
-    if (!useLocalHighScore) {
-      fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: piUsername, score: highScore })
-      }).catch(console.error);
-    }  // <-- closing brace added here
-
-    // always show the game-over screen
-    document.getElementById('game-over-screen').style.display = 'flex';
-  });
-}
-
 
     function collectPoint(_,pt){
       pt.destroy();
