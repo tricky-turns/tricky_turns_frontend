@@ -272,6 +272,7 @@
         document.getElementById('username').innerText = piUsername;
         document.getElementById('loginBtn').style.display = 'none';
         useLocalHighScore = false;
+        // fetch user's high score via username endpoint
         const res = await fetch(`/api/leaderboard/${piUsername}`);
         if (res.ok) {
           const entry = await res.json();
@@ -280,7 +281,9 @@
           highScore = 0;
         }
         localStorage.setItem('tricky_high_score', highScore);
-      } catch (e) {}
+      } catch (e) {
+        // Not signed in
+      }
     }
     initAuth();
     document.getElementById('loginBtn').addEventListener('click', initAuth);
@@ -321,9 +324,6 @@
     let scoreText, pauseIcon, pauseOverlay, countdownText;
     let sfx = {}, isMuted = false;
 
-    //--- Critical: Store reference to game and scene for robust restart ---
-    let gameInstance = null;
-
     const config = {
       type: Phaser.AUTO,
       transparent: true,
@@ -331,7 +331,7 @@
       physics: { default: 'arcade', arcade: { debug: false } },
       scene: { key: 'default', preload, create, update }
     };
-    gameInstance = new Phaser.Game(config);
+    window.game = new Phaser.Game(config);
 
     function preload() {
       this.load.audio('explode','assets/explode.wav');
@@ -343,15 +343,6 @@
     }
 
     function create() {
-      // Reset ALL global state on every create
-      gameStarted = true;
-      gameOver = false;
-      gamePaused = false;
-      direction = 1;
-      angle = 0;
-      speed = 3;
-      score = 0;
-
       if (obstacles) obstacles.clear(true, true);
       if (points) points.clear(true, true);
 
@@ -393,7 +384,7 @@
       scoreText = this.add.text(16,16,'Score: 0',{
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
-      }).setDepth(2).setVisible(true); // always visible after restart
+      }).setDepth(2).setVisible(false);
 
       if (useLocalHighScore) {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
@@ -418,9 +409,9 @@
       gfx.generateTexture('muteOff',56,56);
 
       pauseIcon = this.add.image(cam.width-40,40,'pauseIcon')
-                    .setInteractive().setDepth(3).setVisible(true); // always visible
+                    .setInteractive().setDepth(3).setVisible(false);
       const muteIcon = this.add.image(cam.width-100,40,'muteOn')
-                       .setInteractive().setDepth(3).setVisible(true); // always visible
+                       .setInteractive().setDepth(3).setVisible(false);
       pauseOverlay = document.getElementById('pause-overlay');
 
       countdownText = this.add.text(cx,cy,'',{
@@ -511,16 +502,37 @@
         },[],scene);
       }
 
-      // Always start gameplay and show canvas & HUD after restart
-      document.querySelector('canvas').style.visibility='visible';
-      scoreText.setVisible(true);
-      pauseIcon.setVisible(true);
-      muteIcon.setVisible(true);
-      pauseOverlay.style.display = 'none';
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.getElementById('leaderboard-screen').style.display = 'none';
-      // Only start spawning (no fade in needed on restart)
-      scheduleSpawn();
+      // START game
+      document.getElementById('startBtn').addEventListener('click', ()=>{
+        sfx.uiClick.play();
+        fadeIn(() => {
+          document.getElementById('user-info').style.display='none';
+          document.getElementById('viewLeaderboardBtn').style.display='none';
+          document.getElementById('start-screen').style.display='none';
+          gameStarted=true;
+          document.querySelector('canvas').style.visibility='visible';
+          scoreText.setVisible(true);
+          pauseIcon.setVisible(true);
+          muteIcon.setVisible(true);
+          scheduleSpawn();
+          fadeOut();
+        });
+      }, { once: true }); // Only attach once
+
+      // RESTART (just hide overlay and restart scene)
+      document.getElementById('restartBtn').addEventListener('click', () => {
+        sfx.uiClick.play();
+        fadeIn(() => {
+          document.getElementById('game-over-screen').style.display = 'none';
+          // The key fix: don't manually touch any other state!
+          window.game.scene.keys.default.scene.restart();
+          fadeOut();
+        });
+      });
+
+      document.getElementById('homeBtn').addEventListener('click', () => {
+        fadeIn(() => window.location.href = window.location.href);
+      });
     }
 
     function update(){
@@ -599,33 +611,6 @@
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-
-    //--- EVENT HANDLERS (only attach ONCE, not in create) ---
-    document.getElementById('startBtn').addEventListener('click', ()=>{
-      sfx.uiClick?.play();
-      fadeIn(() => {
-        document.getElementById('user-info').style.display='none';
-        document.getElementById('viewLeaderboardBtn').style.display='none';
-        document.getElementById('start-screen').style.display='none';
-        document.querySelector('canvas').style.visibility='visible';
-        fadeOut();
-      });
-    });
-
-    document.getElementById('restartBtn').addEventListener('click', () => {
-      sfx.uiClick?.play();
-      fadeIn(() => {
-        document.getElementById('game-over-screen').style.display = 'none';
-        // Phaser restart
-        gameInstance.scene.keys.default.scene.restart();
-        fadeOut();
-      });
-    });
-
-    document.getElementById('homeBtn').addEventListener('click', () => {
-      fadeIn(() => window.location.href = window.location.href);
-    });
-
   </script>
 </body>
 </html>
