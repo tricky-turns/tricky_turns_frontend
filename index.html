@@ -542,6 +542,10 @@ function preload() {
       this.load.audio('newBest','assets/new_best.wav');
       this.load.audio('uiClick','assets/ui_click_subtle.wav');
       this.load.audio('pauseWhoosh','assets/pause_whoosh_subtle.wav');
+        this.load.image('iconPause', 'assets/icon-pause.svg');
+  this.load.image('iconPlay', 'assets/icon-play.svg');
+  this.load.image('iconMute', 'assets/icon-mute.svg');
+  this.load.image('iconUnmute', 'assets/icon-unmute.svg');
     }
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
@@ -598,26 +602,8 @@ function create() {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
       }
 
-      // generate UI icons
-      const gfx=this.make.graphics({add:false});
-      gfx.fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillRoundedRect(14,12,8,32,4).fillRoundedRect(34,12,8,32,4);
-      gfx.generateTexture('pauseIcon',56,56);
-      gfx.clear().fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillTriangle(20,16,20,40,40,28);
-      gfx.generateTexture('playIcon',56,56);
-      gfx.clear().fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillRect(16,18,8,20)
-         .beginPath().moveTo(24,18).lineTo(38,8).lineTo(38,52).lineTo(24,32).closePath().fillPath();
-      gfx.generateTexture('muteOn',56,56);
-      gfx.clear().fillStyle(0x000000,0.3).fillRoundedRect(0,0,56,56,12)
-         .fillStyle(0xffffff,1).fillRect(16,18,8,20)
-         .beginPath().moveTo(24,18).lineTo(38,8).lineTo(38,52).lineTo(24,32).closePath().fillPath()
-         .lineStyle(4,0xffffff,1).beginPath().moveTo(20,20).lineTo(44,44).strokePath()
-         .beginPath().moveTo(44,20).lineTo(20,44).strokePath();
-      gfx.generateTexture('muteOff',56,56);
 
-      pauseIcon=this.add.image(cam.width-40,40,'pauseIcon')
+      pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
                     .setInteractive().setDepth(3).setVisible(false);
       const muteIcon=this.add.image(cam.width-100,40,'muteOn')
                        .setInteractive().setDepth(3).setVisible(false);
