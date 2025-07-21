@@ -694,7 +694,7 @@ document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
     document.getElementById('game-over-screen').style.display = 'none';
 
-    // Reset all game state variables
+    // Reset game state
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
@@ -703,19 +703,24 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     speed = 3;
     score = 0;
 
-    // Restart the Phaser scene
-    game.scene.getScene('default').scene.restart();
+    // Restart scene
+    const scene = game.scene.getScene('default');
+    scene.scene.restart();
 
     setTimeout(() => {
-      // Manually trigger start flow after scene is ready
       gameStarted = true;
+      scene.physics.resume(); // ✅ resume physics engine
+
+      // Restore UI
       document.querySelector('canvas').style.visibility = 'visible';
-      scoreText?.setVisible(true);
-      pauseIcon?.setVisible(true);
+      if (scoreText) scoreText.setVisible(true);
+      if (pauseIcon) pauseIcon.setVisible(true);
+
       fadeOut();
     }, 100);
   });
 });
+
 
 
 
