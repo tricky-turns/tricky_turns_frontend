@@ -4,11 +4,121 @@
 <head>
 <!-- Pi SDK (must load before any Pi.* calls) -->
 <script src="https://sdk.minepi.com/pi-sdk.js">
+
+  // Add a reference to the Phaser game object so we can reassign it
+  let game;
+
+  // Wrap game config and instantiation in a function so we can reuse it
+  function startPhaserGame() {
+    const config = {
+      type: Phaser.AUTO,
+      transparent: true,
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: 'arcade', arcade: { debug: false } },
+      scene: { preload, create, update }
+    };
+    game = new Phaser.Game(config);
+  }
+
+  // First game load
+  startPhaserGame();
+
+  // —— RESTART logic: clean and reload everything ——
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      // Reset game state variables
+      gameStarted = false;
+      gameOver = false;
+      gamePaused = false;
+      direction = 1;
+      angle = 0;
+      radius = 100;
+      speed = 3;
+      maxSpeed = 6;
+      score = 0;
+
+      // Hide UI
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.querySelector('canvas')?.remove();
+
+      // Destroy old game instance
+      if (game) game.destroy(true);
+
+      // Recreate game instance fresh
+      setTimeout(() => {
+        startPhaserGame();  // 🔁 reinitialize game
+        fadeOut();
+      }, 100);
+    });
+  });
+
+  // —— HOME logic: hard reload the page to reset everything
+  document.getElementById('homeBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      window.location.href = window.location.href;
+    });
+  });
+
 </script>
 <!-- JavaScript: Game logic, UI handling, Pi SDK integration -->
 <script>
    Pi.init({ version: "2.0", sandbox: true });
-  </script>
+  
+  // Add a reference to the Phaser game object so we can reassign it
+  let game;
+
+  // Wrap game config and instantiation in a function so we can reuse it
+  function startPhaserGame() {
+    const config = {
+      type: Phaser.AUTO,
+      transparent: true,
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: 'arcade', arcade: { debug: false } },
+      scene: { preload, create, update }
+    };
+    game = new Phaser.Game(config);
+  }
+
+  // First game load
+  startPhaserGame();
+
+  // —— RESTART logic: clean and reload everything ——
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      // Reset game state variables
+      gameStarted = false;
+      gameOver = false;
+      gamePaused = false;
+      direction = 1;
+      angle = 0;
+      radius = 100;
+      speed = 3;
+      maxSpeed = 6;
+      score = 0;
+
+      // Hide UI
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.querySelector('canvas')?.remove();
+
+      // Destroy old game instance
+      if (game) game.destroy(true);
+
+      // Recreate game instance fresh
+      setTimeout(() => {
+        startPhaserGame();  // 🔁 reinitialize game
+        fadeOut();
+      }, 100);
+    });
+  });
+
+  // —— HOME logic: hard reload the page to reset everything
+  document.getElementById('homeBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      window.location.href = window.location.href;
+    });
+  });
+
+</script>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>
@@ -16,6 +126,61 @@
   </title>
 <!-- Phaser 3 -->
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
+
+  // Add a reference to the Phaser game object so we can reassign it
+  let game;
+
+  // Wrap game config and instantiation in a function so we can reuse it
+  function startPhaserGame() {
+    const config = {
+      type: Phaser.AUTO,
+      transparent: true,
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: 'arcade', arcade: { debug: false } },
+      scene: { preload, create, update }
+    };
+    game = new Phaser.Game(config);
+  }
+
+  // First game load
+  startPhaserGame();
+
+  // —— RESTART logic: clean and reload everything ——
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      // Reset game state variables
+      gameStarted = false;
+      gameOver = false;
+      gamePaused = false;
+      direction = 1;
+      angle = 0;
+      radius = 100;
+      speed = 3;
+      maxSpeed = 6;
+      score = 0;
+
+      // Hide UI
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.querySelector('canvas')?.remove();
+
+      // Destroy old game instance
+      if (game) game.destroy(true);
+
+      // Recreate game instance fresh
+      setTimeout(() => {
+        startPhaserGame();  // 🔁 reinitialize game
+        fadeOut();
+      }, 100);
+    });
+  });
+
+  // —— HOME logic: hard reload the page to reset everything
+  document.getElementById('homeBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      window.location.href = window.location.href;
+    });
+  });
+
 </script>
 <!-- Poppins Font -->
 <!-- Load Poppins font from Google Fonts -->
@@ -478,10 +643,9 @@ const config={
       transparent:true,
       scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
       physics:{default:'arcade', arcade:{debug:false}},
-      scene: { key: 'default', preload, create, update }
+      scene:{preload,create,update}
     };
-    window.game = new Phaser.Game(config);
-
+    const game = new Phaser.Game(config);
 
     // Preload audio assets used throughout the game (SFX)
 function preload() {
@@ -495,9 +659,6 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-      if (obstacles) obstacles.clear(true, true);
-      if (points) points.clear(true, true);
-
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
       LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
@@ -694,42 +855,18 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
     document.getElementById('game-over-screen').style.display = 'none';
-    
-    // Destroy the old game completely
-    game.destroy(true);
-
-    // Reset all global game state variables
-    gameStarted = false;
-    gameOver = false;
-    gamePaused = false;
-    direction = 1;
-    angle = 0;
-    speed = 3;
-    score = 0;
-
-    // Clear old DOM canvas if any
-    const oldCanvas = document.querySelector('canvas');
-    if (oldCanvas) oldCanvas.remove();
-
-    // Recreate new Phaser instance from scratch
+    document.querySelector('canvas')?.remove();
+    game.destroy(true); // clean up old Phaser instance
     setTimeout(() => {
-      window.game = new Phaser.Game(config); // Must assign to global so rest of code can access
+      const newGame = new Phaser.Game(config);
       fadeOut();
-    }, 50); // Let DOM settle
+    }, 50); // let DOM settle
   });
 });
 
 
 
 
-
-
-
-document.getElementById('homeBtn').addEventListener('click', () => {
-  fadeIn(() => {
-    window.location.href = window.location.href;
-  });
-});
 
 
     }
@@ -828,7 +965,62 @@ data.forEach((e, i) => {
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-  </script>
+  
+  // Add a reference to the Phaser game object so we can reassign it
+  let game;
+
+  // Wrap game config and instantiation in a function so we can reuse it
+  function startPhaserGame() {
+    const config = {
+      type: Phaser.AUTO,
+      transparent: true,
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: 'arcade', arcade: { debug: false } },
+      scene: { preload, create, update }
+    };
+    game = new Phaser.Game(config);
+  }
+
+  // First game load
+  startPhaserGame();
+
+  // —— RESTART logic: clean and reload everything ——
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      // Reset game state variables
+      gameStarted = false;
+      gameOver = false;
+      gamePaused = false;
+      direction = 1;
+      angle = 0;
+      radius = 100;
+      speed = 3;
+      maxSpeed = 6;
+      score = 0;
+
+      // Hide UI
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.querySelector('canvas')?.remove();
+
+      // Destroy old game instance
+      if (game) game.destroy(true);
+
+      // Recreate game instance fresh
+      setTimeout(() => {
+        startPhaserGame();  // 🔁 reinitialize game
+        fadeOut();
+      }, 100);
+    });
+  });
+
+  // —— HOME logic: hard reload the page to reset everything
+  document.getElementById('homeBtn').addEventListener('click', () => {
+    fadeIn(() => {
+      window.location.href = window.location.href;
+    });
+  });
+
+</script>
 <div id="fade-screen">
 </div>
 </body>
