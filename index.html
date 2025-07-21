@@ -9,60 +9,63 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
-    /* ...styles unchanged for brevity... */
-    /* [Use the exact CSS you already have] */
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; }
     body { font-family:'Poppins',sans-serif; background: linear-gradient(to bottom, #3199E4 0%, #58C0F2 100%); position:relative; }
     canvas { display:block; margin:0 auto; visibility:hidden; z-index:1; }
-    /* ...[rest of your CSS from above, unchanged]... */
-    #leaderboard, #leaderboardEntriesHome, #leaderboard-screen ol {
-      width: 100%;
-      max-width: 400px;
-      box-sizing: border-box;
-      margin: 0 auto;
-      padding-left: 2.5rem;
-      background:rgba(0,0,0,0.6);
-      padding-top:1rem; padding-bottom:1rem; border-radius:0.5rem;
-      max-height:300px; overflow-y:auto;
-      color:#fff; font-size:1rem;
-      text-align:left; line-height:1.4;
+    #user-info { display:flex; align-items:center; gap:0.5rem; color:#fff; font-size:1rem; text-shadow:0 0 4px #000; }
+    #user-info button { background:rgba(255,255,255,0.8); border:none; border-radius:0.3rem; padding:0.2rem 0.6rem; font-weight:700; cursor:pointer; }
+    .bg-cloud, .start-cloud {
+      position:absolute;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><path d='M20,35 C20,25 35,20 45,25 C50,15 65,15 70,25 C85,25 90,35 80,45 C90,45 95,55 85,60 C75,65 55,60 50,50 C40,60 25,60 20,50 C10,50 5,40 20,35 Z' fill='%23FFFFFF'/></svg>");
+      background-size:contain;
+      background-repeat:no-repeat;
+      filter:blur(6px);
+      opacity:.8;
+      animation:drift linear infinite;
+      pointer-events:none;
     }
-    #leaderboard li, #leaderboardEntriesHome li {
-      background: rgba(255,255,255,0.05);
-      border-radius: 0.4rem;
-      margin-bottom: 0.4rem;
-      padding: 0.5rem 0.8rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #fff;
-      font-family: 'Poppins', sans-serif;
-      font-size: 1rem;
-      position: relative;
+    .bg-cloud.one,   .start-cloud.one   { width:260px; height:90px;  top:12%;  left:10%;   animation-duration:40s; }
+    .bg-cloud.two,   .start-cloud.two   { width:200px; height:70px;  top:8%;   right:12%;  animation-duration:50s; }
+    .bg-cloud.three, .start-cloud.three { width:300px; height:100px; top:48%;  left:18%;   animation-duration:45s; }
+    .bg-cloud.four,  .start-cloud.four  { width:280px; height:95px;  bottom:18%; right:22%; animation-duration:55s; }
+    @keyframes drift { from{transform:translateX(0);} to{transform:translateX(-150vw);} }
+    #start-screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4rem; z-index:2; cursor:pointer; }
+    #start-screen h1 {
+      color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;
     }
-    #leaderboard li::before, #leaderboardEntriesHome li::before {
-      content: attr(data-rank);
-      background: #FF4A4A;
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.9rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 1rem;
-      margin-right: 0.8rem;
-      position: absolute;
-      left: -2.5rem;
-    }
-    #fade-screen {
-      position: absolute; inset: 0;
-      background: #000; opacity: 0; pointer-events: none; z-index: 10;
-      transition: opacity 0.6s ease-in-out;
-    }
+    @media (max-width: 600px) { #start-screen h1 { font-size: 3rem; -webkit-text-stroke: 0.4px #0F3D75; } }
+    .btn-primary { background: #3EAFF6; color: #fff; font-size: 1.4rem; font-weight: 700; padding: 0.8rem 2.5rem; border: none; border-radius: 2rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); cursor: pointer; transition: all 0.2s ease; text-align: center; }
+    .btn-primary:hover { background: #318EE6; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3); transform: translateY(-2px);}
+    @media (max-width:600px) { .btn-primary { font-size:1.1rem; padding:0.6rem 1.8rem; } }
+    .btn-secondary { background: rgba(255,255,255,0.8); color: #000; font-weight: 600; padding: 0.2rem 0.6rem; font-size: 0.9rem; border: none; border-radius: 0.3rem; cursor: pointer; transition: background 0.2s ease; }
+    .btn-secondary:hover { background: rgba(255,255,255,1); }
+    .orbit { position: relative; width: 240px; height: 240px; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
+    .ring { position:absolute; width:100%; height:100%; border-radius:50%; border:8px solid rgba(255,255,255,0.6); box-shadow:0 0 20px rgba(255,255,255,0.8); animation:spin 3.5s linear infinite;}
+    .circle { position:absolute; width:60px; height:60px; background:#fff; border-radius:50%; box-shadow:0 0 20px rgba(255,255,255,1);}
+    .circle.top { top:0; left:50%; transform:translate(-50%,-50%);}
+    .circle.bottom { bottom:0; left:50%; transform:translate(-50%,50%);}
+    @keyframes spin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
+    #pause-overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:4; pointer-events:none;}
+    #pause-overlay .paused-text { font-family:'Poppins',sans-serif; font-size:4rem; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:.1rem; -webkit-text-stroke:1px #000;}
+    #game-over-screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:2rem; z-index:3; cursor:pointer;}
+    #game-over-screen h1 { color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;}
+    @media (max-width:600px) { #game-over-screen h1 { font-size:4rem; } }
+    #leaderboard, #leaderboardEntriesHome, #leaderboard-screen ol { width: 100%; max-width: 400px; box-sizing: border-box; margin: 0 auto; padding-left: 2.5rem; background:rgba(0,0,0,0.6); padding-top:1rem; padding-bottom:1rem; border-radius:0.5rem; max-height:300px; overflow-y:auto; color:#fff; font-size:1rem; text-align:left; line-height:1.4; }
+    #leaderboard li, #leaderboardEntriesHome li { background: rgba(255,255,255,0.05); border-radius: 0.4rem; margin-bottom: 0.4rem; padding: 0.5rem 0.8rem; display: flex; align-items: center; justify-content: space-between; color: #fff; font-family: 'Poppins', sans-serif; font-size: 1rem; position: relative;}
+    #leaderboard li::before, #leaderboardEntriesHome li::before { content: attr(data-rank); background: #FF4A4A; color: #fff; font-weight: 700; font-size: 0.9rem; padding: 0.25rem 0.6rem; border-radius: 1rem; margin-right: 0.8rem; position: absolute; left: -2.5rem;}
+    #leaderboard-screen { position:absolute; inset:0; background:rgba(0,0,0,0.9); display:none; flex-direction:column; align-items:center; overflow-y:auto; padding:2rem; z-index:5;}
+    #leaderboard-screen h2 { color:#fff; margin-bottom:1rem; }
+    #leaderboard-screen button { position:absolute; top:1rem; right:1rem; background:#FF4A4A; color:#fff; border:none; border-radius:0.3rem; padding:0.5rem 1rem; font-weight:700; cursor:pointer; }
+    #leaderboard-screen ol { color:#fff; }
+    #fade-screen { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.6s ease-in-out;}
     #fade-screen.fade-in { opacity: 1; }
   </style>
 </head>
 <body>
-  <!-- ...DOM unchanged... -->
+  <!-- ...identical DOM as before... -->
   <div class="bg-cloud one"></div>
   <div class="bg-cloud two"></div>
   <div class="bg-cloud three"></div>
@@ -104,12 +107,9 @@
   </div>
   <div id="fade-screen"></div>
   <script>
-    // --- Pi Auth, Leaderboard logic (unchanged) ---
-    // ...[unchanged from your previous code, as above]...
+    // ---- Pi Auth and Leaderboard logic unchanged ----
     const scopes = ['username'];
-    let piUsername = 'Guest';
-    let highScore = 0;
-    let useLocalHighScore = true;
+    let piUsername = 'Guest', highScore = 0, useLocalHighScore = true;
     function onIncompletePaymentFound(payment) { console.log('Incomplete payment found:', payment);}
     async function initAuth() {
       try {
@@ -150,12 +150,12 @@
       document.getElementById('leaderboard-screen').style.display = 'none';
     });
 
-    // -- ONLY THESE ARE GLOBAL --
+    // --- Only these are global ---
     let gameStarted = false, gameOver = false, gamePaused = false;
     let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
-    let score = 0;
-    let sfx = {}, isMuted = false;
+    let score = 0, sfx = {}, isMuted = false;
 
+    // -- Phaser scene --
     const config = {
       type: Phaser.AUTO,
       transparent: true,
@@ -164,6 +164,14 @@
       scene: { key: 'default', preload, create, update }
     };
     window.game = new Phaser.Game(config);
+
+    function hideAllOverlays() {
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.getElementById('leaderboard-screen').style.display = 'none';
+      document.getElementById('pause-overlay').style.display = 'none';
+      document.querySelector('canvas').style.visibility = 'visible';
+    }
 
     function preload() {
       this.load.audio('explode','assets/explode.wav');
@@ -175,7 +183,10 @@
     }
 
     function create() {
-      // All Phaser objects are now *scene* properties, not global
+      // Hide overlays, show game canvas and HUD
+      hideAllOverlays();
+
+      // Phaser-scene objects as scene props
       this.LANES = [];
       gameStarted = true; gameOver = false; gamePaused = false; direction = 1; angle = 0; speed = 3; score = 0;
       const cam = this.cameras.main;
@@ -334,7 +345,6 @@
 
     function update(){
       if(!gameStarted||gameOver||gamePaused) return;
-      // Use scene objects (not globals)
       const scene = this;
       angle+=0.05*direction;
       const o1=Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(radius);
@@ -426,8 +436,8 @@
     });
     document.getElementById('restartBtn').addEventListener('click', () => {
       sfx.uiClick?.play();
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.querySelector('canvas').style.visibility='visible';
+      // Hide overlays, show game canvas for fresh restart
+      hideAllOverlays();
       window.game.scene.keys.default.scene.restart();
     });
     document.getElementById('homeBtn').addEventListener('click', () => {
