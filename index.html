@@ -343,6 +343,23 @@
   min-width: 2rem;
   text-align: center;
 }
+/* — Disable background taps & tap–highlight on home & game-over screens — */
+#start-screen,
+#game-over-screen {
+  cursor: default;                 /* remove the “clickable” cursor */ 
+  pointer-events: none;            /* container itself ignores all taps */ 
+  -webkit-tap-highlight-color: transparent; /* no blue flash on mobile */ 
+}
+
+/* — Re-enable taps on the buttons inside those screens — */
+#start-screen button,
+#start-screen .btn-primary,
+#start-screen .btn-secondary,
+#game-over-screen button,
+#game-over-screen .btn-primary {
+  pointer-events: auto;            /* buttons now clickable again */ 
+}
+
 
   </style>
 </head>
