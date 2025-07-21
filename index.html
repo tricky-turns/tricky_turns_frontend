@@ -365,12 +365,12 @@
     Paused
    </div>
 </div>
-<div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
+<div id="game-over-screen" style="position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:4rem; z-index:3; background: linear-gradient(to bottom, #3199E4 0%, #58C0F2 100%);">
 <h1 style="color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;">GAME OVER</h1>
 <div class="result-wrapper">
 <div class="orb-bg" style="display:none;">
 </div>
-<div class="results" style="color: #fff; font-size: 2rem; font-weight: 600; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
+<div class="results" style="color: #fff; font-size: 2.2rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 0.1rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.3); -webkit-text-stroke: 1px #0F3D75;">
      SCORE:
      <span id="finalScore">
       0
@@ -478,9 +478,10 @@ const config={
       transparent:true,
       scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
       physics:{default:'arcade', arcade:{debug:false}},
-      scene:{preload,create,update}
+      scene: { key: 'default', preload, create, update }
     };
-    const game = new Phaser.Game(config);
+    window.game = new Phaser.Game(config);
+
 
     // Preload audio assets used throughout the game (SFX)
 function preload() {
@@ -494,6 +495,9 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
+      if (obstacles) obstacles.clear(true, true);
+      if (points) points.clear(true, true);
+
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
       LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
@@ -690,20 +694,34 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
     document.getElementById('game-over-screen').style.display = 'none';
-    score = 0;
+    
+    // Destroy the old game completely
+    game.destroy(true);
+
+    // Reset all global game state variables
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
     direction = 1;
     angle = 0;
     speed = 3;
-    maxSpeed = 6;
-    document.querySelector('canvas').style.visibility = 'hidden';
-    fadeOut(() => {
-      document.getElementById('startBtn').click();
-    });
+    score = 0;
+
+    // Clear old DOM canvas if any
+    const oldCanvas = document.querySelector('canvas');
+    if (oldCanvas) oldCanvas.remove();
+
+    // Recreate new Phaser instance from scratch
+    setTimeout(() => {
+      window.game = new Phaser.Game(config); // Must assign to global so rest of code can access
+      fadeOut();
+    }, 50); // Let DOM settle
   });
 });
+
+
+
+
 
 
 

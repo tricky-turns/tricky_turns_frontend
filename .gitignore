@@ -3,3 +3,4 @@ node_modules
 .vercel
 .env
 index_commented.html
+index-restart.html
