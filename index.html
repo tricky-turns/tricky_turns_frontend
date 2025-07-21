@@ -685,32 +685,57 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 });
 
 
-      // RESTART
-
-
-
-
-
-
-      document.getElementById('homeBtn').addEventListener('click', () => {
-        fadeIn(() => window.location.href = window.location.href);
-      });
-
-
-
-
-
-
-
-document.getElementById('homeBtn').addEventListener('click', () => {
-  fadeIn(() => {
-    window.location.href = window.location.href;
-  });
-});
-
-
-    }
-
+      // RESTART: fully reset game state and restart
+      {
+        const scene = this;
+        document.getElementById('restartBtn').addEventListener('click', () => {
+          sfx.uiClick.play();
+          fadeIn(() => {
+            document.getElementById('game-over-screen').style.display = 'none';
+            // reset state
+            gameOver = false;
+            gamePaused = false;
+            gameStarted = true;
+            direction = 1;
+            angle = 0;
+            speed = 3;
+            score = 0;
+            // clear existing objects
+            obstacles.clear(true, true);
+            points.clear(true, true);
+            // recreate orbiting circles
+            scene.circle1 = scene.add.image(0, 0, 'orb');
+            scene.physics.add.existing(scene.circle1);
+            scene.circle1.body.setCircle(22.5, 27.5, 27.5);
+            scene.circle2 = scene.add.image(0, 0, 'orb');
+            scene.physics.add.existing(scene.circle2);
+            scene.circle2.body.setCircle(22.5, 27.5, 27.5);
+            // recreate trail
+            const trail = scene.add.particles('orb');
+            [scene.circle1, scene.circle2].forEach(c => trail.createEmitter({
+              follow: c,
+              lifespan: 300, speed: 0,
+              scale: { start: 0.3, end: 0 },
+              alpha: { start: 0.4, end: 0 },
+              frequency: 50, blendMode: 'ADD'
+            }));
+            // rebind collisions
+            scene.physics.add.overlap(scene.circle1, obstacles, triggerGameOver, null, scene);
+            scene.physics.add.overlap(scene.circle2, obstacles, triggerGameOver, null, scene);
+            // show canvas and HUD
+            document.querySelector('canvas').style.visibility = 'visible';
+            scoreText.setText('Score: 0');
+            scoreText.setVisible(true);
+            pauseIcon.setVisible(true);
+            muteIcon.setVisible(true);
+            // resume physics
+            scene.physics.resume();
+            // restart object spawning
+            scheduleSpawn();
+            fadeOut();
+          });
+        });
+      }
     function update(){
       if(!gameStarted||gameOver||gamePaused) return;
       angle+=0.05*direction;
@@ -805,14 +830,6 @@ data.forEach((e, i) => {
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-    // RESTART (fixed) using working_restart.html logic
-    document.getElementById('restartBtn').addEventListener('click', () => {
-      sfx.uiClick?.play();
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.querySelector('canvas').style.visibility = 'visible';
-      window.game.scene.keys.default.scene.restart();
-    });
-
   </script>
 <div id="fade-screen">
 </div>
