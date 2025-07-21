@@ -2,17 +2,194 @@
 <html lang="en">
  <head>
   <script src="https://sdk.minepi.com/pi-sdk.js">
-  </script>
+  
+    
+document.addEventListener("DOMContentLoaded", () => {
+  const muteToggleBtn = document.getElementById('muteToggleBtn');
+  const startBtn = document.getElementById('startBtn');
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (muteToggleBtn) {
+    const savedMute = localStorage.getItem('tricky_muted');
+    if (savedMute !== null) {
+      isMuted = savedMute === 'true';
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+    }
+
+    muteToggleBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('tricky_muted', isMuted);
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      if (typeof game !== 'undefined' && game.sound) {
+        game.sound.mute = isMuted;
+      }
+    });
+  }
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', initAuth);
+  }
+
+  if (viewLeaderboardBtn) {
+    viewLeaderboardBtn.addEventListener('click', showHomeLeaderboard);
+  }
+
+  if (closeLeaderboardBtn) {
+    closeLeaderboardBtn.addEventListener('click', () => {
+      document.getElementById('leaderboard-screen').style.display = 'none';
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      sfx?.uiClick?.play?.();
+      fadeIn(() => {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('viewLeaderboardBtn').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'none';
+        gameStarted = true;
+        document.querySelector('canvas').style.visibility = 'visible';
+        scoreText?.setVisible(true);
+        pauseIcon?.setVisible(true);
+        muteIcon?.setVisible(true);
+        scheduleSpawn();
+        fadeOut();
+      });
+    });
+  }
+});
+
+</script>
   <script>
    Pi.init({ version: "2.0", sandbox: true });
-  </script>
+  
+    
+document.addEventListener("DOMContentLoaded", () => {
+  const muteToggleBtn = document.getElementById('muteToggleBtn');
+  const startBtn = document.getElementById('startBtn');
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (muteToggleBtn) {
+    const savedMute = localStorage.getItem('tricky_muted');
+    if (savedMute !== null) {
+      isMuted = savedMute === 'true';
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+    }
+
+    muteToggleBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('tricky_muted', isMuted);
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      if (typeof game !== 'undefined' && game.sound) {
+        game.sound.mute = isMuted;
+      }
+    });
+  }
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', initAuth);
+  }
+
+  if (viewLeaderboardBtn) {
+    viewLeaderboardBtn.addEventListener('click', showHomeLeaderboard);
+  }
+
+  if (closeLeaderboardBtn) {
+    closeLeaderboardBtn.addEventListener('click', () => {
+      document.getElementById('leaderboard-screen').style.display = 'none';
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      sfx?.uiClick?.play?.();
+      fadeIn(() => {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('viewLeaderboardBtn').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'none';
+        gameStarted = true;
+        document.querySelector('canvas').style.visibility = 'visible';
+        scoreText?.setVisible(true);
+        pauseIcon?.setVisible(true);
+        muteIcon?.setVisible(true);
+        scheduleSpawn();
+        fadeOut();
+      });
+    });
+  }
+});
+
+</script>
   <meta charset="utf-8"/>
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>
    Tricky Turns
   </title>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
-  </script>
+  
+    
+document.addEventListener("DOMContentLoaded", () => {
+  const muteToggleBtn = document.getElementById('muteToggleBtn');
+  const startBtn = document.getElementById('startBtn');
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (muteToggleBtn) {
+    const savedMute = localStorage.getItem('tricky_muted');
+    if (savedMute !== null) {
+      isMuted = savedMute === 'true';
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+    }
+
+    muteToggleBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('tricky_muted', isMuted);
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      if (typeof game !== 'undefined' && game.sound) {
+        game.sound.mute = isMuted;
+      }
+    });
+  }
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', initAuth);
+  }
+
+  if (viewLeaderboardBtn) {
+    viewLeaderboardBtn.addEventListener('click', showHomeLeaderboard);
+  }
+
+  if (closeLeaderboardBtn) {
+    closeLeaderboardBtn.addEventListener('click', () => {
+      document.getElementById('leaderboard-screen').style.display = 'none';
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      sfx?.uiClick?.play?.();
+      fadeIn(() => {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('viewLeaderboardBtn').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'none';
+        gameStarted = true;
+        document.querySelector('canvas').style.visibility = 'visible';
+        scoreText?.setVisible(true);
+        pauseIcon?.setVisible(true);
+        muteIcon?.setVisible(true);
+        scheduleSpawn();
+        fadeOut();
+      });
+    });
+  }
+});
+
+</script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
   <style>
    * { margin:0; padding:0; box-sizing:border-box; }
@@ -388,7 +565,12 @@
    <button class="btn-primary" id="viewLeaderboardBtn">
     VIEW LEADERBOARD
    </button>
-   <div class="orbit">
+   
+   <button class="btn-secondary" id="muteToggleBtn" style="margin-top: 1rem;">
+    🔇 Mute
+   </button>
+
+<div class="orbit">
     <div class="ring">
     </div>
     <div class="circle top">
@@ -835,7 +1017,66 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-  </script>
+  
+    
+document.addEventListener("DOMContentLoaded", () => {
+  const muteToggleBtn = document.getElementById('muteToggleBtn');
+  const startBtn = document.getElementById('startBtn');
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (muteToggleBtn) {
+    const savedMute = localStorage.getItem('tricky_muted');
+    if (savedMute !== null) {
+      isMuted = savedMute === 'true';
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+    }
+
+    muteToggleBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('tricky_muted', isMuted);
+      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      if (typeof game !== 'undefined' && game.sound) {
+        game.sound.mute = isMuted;
+      }
+    });
+  }
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', initAuth);
+  }
+
+  if (viewLeaderboardBtn) {
+    viewLeaderboardBtn.addEventListener('click', showHomeLeaderboard);
+  }
+
+  if (closeLeaderboardBtn) {
+    closeLeaderboardBtn.addEventListener('click', () => {
+      document.getElementById('leaderboard-screen').style.display = 'none';
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      sfx?.uiClick?.play?.();
+      fadeIn(() => {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('viewLeaderboardBtn').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'none';
+        gameStarted = true;
+        document.querySelector('canvas').style.visibility = 'visible';
+        scoreText?.setVisible(true);
+        pauseIcon?.setVisible(true);
+        muteIcon?.setVisible(true);
+        scheduleSpawn();
+        fadeOut();
+      });
+    });
+  }
+});
+
+</script>
   <div id="fade-screen">
   </div>
  </body>
