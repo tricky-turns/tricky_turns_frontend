@@ -453,7 +453,7 @@ async function showHomeLeaderboard() {
       data.forEach((e, i) => {
   const li = document.createElement('li');
   li.setAttribute('data-rank', `#${i + 1}`);
-  li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
+li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
   list.appendChild(li);
 });
 
@@ -813,7 +813,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
 data.forEach((e, i) => {
   const li = document.createElement('li');
   li.setAttribute('data-rank', `#${i + 1}`);
-  li.innerHTML = `<strong>${e.username}</strong><span>${e.score}</span>`;
+li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
   list.appendChild(li);
 });
 
