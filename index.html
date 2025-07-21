@@ -684,19 +684,25 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
       // RESTART
 
 
+
 document.getElementById('restartBtn').addEventListener('click', () => {
   fadeIn(() => {
+    document.getElementById('user-info').style.display='none';
+    document.getElementById('viewLeaderboardBtn').style.display='none';
+    document.getElementById('start-screen').style.display='none';
     document.getElementById('game-over-screen').style.display = 'none';
-    document.querySelector('canvas').style.visibility = 'visible';
+    gameStarted = true;
+    gameOver = false;
     score = 0;
     scoreText.setText('Score: 0');
+    document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
     pauseIcon.setVisible(true);
-    gameOver = false;
-    this.scene.restart();
+    this.scene.restart(); // Restart the Phaser scene for full game logic reset
     fadeOut();
   });
 });
+
 document.getElementById('homeBtn').addEventListener('click', () => {
   fadeIn(() => {
     window.location.href = window.location.href;
