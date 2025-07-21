@@ -698,9 +698,10 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     angle = 0;
     speed = 3;
     maxSpeed = 6;
-    document.querySelector('canvas').style.visibility = 'visible';
-    game.scene.scenes[0].scene.restart();
-    fadeOut();
+    document.querySelector('canvas').style.visibility = 'hidden';
+    fadeOut(() => {
+      document.getElementById('startBtn').click();
+    });
   });
 });
 
