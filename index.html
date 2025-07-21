@@ -328,6 +328,21 @@
     font-size: 0.9rem;
   }
 }
+/* make room for the badge + gap */
+#leaderboard li,
+#leaderboardEntriesHome li {
+  /* replace the 4-value padding shorthand so we can set a larger left inset */
+  padding: 0.5rem 0.8rem 0.5rem 4rem;   /* top/right/bottom/left */ :contentReference[oaicite:0]{index=0}
+}
+
+/* enlarge the gap after the badge */
+#leaderboard li::before,
+#leaderboardEntriesHome li::before {
+  margin-right: 1.2rem;                  /* was 0.8rem */ :contentReference[oaicite:1]{index=1}
+  /* optionally center multi-digit ranks in a fixed box: */
+  min-width: 2rem;
+  text-align: center;
+}
 
   </style>
 </head>
