@@ -468,6 +468,7 @@ async function initAuth() {
         }
         // persist locally as well
         localStorage.setItem('tricky_high_score', highScore);
+        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
       } catch (e) {
         console.log('Not signed in:', e);
       }
@@ -627,6 +628,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       // initialize highScore from localStorage if using guest
       if (useLocalHighScore) {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
+        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
       }
 
 
@@ -824,6 +826,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
         bestScoreText.setText('Best: ' + highScore);
         if(useLocalHighScore) {
           localStorage.setItem('tricky_high_score', highScore);
+        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
         }
 
         // POST score only if not guest
