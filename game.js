@@ -454,4 +454,27 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-  
+ 
+      // Bind startBtn click once after game is ready
+      if (!window._startBound) {
+        document.getElementById('startBtn').addEventListener('click', () => {
+          sfx.uiClick.play();
+          fadeIn(() => {
+            document.getElementById('user-info').style.display='none';
+            document.getElementById('viewLeaderboardBtn').style.display='none';
+            document.getElementById('start-screen').style.display='none';
+            muteBtnHome.style.display='none';
+            gameStarted=true;
+            document.querySelector('canvas').style.visibility='visible';
+            scoreText.setVisible(true);
+            bestScoreText.setVisible(true);
+            pauseIcon.setVisible(true);
+            muteIcon.setVisible(true);
+            scheduleSpawn();
+            fadeOut();
+          });
+        });
+        window._startBound = true;
+      }
+
+ 
