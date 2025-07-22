@@ -4,6 +4,7 @@
   <script src="https://sdk.minepi.com/pi-sdk.js">
   
     
+
 document.addEventListener("DOMContentLoaded", () => {
   const muteToggleBtn = document.getElementById('muteToggleBtn');
   const startBtn = document.getElementById('startBtn');
@@ -15,13 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedMute = localStorage.getItem('tricky_muted');
     if (savedMute !== null) {
       isMuted = savedMute === 'true';
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
     }
 
     muteToggleBtn.addEventListener('click', () => {
       isMuted = !isMuted;
       localStorage.setItem('tricky_muted', isMuted);
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
       if (typeof game !== 'undefined' && game.sound) {
         game.sound.mute = isMuted;
       }
@@ -66,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
    Pi.init({ version: "2.0", sandbox: true });
   
     
+
 document.addEventListener("DOMContentLoaded", () => {
   const muteToggleBtn = document.getElementById('muteToggleBtn');
   const startBtn = document.getElementById('startBtn');
@@ -77,13 +79,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedMute = localStorage.getItem('tricky_muted');
     if (savedMute !== null) {
       isMuted = savedMute === 'true';
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
     }
 
     muteToggleBtn.addEventListener('click', () => {
       isMuted = !isMuted;
       localStorage.setItem('tricky_muted', isMuted);
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
       if (typeof game !== 'undefined' && game.sound) {
         game.sound.mute = isMuted;
       }
@@ -132,6 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
   
     
+
 document.addEventListener("DOMContentLoaded", () => {
   const muteToggleBtn = document.getElementById('muteToggleBtn');
   const startBtn = document.getElementById('startBtn');
@@ -143,13 +146,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedMute = localStorage.getItem('tricky_muted');
     if (savedMute !== null) {
       isMuted = savedMute === 'true';
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
     }
 
     muteToggleBtn.addEventListener('click', () => {
       isMuted = !isMuted;
       localStorage.setItem('tricky_muted', isMuted);
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
       if (typeof game !== 'undefined' && game.sound) {
         game.sound.mute = isMuted;
       }
@@ -569,6 +572,9 @@ document.addEventListener("DOMContentLoaded", () => {
    <button class="btn-secondary" id="muteToggleBtn" style="margin-top: 1rem;">
     🔇 Mute
    </button>
+
+
+   <img id="muteToggleBtn" src="assets/icon-unmute.svg" alt="Mute Toggle" style="width:40px;height:40px;cursor:pointer;margin-top:1rem;" />
 
 <div class="orbit">
     <div class="ring">
@@ -1019,6 +1025,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     }
   
     
+
 document.addEventListener("DOMContentLoaded", () => {
   const muteToggleBtn = document.getElementById('muteToggleBtn');
   const startBtn = document.getElementById('startBtn');
@@ -1030,13 +1037,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedMute = localStorage.getItem('tricky_muted');
     if (savedMute !== null) {
       isMuted = savedMute === 'true';
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
     }
 
     muteToggleBtn.addEventListener('click', () => {
       isMuted = !isMuted;
       localStorage.setItem('tricky_muted', isMuted);
-      muteToggleBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+      muteToggleBtn.src = isMuted ? 'assets/icon-mute.svg' : 'assets/icon-unmute.svg';
       if (typeof game !== 'undefined' && game.sound) {
         game.sound.mute = isMuted;
       }
