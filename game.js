@@ -222,23 +222,13 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      }
+      
+      
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      }
+      
+      
       pauseOverlay=document.getElementById('pause-overlay');
 
       countdownText=this.add.text(cx,cy,'',{
