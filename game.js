@@ -130,13 +130,16 @@ let bestScoreText;
 
 
     // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
-const config={
-      type:Phaser.AUTO,
-      transparent:true,
-      scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
-      physics:{default:'arcade', arcade:{debug:false},
-      scene: { key: 'default', preload, create, update }
-    };
+const config = {
+  type: Phaser.AUTO,
+  transparent: true,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: {
+    default: 'arcade',
+    arcade: { debug: false }
+  },
+  scene: { key: 'default', preload, create, update }
+};
     window.game = new Phaser.Game(config);
 
 
