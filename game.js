@@ -344,7 +344,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       // spawn scheduler
       const scene=this;
       
-      , []);
       }
 
       // START
