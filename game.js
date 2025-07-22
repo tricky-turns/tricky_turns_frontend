@@ -42,6 +42,29 @@ async function initAuth() {
     // Attempt silent auth on load
     initAuth();
 
+document.getElementById('startBtn').addEventListener('click', () => {
+  sfx.uiClick.play();
+  fadeIn(() => {
+    document.getElementById('user-info').style.display='none';
+    document.getElementById('viewLeaderboardBtn').style.display='none';
+    document.getElementById('start-screen').style.display='none';
+    muteBtnHome.style.display='none';
+    gameStarted=true;
+    document.querySelector('canvas').style.visibility='visible';
+    scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
+    pauseIcon.setVisible(true);
+    muteIcon.setVisible(true);
+    scheduleSpawn();
+    fadeOut();
+  });
+});
+
+document.getElementById('homeBtn').addEventListener('click', () => {
+  fadeIn(() => window.location.href = window.location.href);
+});
+
+
     // If not signed in, show login prompt
     document.getElementById('loginBtn').addEventListener('click', initAuth);
 
@@ -170,7 +193,10 @@ function create() {
 
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
-      LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
+      LANES.length = 0;
+for (let i = -1; i <= 1; i++) {
+  LANES.push(cy + i * radius);
+}
 
       // generate textures
       this.make.graphics({add:false})
