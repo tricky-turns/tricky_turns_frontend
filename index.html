@@ -656,13 +656,21 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       window.muteIcon = muteIcon
                        .setInteractive().setDepth(3).setVisible(false);
       this.sound.mute = isMuted;
-      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      if (!window.muteIcon) window.muteIcon = muteIcon;
+      muteIcon.setTexture(isMuted ? 'iconMute' : 'iconUnmute');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      }
       if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (document.getElementById('muteToggleHome')) {
         document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       this.sound.mute = isMuted;
-      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      if (!window.muteIcon) window.muteIcon = muteIcon;
+      muteIcon.setTexture(isMuted ? 'iconMute' : 'iconUnmute');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      }
       if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (document.getElementById('muteToggleHome')) {
         document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
