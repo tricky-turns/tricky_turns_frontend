@@ -340,15 +340,18 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       }
 
       // START
-document.getElementById('startBtn').addEventListener('click', ()=>{
+const startBtn = document.getElementById('startBtn');
+const homeBtn = document.getElementById('homeBtn');
+
+function handleStartGame() {
   sfx.uiClick.play();
   fadeIn(() => {
-    document.getElementById('user-info').style.display='none';
-    document.getElementById('viewLeaderboardBtn').style.display='none';
-    document.getElementById('start-screen').style.display='none';
-    muteBtnHome.style.display='none';
-    gameStarted=true;
-    document.querySelector('canvas').style.visibility='visible';
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('viewLeaderboardBtn').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'none';
+    muteBtnHome.style.display = 'none';
+    gameStarted = true;
+    document.querySelector('canvas').style.visibility = 'visible';
     scoreText.setVisible(true);
     bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
@@ -356,12 +359,16 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     scheduleSpawn();
     fadeOut();
   });
-});
+}
 
+function handleGoHome() {
+  fadeIn(() => window.location.href = window.location.href);
+}
 
-      document.getElementById('homeBtn').addEventListener('click', () => {
-        fadeIn(() => window.location.href = window.location.href);
-      });
+startBtn.removeEventListener('click', handleStartGame);
+homeBtn.removeEventListener('click', handleGoHome);
+startBtn.addEventListener('click', handleStartGame);
+homeBtn.addEventListener('click', handleGoHome);
 
 
 
