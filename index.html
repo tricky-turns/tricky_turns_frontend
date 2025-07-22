@@ -553,11 +553,9 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
-        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         isMuted = !isMuted;
-        muteBtnHome.src = currentMuteIcon();
+        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if (window.game && window.game.sound) {
           window.game.sound.mute = isMuted;
         }
