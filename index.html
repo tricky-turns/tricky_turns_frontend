@@ -53,9 +53,6 @@
     @keyframes drift { from{transform:translateX(0);} to{transform:translateX(-150vw);} }
 
     #start-screen {
-  opacity: 1;
-  transition: opacity 0.5s ease;
-
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4rem;
       z-index:2; cursor:pointer;
@@ -180,9 +177,6 @@
     }
 
     #game-over-screen {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-
       position:absolute; inset:0; display:none;
       flex-direction:column; align-items:center; justify-content:center; gap:1.5rem;
       z-index:3; cursor:pointer;
@@ -224,9 +218,6 @@
 
     /* —— Full-Screen Leaderboard Overlay —— */
     #leaderboard-screen {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-
       position:absolute; inset:0;
       background:rgba(0,0,0,0.9);
       display:none; flex-direction:column;
@@ -286,8 +277,6 @@
   }
 
   #fade-screen {
-  transition: opacity 0.5s ease;
-
   position: absolute;
   inset: 0;
   background: #000;
@@ -346,9 +335,6 @@
 /* — Disable background taps & tap–highlight on home & game-over screens — */
 #start-screen,
 #game-over-screen {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-
   cursor: default;                 /* remove the “clickable” cursor */ 
   pointer-events: none;            /* container itself ignores all taps */ 
   -webkit-tap-highlight-color: transparent; /* no blue flash on mobile */ 
@@ -490,11 +476,27 @@ async function initAuth() {
     document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 
-    // Smoothly fades the screen to black, then executes callback
-function fadeIn(callback, duration = 600) {
-  const screens = document.querySelectorAll('#start-screen, #game-over-screen, #leaderboard-screen');
-  screens.forEach(el => el.style.opacity = 0);
+    
+function fadeInElement(el, duration = 500, displayType = 'flex') {
+  el.style.opacity = 0;
+  el.style.display = displayType;
+  requestAnimationFrame(() => {
+    el.style.transition = `opacity ${duration}ms ease`;
+    el.style.opacity = 1;
+  });
+}
 
+function fadeOutElement(el, duration = 500) {
+  el.style.transition = `opacity ${duration}ms ease`;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, duration);
+}
+
+
+// Smoothly fades the screen to black, then executes callback
+function fadeIn(callback, duration = 600) {
   const fade = document.getElementById('fade-screen');
   fade.classList.add('fade-in');
   setTimeout(() => {
@@ -504,9 +506,6 @@ function fadeIn(callback, duration = 600) {
 
 // Reverses fadeIn effect to reveal screen content
 function fadeOut(callback, duration = 600) {
-  const screens = document.querySelectorAll('#start-screen, #game-over-screen, #leaderboard-screen');
-  screens.forEach(el => el.style.opacity = 1);
-
   const fade = document.getElementById('fade-screen');
   fade.classList.remove('fade-in');
   setTimeout(() => {
