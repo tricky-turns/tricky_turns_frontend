@@ -26,6 +26,13 @@
   <style>
 
   #best-score-hud {
+  font-size: 1.6rem;
+  -webkit-text-stroke: 1px #000;
+  text-shadow: none;
+  top: 20px;
+  left: 16px;
+  font-size: 1.1rem;
+
     position: absolute;
     top: 64px;
     left: 16px;
@@ -477,7 +484,7 @@
      </span>
      <br/>
      BEST:
-     <span id="bestScore">
+     <!-- removed bestScore from game over screen -->
       0
      </span>
     </div>
@@ -666,7 +673,7 @@ function create() {
       points=this.physics.add.group();
 
       // HUD
-      scoreText=this.add.text(16,16,'Score: 0',{
+      scoreText=this.add.text(16,40,'Score: 0',{
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
@@ -848,15 +855,66 @@ document.getElementById('homeBtn').addEventListener('click', () => {
     function triggerGameOver(){
       if(gameOver) return;
       gameOver=true;
+      const scene = this;
       [circle1,circle2].forEach(c=>{
         const px=c.x, py=c.y; c.destroy();
-        this.add.particles('orb').createEmitter({
+        scene.add.particles('orb').createEmitter({
           x:px,y:py,
           speed:{min:150,max:350},
           angle:{min:0,max:360},
           scale:{start:0.8,end:0},
           lifespan:500,blendMode:'ADD',quantity:8
         });
+      });
+      sfx.explode.play();
+      scene.time.delayedCall(700,()=>{
+        scene.physics.pause();
+        document.querySelector('canvas').style.visibility='hidden';
+        const fs = document.getElementById('finalScore'); fs.innerText=score; fs.style.transform='scale(1.3)'; fs.style.transition='transform 0.4s ease'; setTimeout(()=>fs.style.transform='scale(1)', 50);
+        if(score > highScore){
+          highScore = score;
+          document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
+          sfx.newBest.play();
+        }
+        document.getElementById('bestScore').innerText = highScore;
+        if(useLocalHighScore) {
+          localStorage.setItem('tricky_high_score', highScore);
+        }
+        if (!useLocalHighScore) {
+          fetch('/api/leaderboard', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ username: piUsername, score: highScore })
+          }).catch(console.error);
+        }
+        fetch('/api/leaderboard?top=100')
+          .then(r=>r.json()).then(data=>{
+            const list=document.getElementById('leaderboardEntries');
+            if (list) {
+              list.innerHTML = '';
+              data.forEach((e, i) => {
+                const li = document.createElement('li');
+                li.setAttribute('data-rank', `#${i + 1}`);
+                li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+                list.appendChild(li);
+              });
+              document.getElementById('leaderboard').style.display = 'block';
+            }
+            const rank = data.findIndex(e => e.username === piUsername);
+            const rankMessage = document.getElementById('rankMessage');
+            if (rankMessage) {
+              if (rank >= 0) {
+                rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
+              } else {
+                rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+              }
+            }
+            const go = document.getElementById('game-over-screen');
+            go.style.display = 'flex';
+            go.classList.add('show');
+          }).catch(console.error);
+      });
+    });
       });
       sfx.explode.play();
       this.time.delayedCall(700,()=>{
