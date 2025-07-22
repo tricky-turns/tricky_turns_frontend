@@ -756,6 +756,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     document.getElementById('user-info').style.display='none';
     document.getElementById('viewLeaderboardBtn').style.display='none';
     document.getElementById('start-screen').style.display='none';
+    document.getElementById('muteToggleHome').style.display='none';
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
@@ -881,6 +882,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
               }
             }
 
+            document.getElementById('muteToggleHome').style.display='none';
             document.getElementById('game-over-screen').style.display='flex';
           }).catch(console.error);
 
