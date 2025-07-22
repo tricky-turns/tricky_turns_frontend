@@ -134,7 +134,7 @@ const config={
       type:Phaser.AUTO,
       transparent:true,
       scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
-      physics:{default:'arcade', arcade:{debug:false}},
+      physics:{default:'arcade', arcade:{debug:false},
       scene: { key: 'default', preload, create, update }
     };
     window.game = new Phaser.Game(config);
@@ -166,7 +166,7 @@ function scheduleSpawn(){
     if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
     scheduleSpawn();
   });
-}}
+}
 
 function create() {
       if (obstacles) obstacles.clear(true, true);
