@@ -548,7 +548,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
     const muteBtnHome = document.getElementById('muteToggleHome');
-    if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-mute.svg' : 'icon-unmute.svg');
+    if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
@@ -657,9 +657,9 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                        .setInteractive().setDepth(3).setVisible(false);
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      muteIcon.setTexture(isMuted ? 'iconMute' : 'iconUnmute');
+      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       if (document.getElementById('muteToggleHome')) {
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-mute.svg' : 'icon-unmute.svg');
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (document.getElementById('muteToggleHome')) {
@@ -667,9 +667,9 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       }
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      muteIcon.setTexture(isMuted ? 'iconMute' : 'iconUnmute');
+      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       if (document.getElementById('muteToggleHome')) {
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-mute.svg' : 'icon-unmute.svg');
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (document.getElementById('muteToggleHome')) {
