@@ -32,7 +32,7 @@
     #user-info button {
       background:rgba(255,255,255,0.8);
       border:none; border-radius:0.3rem;
-      padding:0.2rem 0.6rem; p0; cursor:pointer;
+      padding:0.2rem 0.6rem; font-weight:700; cursor:pointer;
     }
 
     /* clouds visible but don’t catch taps */
@@ -59,14 +59,14 @@
     }
     #start-screen h1 {
     color: #fff;
-    font-size: 4rem;
-    p0;
+    font-size: 5rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1rem;
     text-align: center;
     line-height: 1.1;
     text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
-    -webkit-text-stroke: 0.6px #0F3D75;
+    -webkit-text-stroke: 0.7px #0F3D75;
   }
   @media (max-width: 600px) {
     #start-screen h1 {
@@ -79,7 +79,7 @@
     background: #3EAFF6;
     color: #fff;
     font-size: 1.4rem;
-    p0;
+    font-weight: 700;
     padding: 0.8rem 2.5rem;
     border: none;
     border-radius: 2rem;
@@ -103,7 +103,7 @@
   .btn-secondary {
   background: rgba(255,255,255,0.8);
   color: #000;
-  p0;
+  font-weight: 600;
   padding: 0.2rem 0.6rem;
   font-size: 0.9rem;
   border: none;
@@ -120,7 +120,7 @@
       background: #3EAFF6;
       color: #fff;
       font-size: 1.4rem;
-      p0;
+      font-weight: 700;
       padding: 0.8rem 2.5rem;
       border: none;
       border-radius: 2rem;
@@ -171,7 +171,7 @@
       background:rgba(0,0,0,0.4); z-index:4; pointer-events:none;
     }
     #pause-overlay .paused-text {
-      font-family:'Poppins',sans-serif; font-size:4rem; p0;
+      font-family:'Poppins',sans-serif; font-size:4rem; font-weight:700;
       color:#fff; text-transform:uppercase; letter-spacing:.1rem;
       -webkit-text-stroke:1px #000;
     }
@@ -182,7 +182,7 @@
       z-index:3; cursor:pointer;
     }
     #game-over-screen h2 {
-      font-family:'Poppins',sans-serif; color:#3EAFF6; font-size:4rem; p0;
+      font-family:'Poppins',sans-serif; color:#3EAFF6; font-size:6rem; font-weight:700;
       text-transform:uppercase; letter-spacing:.1rem; -webkit-text-stroke:1px #000;
     }
     .result-wrapper { position:relative; width:300px; height:300px; }
@@ -193,7 +193,7 @@
     }
     .results {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      color:#fff; font-size:2rem; p0;
+      color:#fff; font-size:2.4rem; font-weight:700;
       text-transform:uppercase; letter-spacing:.15rem;
       -webkit-text-stroke:2px #000; text-align:center; line-height:1.3;
     }
@@ -231,7 +231,7 @@
       position:absolute; top:1rem; right:1rem;
       background:#3EAFF6; color:#fff;
       border:none; border-radius:0.3rem;
-      padding:0.5rem 1rem; p0;
+      padding:0.5rem 1rem; font-weight:700;
       cursor:pointer;
     }
     #leaderboard-screen ol {
@@ -267,7 +267,7 @@
     content: attr(data-rank);
     background: #3EAFF6;
     color: #fff;
-    p0;
+    font-weight: 700;
     font-size: 0.9rem;
     padding: 0.25rem 0.6rem;
     border-radius: 1rem;
@@ -413,13 +413,13 @@
    </div>
   </div>
   <div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
-   <h1 style="color: #fff; font-size: 4rem; p0; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.6px #0F3D75;">
+   <h1 style="color: #fff; font-size: 5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.7px #0F3D75;">
     GAME OVER
    </h1>
    <div class="result-wrapper">
     <div class="orb-bg" style="display:none;">
     </div>
-    <div class="results" style="color: #fff; font-size: 2rem; p0; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
+    <div class="results" style="color: #fff; font-size: 2rem; font-weight: 600; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
      SCORE:
      <span id="finalScore">
       0
@@ -431,11 +431,7 @@
      </span>
     </div>
    </div>
-   
-<div id="rankMessage" style="font-size: 1.6rem; p0; color: #fff; text-align: center; text-shadow: 0 0 4px #000;">
-</div>
-
-  <button class="btn-primary" id="homeBtn">
+   <button class="btn-primary" id="homeBtn">
     HOME
    </button>
   </div>
@@ -480,26 +476,7 @@ async function initAuth() {
     document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 
-    
-function fadeInElement(el, duration = 500, displayType = 'flex') {
-  el.style.opacity = 0;
-  el.style.display = displayType;
-  requestAnimationFrame(() => {
-    el.style.transition = `opacity ${duration}ms ease`;
-    el.style.opacity = 1;
-  });
-}
-
-function fadeOutElement(el, duration = 500) {
-  el.style.transition = `opacity ${duration}ms ease`;
-  el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, duration);
-}
-
-
-// Smoothly fades the screen to black, then executes callback
+    // Smoothly fades the screen to black, then executes callback
 function fadeIn(callback, duration = 600) {
   const fade = document.getElementById('fade-screen');
   fade.classList.add('fade-in');
@@ -616,16 +593,6 @@ function create() {
 
       // HUD
       scoreText=this.add.text(16,16,'Score: 0',{
-        fontFamily:'Poppins', fontSize:'36px',
-        color:'#fff', stroke:'#000', strokeThickness:4
-      }).setDepth(2).setVisible(false);
-
-      bestScoreText=this.add.text(16,56,'Best: 0',{
-        fontFamily:'Poppins', fontSize:'28px',
-        color:'#fff', stroke:'#000', strokeThickness:3
-      }).setDepth(2).setVisible(false);
-
-      
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
@@ -747,7 +714,6 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
     scheduleSpawn();
@@ -839,36 +805,22 @@ document.getElementById('homeBtn').addEventListener('click', () => {
           }).catch(console.error);
         }
 
-        
         // GET top-100 for game-over screen
         fetch('/api/leaderboard?top=100')
           .then(r=>r.json()).then(data=>{
             const list=document.getElementById('leaderboardEntries');
-            if (list) {
-              list.innerHTML = '';
-              data.forEach((e, i) => {
-                const li = document.createElement('li');
-                li.setAttribute('data-rank', `#${i + 1}`);
-                li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-                list.appendChild(li);
-              });
-              document.getElementById('leaderboard').style.display = 'block';
-            }
+            list.innerHTML = '';
+data.forEach((e, i) => {
+  const li = document.createElement('li');
+  li.setAttribute('data-rank', `#${i + 1}`);
+li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+  list.appendChild(li);
+});
 
-            // Find player's rank
-            const rank = data.findIndex(e => e.username === piUsername);
-            const rankMessage = document.getElementById('rankMessage');
-            if (rankMessage) {
-              if (rank >= 0) {
-                rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
-              } else {
-                rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-              }
-            }
-
-            document.getElementById('game-over-screen').style.display='flex';
+            document.getElementById('leaderboard').style.display = 'block';
           }).catch(console.error);
 
+        document.getElementById('game-over-screen').style.display='flex';
       });
     }
 
@@ -877,7 +829,6 @@ document.getElementById('homeBtn').addEventListener('click', () => {
       score++;
       sfx.point.play();
       scoreText.setText('Score: '+score);
-      bestScoreText.setText('Best: '+Math.max(score, highScore));
       this.tweens.add({
         targets:scoreText,
         scaleX:1.1, scaleY:1.1,
