@@ -1,10 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <script src="https://sdk.minepi.com/pi-sdk.js">
+  </script>
+  <script>
+   Pi.init({ version: "2.0", sandbox: true });
+  </script>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
+   Tricky Turns
+  </title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
+  <style>
+   * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; }
+    body {
+      font-family:'Poppins',sans-serif;
+      background: linear-gradient(to bottom, #3199E4 0%, #58C0F2 100%);
+      position:relative;
+    }
+    canvas { display:block; margin:0 auto; visibility:hidden; z-index:1; }
 
-   Pi.init({ versconst muteBtnHome = muteBtnHome;
-ion: "2.0", sandbox: true });
-  
+    /* —— Pi Auth & User Display on Home Screen —— */
+    #user-info {
+      display:flex; align-items:center; gap:0.5rem;
+      color:#fff; font-size:1rem; text-shadow:0 0 4px #000;
+    }
+    #user-info button {
+      background:rgba(255,255,255,0.8);
+      border:none; border-radius:0.3rem;
+      padding:0.2rem 0.6rem; p0; cursor:pointer;
+    }
+
+    /* clouds visible but don’t catch taps */
+    .bg-cloud, .start-cloud {
+      position:absolute;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><path d='M20,35 C20,25 35,20 45,25 C50,15 65,15 70,25 C85,25 90,35 80,45 C90,45 95,55 85,60 C75,65 55,60 50,50 C40,60 25,60 20,50 C10,50 5,40 20,35 Z' fill='%23FFFFFF'/></svg>");
+      background-size:contain;
+      background-repeat:no-repeat;
+      filter:blur(6px);
+      opacity:.8;
+      animation:drift linear infinite;
+      pointer-events:none;
+    }
+    .bg-cloud.one,   .start-cloud.one   { width:260px; height:90px;  top:12%;  left:10%;   animation-duration:40s; }
+    .bg-cloud.two,   .start-cloud.two   { width:200px; height:70px;  top:8%;   right:12%;  animation-duration:50s; }
+    .bg-cloud.three, .start-cloud.three { width:300px; height:100px; top:48%;  left:18%;   animation-duration:45s; }
+    .bg-cloud.four,  .start-cloud.four  { width:280px; height:95px;  bottom:18%; right:22%; animation-duration:55s; }
+    @keyframes drift { from{transform:translateX(0);} to{transform:translateX(-150vw);} }
+
+    #start-screen {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4rem;
+      z-index:2; cursor:pointer;
+    }
+    #start-screen h1 {
+    color: #fff;
+    font-size: 4rem;
+    p0;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    text-align: center;
+    line-height: 1.1;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+    -webkit-text-stroke: 0.6px #0F3D75;
+  }
+  @media (max-width: 600px) {
+    #start-screen h1 {
+      font-size: 3rem;
+      -webkit-text-stroke: 0.4px #0F3D75;
+    }
+  }
+
+    .btn-primary {
+    background: #3EAFF6;
+    color: #fff;
+    font-size: 1.4rem;
+    p0;
+    padding: 0.8rem 2.5rem;
+    border: none;
+    border-radius: 2rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+  .btn-primary:hover {
+    background: #318EE6;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+  }
+  @media (max-width:600px) {
+    .btn-primary {
+      font-size: 1.1rem;
+      padding: 0.6rem 1.8rem;
+    }
+  }
+
+  .btn-secondary {
+  background: rgba(255,255,255,0.8);
+  color: #000;
+  p0;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,1);
+}
 
 
-   // \E2\80\94\E2\80\94 Pi Authentication setup \E2\80\94\E2\80\94
+    .start-button {
+      background: #3EAFF6;
+      color: #fff;
+      font-size: 1.4rem;
+      p0;
+      padding: 0.8rem 2.5rem;
+      border: none;
+      border-radius: 2rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .start-button:hover {
+      background: #318EE6;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+        @media (max-width:600px) {
+          #start-screen h1 { font-size:3rem; }
+          .orbit { width:180px; height:180px; }
+          .ring  { border-width:6px; }
+          .circle{ width:45px; height:45px; }
+        }
+
+    .orbit {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .ring {
+      position:absolute; width:100%; height:100%;
+      border-radius:50%; border:8px solid rgba(255,255,255,0.6);
+      box-shadow:0 0 20px rgba(255,255,255,0.8);
+      animation:spin 3.5s linear infinite;
+    }
+    .circle { position:absolute; width:60px; height:60px; background:#fff; border-radius:50%; box-shadow:0 0 20px rgba(255,255,255,1); }
+    .circle.top    { top:0;    left:50%; transform:translate(-50%,-50%); }
+    .circle.bottom { bottom:0; left:50%; transform:translate(-50%,50%); }
+    @keyframes spin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
+
+    #pause-overlay {
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.4); z-index:4; pointer-events:none;
+    }
+    #pause-overlay .paused-text {
+      font-family:'Poppins',sans-serif; font-size:4rem; p0;
+      color:#fff; text-transform:uppercase; letter-spacing:.1rem;
+      -webkit-text-stroke:1px #000;
+    }
+
+    #game-over-screen {
+      position:absolute; inset:0; display:none;
+      flex-direction:column; align-items:center; justify-content:center; gap:1.5rem;
+      z-index:3; cursor:pointer;
+    }
+    #game-over-screen h2 {
+      font-family:'Poppins',sans-serif; color:#3EAFF6; font-size:4rem; p0;
+      text-transform:uppercase; letter-spacing:.1rem; -webkit-text-stroke:1px #000;
+    }
+    .result-wrapper { position:relative; width:300px; height:300px; }
+    .orb-bg {
+      position:absolute; inset:0; border-radius:50%;
+      background:radial-gradient(circle at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0) 70%);
+      backdrop-filter:blur(10px);
+    }
+    .results {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color:#fff; font-size:2rem; p0;
+      text-transform:uppercase; letter-spacing:.15rem;
+      -webkit-text-stroke:2px #000; text-align:center; line-height:1.3;
+    }
+
+    @media (max-width:600px) {
+      #game-over-screen h2 { font-size:4rem; }
+      .results        { font-size:1.8rem; }
+      .restart        { font-size:1.6rem; }
+    }
+
+    /* —— Leaderboard in Game Over —— */
+    #leaderboard {
+      margin-top:1rem;
+      background:rgba(0,0,0,0.6);
+      padding:1rem; border-radius:0.5rem;
+      max-height:300px; overflow-y:auto;
+      color:#fff; font-size:1rem;
+      text-align:left; line-height:1.4;
+      width:80%; max-width:400px;
+    }
+    #leaderboard h3 { margin-bottom:0.5rem; }
+
+    /* —— Full-Screen Leaderboard Overlay —— */
+    #leaderboard-screen {
+      position:absolute; inset:0;
+      background:rgba(0,0,0,0.9);
+      display:none; flex-direction:column;
+      align-items:center; overflow-y:auto;
+      padding:2rem; z-index:5;
+    }
+    #leaderboard-screen h2 {
+      color:#fff; margin-bottom:1rem;
+    }
+    #leaderboard-screen button {
+      position:absolute; top:1rem; right:1rem;
+      background:#3EAFF6; color:#fff;
+      border:none; border-radius:0.3rem;
+      padding:0.5rem 1rem; p0;
+      cursor:pointer;
+    }
+    #leaderboard-screen ol {
+      color:#fff; list-style-position:inside;
+      width:100%; max-width:400px;
+    }
+    #leaderboard ol,
+  #leaderboardEntriesHome {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  #leaderboard li,
+  #leaderboardEntriesHome li {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.4rem;
+    margin-bottom: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    position: relative;
+  }
+
+  #leaderboard li::before,
+  #leaderboardEntriesHome li::before {
+    content: attr(data-rank);
+    background: #3EAFF6;
+    color: #fff;
+    p0;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 1rem;
+    margin-right: 0.8rem;
+    position: absolute;
+    left: -2.5rem;
+  }
+
+  #fade-screen {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.6s ease-in-out;
+}
+#fade-screen.fade-in {
+  opacity: 1;
+}
+@media (max-width: 600px) {
+  /* let the container fill more of the screen */
+  #leaderboard {
+    width: 90%;
+  }
+
+  /* shift the rank badge in a bit so it never clips off the left edge */
+  #leaderboard li::before,
+  #leaderboardEntriesHome li::before {
+    left: -2rem;            /* was -2.5rem on desktop */ 
+    font-size: 0.8rem;      /* shrink slightly to fit */
+    padding: 0.2rem 0.4rem;
+  }
+
+  /* nudge the header down so it doesn’t collide with the close button */
+  #leaderboard-screen h2 {
+    margin-top: 3rem;
+    font-size: 1.5rem;      /* optional: scale header a touch smaller */
+    text-align: center;
+  }
+
+  /* shrink & reposition the “Close” button */
+  #leaderboard-screen button {
+    top: 0.5rem;            /* bring it in a bit */
+    right: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+/* make room for the badge + gap */
+#leaderboard li,
+#leaderboardEntriesHome li {
+  /* replace the 4-value padding shorthand so we can set a larger left inset */
+  padding: 0.5rem 0.8rem 0.5rem 2rem;   /* top/right/bottom/left */ :contentReference[oaicite:0]{index=0}
+}
+
+/* enlarge the gap after the badge */
+#leaderboard li::before,
+#leaderboardEntriesHome li::before {
+  margin-right: 1.2rem;                  /* was 0.8rem */ :contentReference[oaicite:1]{index=1}
+  /* optionally center multi-digit ranks in a fixed box: */
+  min-width: 2rem;
+  text-align: center;
+}
+/* — Disable background taps & tap–highlight on home & game-over screens — */
+#start-screen,
+#game-over-screen {
+  cursor: default;                 /* remove the “clickable” cursor */ 
+  pointer-events: none;            /* container itself ignores all taps */ 
+  -webkit-tap-highlight-color: transparent; /* no blue flash on mobile */ 
+}
+
+/* — Re-enable taps on the buttons inside those screens — */
+#start-screen button,
+#start-screen .btn-primary,
+#start-screen .btn-secondary,
+#game-over-screen button,
+#game-over-screen .btn-primary {
+  pointer-events: auto;            /* buttons now clickable again */ 
+}
+  </style>
+ </head>
+ <body>
+  <div class="bg-cloud one">
+  </div>
+  <div class="bg-cloud two">
+  </div>
+  <div class="bg-cloud three">
+  </div>
+  <div class="bg-cloud four">
+  </div>
+  <img id="muteToggleHome" src="assets/icon-unmute.svg" style="position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; cursor: pointer; z-index: 3;">
+  <div id="start-screen">
+   <div id="user-info">
+    User:
+    <strong id="username">
+     Guest
+    </strong>
+    <button class="btn-secondary" id="loginBtn">
+     Login
+    </button>
+   </div>
+   <div class="start-cloud one">
+   </div>
+   <div class="start-cloud two">
+   </div>
+   <div class="start-cloud three">
+   </div>
+   <div class="start-cloud four">
+   </div>
+   <h1>
+    TRICKY
+    <br/>
+    TURNS
+   </h1>
+   <button class="btn-primary" id="startBtn">
+    TAP TO START
+   </button>
+   <button class="btn-primary" id="viewLeaderboardBtn">
+    VIEW LEADERBOARD
+   </button>
+   <div class="orbit">
+    <div class="ring">
+    </div>
+    <div class="circle top">
+    </div>
+    <div class="circle bottom">
+    </div>
+   </div>
+  </div>
+  <div id="leaderboard-screen">
+   <button class="btn-primary" id="closeLeaderboardBtn">
+    Close
+   </button>
+   <h2>
+    Top 100 Leaderboard
+   </h2>
+   <ol id="leaderboardEntriesHome">
+   </ol>
+  </div>
+  <div id="pause-overlay">
+   <div class="paused-text">
+    Paused
+   </div>
+  </div>
+  <div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
+   <h1 style="color: #fff; font-size: 4rem; p0; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.6px #0F3D75;">
+    GAME OVER
+   </h1>
+   <div class="result-wrapper">
+    <div class="orb-bg" style="display:none;">
+    </div>
+    <div class="results" style="color: #fff; font-size: 2rem; p0; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
+     SCORE:
+     <span id="finalScore">
+      0
+     </span>
+     <br/>
+     BEST:
+     <span id="bestScore">
+      0
+     </span>
+    </div>
+   </div>
+   
+<div id="rankMessage" style="font-size: 1.6rem; p0; color: #fff; text-align: center; text-shadow: 0 0 4px #000;">
+</div>
+
+  <button class="btn-primary" id="homeBtn">
+    HOME
+   </button>
+  </div>
+  <script>
+   // —— Pi Authentication setup ——
     const scopes = ['username'];
     let piUsername = 'Guest';
     let highScore = 0;
@@ -83,7 +520,7 @@ function fadeOut(callback, duration = 600) {
 }
 
 
-    // \E2\80\94\E2\80\94 Show Home Leaderboard \E2\80\94\E2\80\94
+    // —— Show Home Leaderboard ——
     // Fetch and display the top 100 leaderboard on the start screen
 async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
@@ -103,14 +540,14 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
       document.getElementById('leaderboard-screen').style.display = 'none';
     });
 
-    // \E2\80\94\E2\80\94 Game & Leaderboard logic \E2\80\94\E2\80\94
+    // —— Game & Leaderboard logic ——
     const LANES = [];
     let gameStarted=false, gameOver=false, gamePaused=false;
     let direction=1, angle=0, radius=100, speed=3, maxSpeed=6;
     let circle1,circle2,obstacles,points,score=0;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
-    const muteBtnHome = muteBtnHome;
+    const muteBtnHome = document.getElementById('muteToggleHome');
     if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
@@ -219,22 +656,22 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       pauseOverlay=document.getElementById('pause-overlay');
 
@@ -256,7 +693,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
         muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        const homeBtn = muteBtnHome;
+        const homeBtn = document.getElementById('muteToggleHome');
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
       });
@@ -342,7 +779,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     document.getElementById('user-info').style.display='none';
     document.getElementById('viewLeaderboardBtn').style.display='none';
     document.getElementById('start-screen').style.display='none';
-    muteBtnHome.style.display='none';
+    document.getElementById('muteToggleHome').style.display='none';
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
@@ -365,7 +802,10 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
 
-
+document.getElementById('homeBtn').addEventListener('click', () => {
+  fadeIn(() => {
+    window.location.href = window.location.href;
+  });
 });
 
 
@@ -459,13 +899,13 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
             const rankMessage = document.getElementById('rankMessage');
             if (rankMessage) {
               if (rank >= 0) {
-                rankMessage.innerText = `\F0\9F\8F\85 Your Global Rank: #${rank + 1}`;
+                rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
               } else {
-                rankMessage.innerText = `\F0\9F\92\A1 You're currently unranked \E2\80\94 keep playing!`;
+                rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
               }
             }
 
-            muteBtnHome.style.display='none';
+            document.getElementById('muteToggleHome').style.display='none';
             document.getElementById('game-over-screen').style.display='flex';
           }).catch(console.error);
 
@@ -483,4 +923,8 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-  
+  </script>
+  <div id="fade-screen">
+  </div>
+ </body>
+</html>
