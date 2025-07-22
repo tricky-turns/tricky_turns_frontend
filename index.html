@@ -53,6 +53,9 @@
     @keyframes drift { from{transform:translateX(0);} to{transform:translateX(-150vw);} }
 
     #start-screen {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4rem;
       z-index:2; cursor:pointer;
@@ -177,6 +180,9 @@
     }
 
     #game-over-screen {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+
       position:absolute; inset:0; display:none;
       flex-direction:column; align-items:center; justify-content:center; gap:1.5rem;
       z-index:3; cursor:pointer;
@@ -218,6 +224,9 @@
 
     /* —— Full-Screen Leaderboard Overlay —— */
     #leaderboard-screen {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+
       position:absolute; inset:0;
       background:rgba(0,0,0,0.9);
       display:none; flex-direction:column;
@@ -277,6 +286,8 @@
   }
 
   #fade-screen {
+  transition: opacity 0.5s ease;
+
   position: absolute;
   inset: 0;
   background: #000;
@@ -335,6 +346,9 @@
 /* — Disable background taps & tap–highlight on home & game-over screens — */
 #start-screen,
 #game-over-screen {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+
   cursor: default;                 /* remove the “clickable” cursor */ 
   pointer-events: none;            /* container itself ignores all taps */ 
   -webkit-tap-highlight-color: transparent; /* no blue flash on mobile */ 
@@ -478,6 +492,9 @@ async function initAuth() {
 
     // Smoothly fades the screen to black, then executes callback
 function fadeIn(callback, duration = 600) {
+  const screens = document.querySelectorAll('#start-screen, #game-over-screen, #leaderboard-screen');
+  screens.forEach(el => el.style.opacity = 0);
+
   const fade = document.getElementById('fade-screen');
   fade.classList.add('fade-in');
   setTimeout(() => {
@@ -487,6 +504,9 @@ function fadeIn(callback, duration = 600) {
 
 // Reverses fadeIn effect to reveal screen content
 function fadeOut(callback, duration = 600) {
+  const screens = document.querySelectorAll('#start-screen, #game-over-screen, #leaderboard-screen');
+  screens.forEach(el => el.style.opacity = 1);
+
   const fade = document.getElementById('fade-screen');
   fade.classList.remove('fade-in');
   setTimeout(() => {
@@ -623,13 +643,12 @@ function create() {
       sfx.pauseWhoosh= this.sound.add('pauseWhoosh');
 
       // mute toggle
-muteIcon.on('pointerdown', () => {
-  isMuted = !isMuted;
-  this.sound.setMute(isMuted);  // ✅ Phaser 3 official method
-  muteIcon.setTexture(isMuted ? 'iconMute' : 'iconUnmute');
-  if (!isMuted) sfx.uiClick.play();
-});
-
+      muteIcon.on('pointerdown',()=>{
+        isMuted=!isMuted;
+        this.sound.mute=isMuted;
+        muteIcon.setTexture(isMuted?'iconUnmute':'iconMute');
+        if(!isMuted) sfx.uiClick.play();
+      });
 
       // pause/play toggle
       pauseIcon.on('pointerdown',(_,x,y,e)=>{
