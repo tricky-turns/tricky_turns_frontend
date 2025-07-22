@@ -170,10 +170,7 @@ function create() {
 
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
-      LANES.length = 0;
-for (let i = -1; i <= 1; i++) {
-  LANES.push(cy + i * radius);
-}
+      LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
 
       // generate textures
       this.make.graphics({add:false})
