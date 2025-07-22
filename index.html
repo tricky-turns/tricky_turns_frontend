@@ -552,7 +552,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
-        if (window.muteIcon) window.muteIcon.setTexture(currentMuteIcon());
+        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         muteBtnHome.src = currentMuteIcon();
         isMuted = !isMuted;
         muteBtnHome.src = currentMuteIcon();
@@ -676,7 +676,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
-        muteIcon.setTexture(isMuted?'iconUnmute':'iconMute');
+        muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         const homeBtn = document.getElementById('muteToggleHome');
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
