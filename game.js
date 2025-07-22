@@ -1,11 +1,13 @@
 
-   Pi.init({ version: "2.0", sandbox: true });
+   Pi.init({ versconst muteBtnHome = muteBtnHome;
+ion: "2.0", sandbox: true });
   
 
 
    // —— Pi Authentication setup ——
     const scopes = ['username'];
     let piUsername = 'Guest';
+const muteBtnHome = document.getElementById('muteToggleHome');
     let highScore = 0;
     let useLocalHighScore = true;
 
@@ -109,7 +111,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     let circle1,circle2,obstacles,points,score=0;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
-    const muteBtnHome = document.getElementById('muteToggleHome');
+    const muteBtnHome = muteBtnHome;
     if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
@@ -218,22 +220,22 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (document.getElementById('muteToggleHome')) {
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (document.getElementById('muteToggleHome')) {
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (document.getElementById('muteToggleHome')) {
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (document.getElementById('muteToggleHome')) {
-        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       pauseOverlay=document.getElementById('pause-overlay');
 
@@ -255,7 +257,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
         muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        const homeBtn = document.getElementById('muteToggleHome');
+        const homeBtn = muteBtnHome;
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
       });
@@ -341,7 +343,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     document.getElementById('user-info').style.display='none';
     document.getElementById('viewLeaderboardBtn').style.display='none';
     document.getElementById('start-screen').style.display='none';
-    document.getElementById('muteToggleHome').style.display='none';
+    muteBtnHome.style.display='none';
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
@@ -364,10 +366,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
 
-document.getElementById('homeBtn').addEventListener('click', () => {
-  fadeIn(() => {
-    window.location.href = window.location.href;
-  });
+
 });
 
 
@@ -467,7 +466,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
               }
             }
 
-            document.getElementById('muteToggleHome').style.display='none';
+            muteBtnHome.style.display='none';
             document.getElementById('game-over-screen').style.display='flex';
           }).catch(console.error);
 
