@@ -552,7 +552,8 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
-        if (window.muteIcon) muteIcon.setTexture(currentMuteIcon());
+        if (window.muteIcon) window.muteIcon.setTexture(currentMuteIcon());
+        muteBtnHome.src = currentMuteIcon();
         isMuted = !isMuted;
         muteBtnHome.src = currentMuteIcon();
         if (window.game && window.game.sound) {
@@ -649,7 +650,8 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
 
       pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
                     .setInteractive().setDepth(3).setVisible(false);
-      const muteIcon=this.add.image(cam.width-100,40,'iconUnmute')
+      muteIcon = this.add.image(cam.width-100,40,'iconUnmute')
+      window.muteIcon = muteIcon
                        .setInteractive().setDepth(3).setVisible(false);
       this.sound.mute = isMuted;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
@@ -675,6 +677,8 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
         muteIcon.setTexture(isMuted?'iconUnmute':'iconMute');
+        const homeBtn = document.getElementById('muteToggleHome');
+        if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
       });
 
