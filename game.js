@@ -130,16 +130,13 @@ let bestScoreText;
 
 
     // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
-const config = {
-  type: Phaser.AUTO,
-  transparent: true,
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: {
-    default: 'arcade',
-    arcade: { debug: false }
-  },
-  scene: { key: 'default', preload, create, update }
-};
+const config={
+      type:Phaser.AUTO,
+      transparent:true,
+      scale:{mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH},
+      physics:{default:'arcade', arcade:{debug:false}},
+      scene: { key: 'default', preload, create, update }
+    };
     window.game = new Phaser.Game(config);
 
 
@@ -158,19 +155,6 @@ function preload() {
     }
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
-function getSpawnInterval(){
-        const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
-        return Phaser.Math.Linear(1500,500,t);
-      }
-
-function scheduleSpawn(){
-  const scene = window.game.scene.keys.default;
-  scene.time.delayedCall(getSpawnInterval(), () => {
-    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
-    scheduleSpawn();
-  });
-}
-
 function create() {
       if (obstacles) obstacles.clear(true, true);
       if (points) points.clear(true, true);
@@ -343,11 +327,52 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
 
       // spawn scheduler
       const scene=this;
-      
+      function getSpawnInterval(){
+        const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
+        return Phaser.Math.Linear(1500,500,t);
+      }
+      function scheduleSpawn(){
+  const scene = window.game.scene.keys.default;
+  scene.time.delayedCall(getSpawnInterval(), () => {
+    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
+    scheduleSpawn();
+  }, []);
       }
 
       // START
-}
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  sfx.uiClick.play();
+  fadeIn(() => {
+    document.getElementById('user-info').style.display='none';
+    document.getElementById('viewLeaderboardBtn').style.display='none';
+    document.getElementById('start-screen').style.display='none';
+    muteBtnHome.style.display='none';
+    gameStarted=true;
+    document.querySelector('canvas').style.visibility='visible';
+    scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
+    pauseIcon.setVisible(true);
+    muteIcon.setVisible(true);
+    scheduleSpawn();
+    fadeOut();
+  });
+});
+
+
+      document.getElementById('homeBtn').addEventListener('click', () => {
+        fadeIn(() => window.location.href = window.location.href);
+      });
+
+
+
+
+
+
+
+
+
+
+    }
 
     function update(){
       if(!gameStarted||gameOver||gamePaused) return;
@@ -461,27 +486,4 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
- 
-      // Bind startBtn click once after game is ready
-      if (!window._startBound) {
-        document.getElementById('startBtn').addEventListener('click', () => {
-          sfx.uiClick.play();
-          fadeIn(() => {
-            document.getElementById('user-info').style.display='none';
-            document.getElementById('viewLeaderboardBtn').style.display='none';
-            document.getElementById('start-screen').style.display='none';
-            muteBtnHome.style.display='none';
-            gameStarted=true;
-            document.querySelector('canvas').style.visibility='visible';
-            scoreText.setVisible(true);
-            bestScoreText.setVisible(true);
-            pauseIcon.setVisible(true);
-            muteIcon.setVisible(true);
-            scheduleSpawn();
-            fadeOut();
-          });
-        });
-        window._startBound = true;
-      }
-
- 
+  
