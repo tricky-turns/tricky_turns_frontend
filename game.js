@@ -340,18 +340,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       }
 
       // START
-      });
-
-
-
-
-
-
-
-
-
-
-    }
+}
 
     function update(){
       if(!gameStarted||gameOver||gamePaused) return;
