@@ -411,7 +411,10 @@
   </div>
   <div class="bg-cloud three">
   </div>
-  <div id="best-score-hud">Best: 0</div>
+  <div id="hud-container" style="position:absolute;top:16px;left:16px;z-index:2;">
+  <div id="best-score-hud" style="font-size:1.6rem;color:#fff;font-family:'Poppins',sans-serif;-webkit-text-stroke:1px #000;">Best: 0</div>
+  <div id="score-hud" style="font-size:1.6rem;color:#fff;font-family:'Poppins',sans-serif;-webkit-text-stroke:1px #000;">Score: 0</div>
+</div>
 <div class="bg-cloud four">
   </div>
   <div id="start-screen">
@@ -670,7 +673,8 @@ function create() {
       points=this.physics.add.group();
 
       // HUD
-      scoreText=this.add.text(16,44,'Score: 0',{
+      // scoreText replaced with DOM HUD
+// scoreText=this.add.text(16,44,'Score: 0',{
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
@@ -791,7 +795,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     document.getElementById('start-screen').classList.remove('show');
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
-    document.getElementById('best-score-hud').style.display = 'block';
+    document.getElementById('hud-container').style.display = 'block';
 document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
 scoreText.setVisible(true);
     pauseIcon.setVisible(true);
@@ -923,7 +927,7 @@ document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
       pt.destroy();
       score++;
       sfx.point.play();
-      scoreText.setText('Score: '+score);
+      document.getElementById('score-hud').innerText = 'Score: ' + score;
       this.tweens.add({
         targets:scoreText,
         scaleX:1.1, scaleY:1.1,
