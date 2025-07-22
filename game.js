@@ -33,7 +33,7 @@ async function initAuth() {
         }
         // persist locally as well
         localStorage.setItem('tricky_high_score', highScore);
-        if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
+        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
       } catch (e) {
         console.log('Not signed in:', e);
       }
@@ -73,8 +73,6 @@ function fadeIn(callback, duration = 600) {
     callback?.();
   }, duration);
 }
-  }, duration);
-}
 
 // Reverses fadeIn effect to reveal screen content
 function fadeOut(callback, duration = 600) {
@@ -83,17 +81,6 @@ function fadeOut(callback, duration = 600) {
   setTimeout(() => {
     callback?.();
   }, duration);
-}
-  }
-
-  if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
-  const bestScoreEl = document.getElementById('bestScore');
-  if (bestScoreEl) bestScoreEl.innerText = highScore;
-
-  const finalScoreEl = document.getElementById('finalScore');
-  if (finalScoreEl) finalScoreEl.innerText = score;
-}
-, duration);
 }
 
 
@@ -223,7 +210,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       // initialize highScore from localStorage if using guest
       if (useLocalHighScore) {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
-        if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
+        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
       }
 
 
@@ -437,11 +424,11 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
           highScore = score;
           sfx.newBest.play();
         }
-        updateScoreDisplay();
-        updateScoreDisplay();
+        document.getElementById('bestScore').innerText = highScore;
+        bestScoreText.setText('Best: ' + highScore);
         if(useLocalHighScore) {
           localStorage.setItem('tricky_high_score', highScore);
-        if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
+        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
         }
 
         // POST score only if not guest
