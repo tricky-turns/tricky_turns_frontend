@@ -345,6 +345,8 @@
 #start-screen .btn-primary,
 #start-screen .btn-secondary,
 #game-over-screen button,
+#game-over-screen .btn-primary,
+#game-over-screen button,
 #game-over-screen .btn-primary {
   pointer-events: auto;            /* buttons now clickable again */ 
 }
@@ -620,6 +622,16 @@ function create() {
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
 
+      bestScoreText=this.add.text(16,56,'Best: 0',{
+        fontFamily:'Poppins', fontSize:'28px',
+        color:'#fff', stroke:'#000', strokeThickness:3
+      }).setDepth(2).setVisible(false);
+
+      
+        fontFamily:'Poppins', fontSize:'36px',
+        color:'#fff', stroke:'#000', strokeThickness:4
+      }).setDepth(2).setVisible(false);
+
       // initialize highScore from localStorage if using guest
       if (useLocalHighScore) {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
@@ -737,6 +749,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
     scheduleSpawn();
@@ -866,6 +879,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
       score++;
       sfx.point.play();
       scoreText.setText('Score: '+score);
+      bestScoreText.setText('Best: '+Math.max(score, highScore));
       this.tweens.add({
         targets:scoreText,
         scaleX:1.1, scaleY:1.1,
