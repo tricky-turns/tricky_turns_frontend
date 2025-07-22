@@ -26,6 +26,10 @@
   <style>
 
   #best-score-hud {
+  top: 20px;
+  left: 16px;
+  font-size: 1.1rem;
+
     position: absolute;
     top: 64px;
     left: 16px;
@@ -477,7 +481,7 @@
      </span>
      <br/>
      BEST:
-     <span id="bestScore">
+     <!-- removed bestScore from game over screen -->
       0
      </span>
     </div>
@@ -666,7 +670,7 @@ function create() {
       points=this.physics.add.group();
 
       // HUD
-      scoreText=this.add.text(16,16,'Score: 0',{
+      scoreText=this.add.text(16,40,'Score: 0',{
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
