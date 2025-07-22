@@ -636,6 +636,8 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                     .setInteractive().setDepth(3).setVisible(false);
       const muteIcon=this.add.image(cam.width-100,40,'iconUnmute')
                        .setInteractive().setDepth(3).setVisible(false);
+      this.sound.mute = isMuted;
+      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       pauseOverlay=document.getElementById('pause-overlay');
 
       countdownText=this.add.text(cx,cy,'',{
