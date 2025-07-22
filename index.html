@@ -883,7 +883,6 @@ document.getElementById('homeBtn').addEventListener('click', () => {
       bestScoreText.setText('Best: '+Math.max(score, highScore));
       this.tweens.add({
         targets:scoreText,
-        scaleX:1.1, scaleY:1.1,
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
