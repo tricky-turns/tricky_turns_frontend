@@ -114,13 +114,13 @@ let bestScoreText;
 
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
-    if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+    applyMuteState();
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
         isMuted = !isMuted;
-        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+        if (window.muteIcon) window.applyMuteState();
         muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if (window.game && window.game.sound) {
           window.game.sound.mute = isMuted;
@@ -129,7 +129,14 @@ let bestScoreText;
     }
 
 
-    // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
+    
+function applyMuteState() {
+  if (window.muteIcon) applyMuteState();
+  applyMuteState();
+  if (window.game?.sound) window.game.sound.mute = isMuted;
+}
+
+// Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
 const config={
       type:Phaser.AUTO,
       transparent:true,
@@ -219,14 +226,14 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon = this.add.image(cam.width-100,40,'iconUnmute')
       window.muteIcon = muteIcon
                        .setInteractive().setDepth(3).setVisible(false);
-      this.sound.mute = isMuted;
+      applyMuteState();
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      applyMuteState();
       
       
-      this.sound.mute = isMuted;
+      applyMuteState();
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      applyMuteState();
       
       
       pauseOverlay=document.getElementById('pause-overlay');
@@ -248,7 +255,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
-        muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+        applyMuteState();
         const homeBtn = muteBtnHome;
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
