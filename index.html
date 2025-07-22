@@ -431,7 +431,11 @@
      </span>
     </div>
    </div>
-   <button class="btn-primary" id="homeBtn">
+   
+<div id="rankMessage" style="font-size: 1.6rem; font-weight: 600; color: #fff; text-align: center; text-shadow: 0 0 4px #000;">
+</div>
+
+  <button class="btn-primary" id="homeBtn">
     HOME
    </button>
   </div>
@@ -824,22 +828,36 @@ document.getElementById('homeBtn').addEventListener('click', () => {
           }).catch(console.error);
         }
 
+        
         // GET top-100 for game-over screen
         fetch('/api/leaderboard?top=100')
           .then(r=>r.json()).then(data=>{
             const list=document.getElementById('leaderboardEntries');
-            list.innerHTML = '';
-data.forEach((e, i) => {
-  const li = document.createElement('li');
-  li.setAttribute('data-rank', `#${i + 1}`);
-li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-  list.appendChild(li);
-});
+            if (list) {
+              list.innerHTML = '';
+              data.forEach((e, i) => {
+                const li = document.createElement('li');
+                li.setAttribute('data-rank', `#${i + 1}`);
+                li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+                list.appendChild(li);
+              });
+              document.getElementById('leaderboard').style.display = 'block';
+            }
 
-            document.getElementById('leaderboard').style.display = 'block';
+            // Find player's rank
+            const rank = data.findIndex(e => e.username === piUsername);
+            const rankMessage = document.getElementById('rankMessage');
+            if (rankMessage) {
+              if (rank >= 0) {
+                rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
+              } else {
+                rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+              }
+            }
+
+            document.getElementById('game-over-screen').style.display='flex';
           }).catch(console.error);
 
-        document.getElementById('game-over-screen').style.display='flex';
       });
     }
 
