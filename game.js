@@ -337,8 +337,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
     if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
     scheduleSpawn();
   }, []);
-}, [], scene);
-},[],scene);
       }
 
       // START
