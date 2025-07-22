@@ -548,10 +548,12 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
     const muteBtnHome = document.getElementById('muteToggleHome');
+    if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
+        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         isMuted = !isMuted;
@@ -655,11 +657,15 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                        .setInteractive().setDepth(3).setVisible(false);
       this.sound.mute = isMuted;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      const homeIcon = document.getElementById('muteToggleHome');
+      if (homeIcon) homeIcon.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (document.getElementById('muteToggleHome')) {
         document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       this.sound.mute = isMuted;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      const homeIcon = document.getElementById('muteToggleHome');
+      if (homeIcon) homeIcon.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (document.getElementById('muteToggleHome')) {
         document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
