@@ -668,9 +668,7 @@ function create() {
       }
 
 
-      document.getElementById('best-score-hud').style.display = 'block';
-document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
-pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
+      pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
                     .setInteractive().setDepth(3).setVisible(false);
       const muteIcon=this.add.image(cam.width-100,40,'iconUnmute')
                        .setInteractive().setDepth(3).setVisible(false);
@@ -780,7 +778,9 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     document.getElementById('start-screen').classList.remove('show');
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
-    scoreText.setVisible(true);
+    document.getElementById('best-score-hud').style.display = 'block';
+document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
+scoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
     scheduleSpawn();
