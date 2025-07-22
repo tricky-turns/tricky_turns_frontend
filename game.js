@@ -132,11 +132,11 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     let gameStarted=false, gameOver=false, gamePaused=false;
     let direction=1, angle=0, radius=100, speed=3, maxSpeed=6;
     let circle1,circle2,obstacles,points,score=0;
-const muteIcon;
-const bestScoreText;
+let muteIcon;
+let bestScoreText;
 
-    const scoreText,pauseIcon,pauseOverlay,countdownText;
-    const sfx={}, isMuted=false;
+    let scoreText,pauseIcon,pauseOverlay,countdownText;
+    let sfx={}, isMuted=false;
     applyMuteState();
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
