@@ -553,7 +553,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
         if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        muteBtnHome.src = currentMuteIcon();
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         isMuted = !isMuted;
         muteBtnHome.src = currentMuteIcon();
         if (window.game && window.game.sound) {
@@ -655,8 +655,12 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                        .setInteractive().setDepth(3).setVisible(false);
       this.sound.mute = isMuted;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      const muteHomeEl = document.getElementById('muteToggleHome');
+      if (muteHomeEl) muteHomeEl.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       this.sound.mute = isMuted;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      const muteHomeEl = document.getElementById('muteToggleHome');
+      if (muteHomeEl) muteHomeEl.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       pauseOverlay=document.getElementById('pause-overlay');
 
       countdownText=this.add.text(cx,cy,'',{
