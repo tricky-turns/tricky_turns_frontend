@@ -131,10 +131,11 @@ let bestScoreText;
 
     
 function applyMuteState() {
-  if (window.muteIcon) applyMuteState();
-  applyMuteState();
-  if (window.game?.sound) window.game.sound.mute = isMuted;
+  if (muteIcon) muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+  if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+  if (game?.sound) game.sound.mute = isMuted;
 }
+
 
 // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
 const config={
