@@ -4,13 +4,17 @@
   <script src="https://sdk.minepi.com/pi-sdk.js">
   </script>
 <script>
+  window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("start-screen").classList.add("show");
+});
 </script>
   <script>
    Pi.init({ version: "2.0", sandbox: true });
   </script>
 <script>
+  window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("start-screen").classList.add("show");
+});
 </script>
   <meta charset="utf-8"/>
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
@@ -20,27 +24,14 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js">
   </script>
 <script>
+  window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("start-screen").classList.add("show");
+});
 </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
   <style>
 
-  #best-score-hud {
-  font-size: 1.6rem;
-  -webkit-text-stroke: 1px #000;
-  text-shadow: none;
-
-    position: absolute;
-    top: 64px;
-    left: 16px;
-    color: #fff;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    text-shadow: 0 0 4px #000;
-    z-index: 2;
-    display: none;
-  }
+  
 
   /* GAME OVER heading animation */
   @keyframes popFade {
@@ -411,8 +402,7 @@
   </div>
   <div class="bg-cloud three">
   </div>
-  <div id="best-score-hud">Best: 0</div>
-<div class="bg-cloud four">
+  <div class="bg-cloud four">
   </div>
   <div id="start-screen">
    <div id="user-info">
@@ -671,6 +661,10 @@ function create() {
 
       // HUD
       scoreText=this.add.text(16,44,'Score: 0',{
+      bestScoreText = this.add.text(16, 20, 'Best: ' + highScore, {
+        fontFamily: 'Poppins', fontSize: '36px', color: '#fff', stroke: '#000', strokeThickness: 4
+      }).setDepth(2).setVisible(false);
+
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
@@ -792,8 +786,9 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     document.getElementById('best-score-hud').style.display = 'block';
-document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
+bestScoreText.setText('Best: ' + highScore);
 scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
     scheduleSpawn();
@@ -869,7 +864,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
         const fs = document.getElementById('finalScore'); fs.innerText=score; fs.style.transform='scale(1.3)'; fs.style.transition='transform 0.4s ease'; setTimeout(()=>fs.style.transform='scale(1)', 50);
         if(score > highScore){
           highScore = score;
-document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
+bestScoreText.setText('Best: ' + highScore);
           sfx.newBest.play();
         }
         document.getElementById('bestScore').innerText = highScore;
@@ -932,7 +927,9 @@ document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
     }
   </script>
 <script>
+  window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("start-screen").classList.add("show");
+});
 </script>
   <div id="fade-screen">
   </div>
