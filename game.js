@@ -73,6 +73,8 @@ function fadeIn(callback, duration = 600) {
     callback?.();
   }, duration);
 }
+  }, duration);
+}
 
 // Reverses fadeIn effect to reveal screen content
 function fadeOut(callback, duration = 600) {
@@ -80,9 +82,10 @@ function fadeOut(callback, duration = 600) {
   fade.classList.remove('fade-in');
   setTimeout(() => {
     callback?.();
+  }, duration);
+}
   }
 
-function updateScoreDisplay() {
   if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
   const bestScoreEl = document.getElementById('bestScore');
   if (bestScoreEl) bestScoreEl.innerText = highScore;
