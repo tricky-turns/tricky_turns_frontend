@@ -552,6 +552,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
+        if (window.muteIcon) muteIcon.setTexture(currentMuteIcon());
         isMuted = !isMuted;
         muteBtnHome.src = currentMuteIcon();
         if (window.game && window.game.sound) {
@@ -650,6 +651,8 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                     .setInteractive().setDepth(3).setVisible(false);
       const muteIcon=this.add.image(cam.width-100,40,'iconUnmute')
                        .setInteractive().setDepth(3).setVisible(false);
+      this.sound.mute = isMuted;
+      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       this.sound.mute = isMuted;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       pauseOverlay=document.getElementById('pause-overlay');
