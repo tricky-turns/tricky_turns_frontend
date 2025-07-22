@@ -359,6 +359,7 @@
   </div>
   <div class="bg-cloud four">
   </div>
+  <img id="muteToggleHome" src="assets/icon-unmute.svg" style="position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; cursor: pointer; z-index: 3;">
   <div id="start-screen">
    <div id="user-info">
     User:
@@ -546,6 +547,19 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     let circle1,circle2,obstacles,points,score=0;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
+    const muteBtnHome = document.getElementById('muteToggleHome');
+    const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
+    if (muteBtnHome) {
+      muteBtnHome.src = currentMuteIcon();
+      muteBtnHome.addEventListener('click', () => {
+        isMuted = !isMuted;
+        muteBtnHome.src = currentMuteIcon();
+        if (window.game && window.game.sound) {
+          window.game.sound.mute = isMuted;
+        }
+      });
+    }
+
 
     // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
 const config={
