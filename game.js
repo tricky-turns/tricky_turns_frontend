@@ -131,8 +131,7 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     const LANES = [];
     let gameStarted=false, gameOver=false, gamePaused=false;
     let direction=1, angle=0, radius=100, speed=3, maxSpeed=6;
-    let score=0;
-const circle1,circle2,obstacles,points;
+    let circle1,circle2,obstacles,points,score=0;
 const muteIcon;
 const bestScoreText;
 
