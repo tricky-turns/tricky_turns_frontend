@@ -1,6 +1,12 @@
 
    Pi.init({ version: "2.0", sandbox: true });
 const muteBtnHome = document.getElementById('muteToggleHome');
+if (muteBtnHome) {
+  muteBtnHome.addEventListener('click', () => {
+    isMuted = !isMuted;
+    updateMuteIcons();
+  });
+}
 function updateMuteIcons() {
   const icon = isMuted ? 'icon-unmute.svg' : 'icon-mute.svg';
 }
@@ -219,13 +225,16 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                     .setInteractive().setDepth(3).setVisible(false);
       muteIcon = this.add.image(cam.width-100,40,'iconUnmute')
       window.muteIcon = muteIcon
+      this.sound.mute = isMuted;
                        .setInteractive().setDepth(3).setVisible(false);
-      if (!window.muteIcon) window.muteIcon = muteIcon;
+      if (!window.muteIcon) window.muteIcon = muteIcon
+      this.sound.mute = isMuted;;
       if (muteBtnHome) {
       }
       if (muteBtnHome) {
       }
-      if (!window.muteIcon) window.muteIcon = muteIcon;
+      if (!window.muteIcon) window.muteIcon = muteIcon
+      this.sound.mute = isMuted;;
       if (muteBtnHome) {
       }
       if (muteBtnHome) {
@@ -247,6 +256,10 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
 
       // mute toggle
       muteIcon.on('pointerdown',()=>{
+        isMuted = !isMuted;
+        updateMuteIcons();
+        if (!isMuted) sfx.uiClick.play();
+      });
         isMuted=!isMuted;
         this.sound.mute=isMuted;
         const homeBtn = muteBtnHome;
