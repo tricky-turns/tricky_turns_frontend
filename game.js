@@ -155,6 +155,18 @@ function preload() {
     }
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
+function getSpawnInterval(){
+        const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
+        return Phaser.Math.Linear(1500,500,t);
+      }
+
+function scheduleSpawn(){
+  const scene = window.game.scene.keys.default;
+  scene.time.delayedCall(getSpawnInterval(), () => {
+    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
+    scheduleSpawn();
+  }
+
 function create() {
       if (obstacles) obstacles.clear(true, true);
       if (points) points.clear(true, true);
@@ -327,16 +339,8 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
 
       // spawn scheduler
       const scene=this;
-      function getSpawnInterval(){
-        const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
-        return Phaser.Math.Linear(1500,500,t);
-      }
-      function scheduleSpawn(){
-  const scene = window.game.scene.keys.default;
-  scene.time.delayedCall(getSpawnInterval(), () => {
-    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
-    scheduleSpawn();
-  }, []);
+      
+      , []);
       }
 
       // START
