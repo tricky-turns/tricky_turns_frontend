@@ -15,6 +15,47 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap" rel="stylesheet"/>
   <style>
+
+  #best-score-hud {
+    position: absolute;
+    top: 64px;
+    left: 16px;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    text-shadow: 0 0 4px #000;
+    z-index: 2;
+    display: none;
+  }
+
+  /* GAME OVER heading animation */
+  @keyframes popFade {
+    0% { transform: scale(0.8); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  #game-over-screen h1 {
+    animation: popFade 0.6s ease-out;
+  }
+  #rankMessage {
+    animation: popFade 0.8s ease-out 0.3s both;
+  }
+  .results {
+    transition: transform 0.4s ease;
+  }
+
+  /* Smooth screen transitions */
+  #start-screen, #game-over-screen, #leaderboard-screen {
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  #start-screen.show, #game-over-screen.show, #leaderboard-screen.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
    * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; }
     body {
@@ -357,7 +398,8 @@
   </div>
   <div class="bg-cloud three">
   </div>
-  <div class="bg-cloud four">
+  <div id="best-score-hud">Best: 0</div>
+<div class="bg-cloud four">
   </div>
   <div id="start-screen">
    <div id="user-info">
@@ -531,11 +573,11 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
   list.appendChild(li);
 });
 
-      document.getElementById('leaderboard-screen').style.display = 'flex';
+      const lb = document.getElementById('leaderboard-screen'); lb.style.display='flex'; lb.classList.add('show');
     }
     document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
     document.getElementById('closeLeaderboardBtn').addEventListener('click', ()=>{
-      document.getElementById('leaderboard-screen').style.display = 'none';
+      const lb = document.getElementById('leaderboard-screen'); lb.classList.remove('show'); setTimeout(()=>lb.style.display='none', 500);
     });
 
     // —— Game & Leaderboard logic ——
@@ -626,7 +668,9 @@ function create() {
       }
 
 
-      pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
+      document.getElementById('best-score-hud').style.display = 'block';
+document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
+pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
                     .setInteractive().setDepth(3).setVisible(false);
       const muteIcon=this.add.image(cam.width-100,40,'iconUnmute')
                        .setInteractive().setDepth(3).setVisible(false);
@@ -733,7 +777,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
   fadeIn(() => {
     document.getElementById('user-info').style.display='none';
     document.getElementById('viewLeaderboardBtn').style.display='none';
-    document.getElementById('start-screen').style.display='none';
+    document.getElementById('start-screen').classList.remove('show');
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
@@ -809,9 +853,10 @@ document.getElementById('homeBtn').addEventListener('click', () => {
       this.time.delayedCall(700,()=>{
         this.physics.pause();
         document.querySelector('canvas').style.visibility='hidden';
-        document.getElementById('finalScore').innerText=score;
+        const fs = document.getElementById('finalScore'); fs.innerText=score; fs.style.transform='scale(1.3)'; fs.style.transition='transform 0.4s ease'; setTimeout(()=>fs.style.transform='scale(1)', 50);
         if(score > highScore){
           highScore = score;
+document.getElementById('best-score-hud').innerText = `Best: ${highScore}`;
           sfx.newBest.play();
         }
         document.getElementById('bestScore').innerText = highScore;
@@ -855,7 +900,7 @@ document.getElementById('homeBtn').addEventListener('click', () => {
               }
             }
 
-            document.getElementById('game-over-screen').style.display='flex';
+            const go = document.getElementById('game-over-screen'); go.style.display='flex'; go.classList.add('show');
           }).catch(console.error);
 
       });
