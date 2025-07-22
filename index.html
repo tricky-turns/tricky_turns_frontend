@@ -616,6 +616,10 @@ function create() {
 
       // HUD
       scoreText=this.add.text(16,16,'Score: 0',{
+      bestScoreText=this.add.text(16,64,'Best: '+highScore,{
+        fontFamily:'Poppins', fontSize:'28px',
+        color:'#fff', stroke:'#000', strokeThickness:3
+      }).setDepth(2).setVisible(false);
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
       }).setDepth(2).setVisible(false);
@@ -737,6 +741,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
     scheduleSpawn();
@@ -811,10 +816,12 @@ document.getElementById('homeBtn').addEventListener('click', () => {
         document.querySelector('canvas').style.visibility='hidden';
         document.getElementById('finalScore').innerText=score;
         if(score > highScore){
+          bestScoreText.setText('Best: ' + score);
           highScore = score;
           sfx.newBest.play();
         }
         document.getElementById('bestScore').innerText = highScore;
+        bestScoreText.setText('Best: ' + highScore);
         if(useLocalHighScore) {
           localStorage.setItem('tricky_high_score', highScore);
         }
