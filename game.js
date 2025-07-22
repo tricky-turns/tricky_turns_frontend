@@ -223,7 +223,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
 
       pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
       muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(3).setVisible(false);
-                       .setInteractive().setDepth(3).setVisible(false);
       if (!window.muteIcon) window.muteIcon = muteIcon
       this.sound.mute = isMuted;;
       if (muteBtnHome) {
