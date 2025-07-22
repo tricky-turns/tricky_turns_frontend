@@ -336,7 +336,8 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
   scene.time.delayedCall(getSpawnInterval(), () => {
     if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
     scheduleSpawn();
-  }, [], scene);
+  }, []);
+}, [], scene);
 },[],scene);
       }
 
