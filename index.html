@@ -321,13 +321,13 @@
 #leaderboard li,
 #leaderboardEntriesHome li {
   /* replace the 4-value padding shorthand so we can set a larger left inset */
-  padding: 0.5rem 0.8rem 0.5rem 2rem;   /* top/right/bottom/left */ 
+  padding: 0.5rem 0.8rem 0.5rem 2rem;   /* top/right/bottom/left */ :contentReference[oaicite:0]{index=0}
 }
 
 /* enlarge the gap after the badge */
 #leaderboard li::before,
 #leaderboardEntriesHome li::before {
-  margin-right: 1.2rem;                  /* was 0.8rem */ 
+  margin-right: 1.2rem;                  /* was 0.8rem */ :contentReference[oaicite:1]{index=1}
   /* optionally center multi-digit ranks in a fixed box: */
   min-width: 2rem;
   text-align: center;
@@ -344,8 +344,6 @@
 #start-screen button,
 #start-screen .btn-primary,
 #start-screen .btn-secondary,
-#game-over-screen button,
-#game-over-screen .btn-primary,
 #game-over-screen button,
 #game-over-screen .btn-primary {
   pointer-events: auto;            /* buttons now clickable again */ 
@@ -545,7 +543,6 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
     let gameStarted=false, gameOver=false, gamePaused=false;
     let direction=1, angle=0, radius=100, speed=3, maxSpeed=6;
     let circle1,circle2,obstacles,points,score=0;
-let bestScoreText;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
 
@@ -621,17 +618,7 @@ function create() {
       scoreText=this.add.text(16,16,'Score: 0',{
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
-      }).setDepth(10).setVisible(false);
-
-      bestScoreText=this.add.text(16,72,'Best: 0',{
-        fontFamily:'Poppins', fontSize:'28px',
-        color:'#fff', stroke:'#000', strokeThickness:3
-      }).setDepth(10).setVisible(false);
-
-      
-        fontFamily:'Poppins', fontSize:'36px',
-        color:'#fff', stroke:'#000', strokeThickness:4
-      }).setDepth(10).setVisible(false);
+      }).setDepth(2).setVisible(false);
 
       // initialize highScore from localStorage if using guest
       if (useLocalHighScore) {
@@ -750,7 +737,6 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
     scheduleSpawn();
@@ -880,7 +866,6 @@ document.getElementById('homeBtn').addEventListener('click', () => {
       score++;
       sfx.point.play();
       scoreText.setText('Score: '+score);
-      bestScoreText.setText('Best: '+Math.max(score, highScore));
       this.tweens.add({
         targets:scoreText,
         scaleX:1.1, scaleY:1.1,
