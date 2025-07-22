@@ -33,7 +33,7 @@ async function initAuth() {
         }
         // persist locally as well
         localStorage.setItem('tricky_high_score', highScore);
-        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+        if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
       } catch (e) {
         console.log('Not signed in:', e);
       }
@@ -80,7 +80,17 @@ function fadeOut(callback, duration = 600) {
   fade.classList.remove('fade-in');
   setTimeout(() => {
     callback?.();
-  }, duration);
+  }
+
+function updateScoreDisplay() {
+  if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
+  const bestScoreEl = document.getElementById('bestScore');
+  if (bestScoreEl) bestScoreEl.innerText = highScore;
+
+  const finalScoreEl = document.getElementById('finalScore');
+  if (finalScoreEl) finalScoreEl.innerText = score;
+}
+, duration);
 }
 
 
@@ -210,7 +220,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       // initialize highScore from localStorage if using guest
       if (useLocalHighScore) {
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
-        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+        if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
       }
 
 
@@ -424,11 +434,11 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
           highScore = score;
           sfx.newBest.play();
         }
-        document.getElementById('bestScore').innerText = highScore;
-        bestScoreText.setText('Best: ' + highScore);
+        updateScoreDisplay();
+        updateScoreDisplay();
         if(useLocalHighScore) {
           localStorage.setItem('tricky_high_score', highScore);
-        if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+        if (typeof bestScoreText !== 'undefined') updateScoreDisplay();
         }
 
         // POST score only if not guest
