@@ -1,6 +1,9 @@
 
    Pi.init({ version: "2.0", sandbox: true });
 const muteBtnHome = document.getElementById('muteToggleHome');
+function updateMuteIcons() {
+  const icon = isMuted ? 'icon-unmute.svg' : 'icon-mute.svg';
+}
 
   
 
@@ -114,16 +117,13 @@ let bestScoreText;
 
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
-    if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
         isMuted = !isMuted;
-        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+        updateMuteIcons();
         if (window.game && window.game.sound) {
-          window.game.sound.mute = isMuted;
         }
       });
     }
@@ -209,6 +209,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
 
       // initialize highScore from localStorage if using guest
       if (useLocalHighScore) {
+        updateMuteIcons();
         highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
         if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
       }
@@ -219,25 +220,15 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon = this.add.image(cam.width-100,40,'iconUnmute')
       window.muteIcon = muteIcon
                        .setInteractive().setDepth(3).setVisible(false);
-      this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       pauseOverlay=document.getElementById('pause-overlay');
 
@@ -258,7 +249,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
-        muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         const homeBtn = muteBtnHome;
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
