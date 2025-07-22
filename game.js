@@ -42,29 +42,6 @@ async function initAuth() {
     // Attempt silent auth on load
     initAuth();
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  sfx.uiClick.play();
-  fadeIn(() => {
-    document.getElementById('user-info').style.display='none';
-    document.getElementById('viewLeaderboardBtn').style.display='none';
-    document.getElementById('start-screen').style.display='none';
-    muteBtnHome.style.display='none';
-    gameStarted=true;
-    document.querySelector('canvas').style.visibility='visible';
-    scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
-    pauseIcon.setVisible(true);
-    muteIcon.setVisible(true);
-    scheduleSpawn();
-    fadeOut();
-  });
-});
-
-document.getElementById('homeBtn').addEventListener('click', () => {
-  fadeIn(() => window.location.href = window.location.href);
-});
-
-
     // If not signed in, show login prompt
     document.getElementById('loginBtn').addEventListener('click', initAuth);
 
@@ -137,13 +114,13 @@ let bestScoreText;
 
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
-    applyMuteState();
+    if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
       muteBtnHome.src = currentMuteIcon();
       muteBtnHome.addEventListener('click', () => {
         isMuted = !isMuted;
-        if (window.muteIcon) window.applyMuteState();
+        if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if (window.game && window.game.sound) {
           window.game.sound.mute = isMuted;
@@ -152,16 +129,7 @@ let bestScoreText;
     }
 
 
-    
-
-function applyMuteState() {
-  if (muteIcon) muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-  if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-  if (window.game?.sound) window.game.sound.mute = isMuted;
-}
-
-
-// Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
+    // Phaser 3 game configuration: sets rendering mode, physics, and scene callbacks
 const config={
       type:Phaser.AUTO,
       transparent:true,
@@ -193,10 +161,7 @@ function create() {
 
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
-      LANES.length = 0;
-for (let i = -1; i <= 1; i++) {
-  LANES.push(cy + i * radius);
-}
+      LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
 
       // generate textures
       this.make.graphics({add:false})
@@ -254,16 +219,26 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon = this.add.image(cam.width-100,40,'iconUnmute')
       window.muteIcon = muteIcon
                        .setInteractive().setDepth(3).setVisible(false);
-      applyMuteState();
+      this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      applyMuteState();
-      
-      
-      applyMuteState();
+      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      }
+      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      }
+      this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
-      applyMuteState();
-      
-      
+      muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      }
+      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (muteBtnHome) {
+        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      }
       pauseOverlay=document.getElementById('pause-overlay');
 
       countdownText=this.add.text(cx,cy,'',{
@@ -283,7 +258,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       muteIcon.on('pointerdown',()=>{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
-        applyMuteState();
+        muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
         const homeBtn = muteBtnHome;
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
@@ -357,10 +332,12 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         return Phaser.Math.Linear(1500,500,t);
       }
       function scheduleSpawn(){
-        scene.time.delayedCall(getSpawnInterval(),()=>{
-          if(gameStarted&&!gameOver&&!gamePaused) spawnObjects.call(scene);
-          scheduleSpawn();
-        },[],scene);
+  const scene = window.game.scene.keys.default;
+  scene.time.delayedCall(getSpawnInterval(), () => {
+    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
+    scheduleSpawn();
+  }, [], scene);
+},[],scene);
       }
 
       // START
@@ -408,21 +385,6 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
       obstacles.children.iterate(o=>o.x-=speed);
       points.children.iterate(p=>p.x-=speed);
     }
-
-
-function getSpawnInterval(){
-  const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
-  return Phaser.Math.Linear(1500,500,t);
-}
-function scheduleSpawn(){
-  scene.time.delayedCall(getSpawnInterval(),()=>{
-    if(gameStarted&&!gameOver&&!gamePaused) spawnObjects.call(scene);
-    scheduleSpawn();
-  },[],scene);
-}
-
-
-
 
     function spawnObjects(){
       const y=Phaser.Math.RND.pick(LANES);
