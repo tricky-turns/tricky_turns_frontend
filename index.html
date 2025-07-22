@@ -616,12 +616,12 @@ function create() {
 
       // HUD
       scoreText=this.add.text(16,16,'Score: 0',{
-      bestScoreText=this.add.text(16,64,'Best: '+highScore,{
-        fontFamily:'Poppins', fontSize:'28px',
-        color:'#fff', stroke:'#000', strokeThickness:3
-      }).setDepth(2).setVisible(false);
         fontFamily:'Poppins', fontSize:'36px',
         color:'#fff', stroke:'#000', strokeThickness:4
+      }).setDepth(2).setVisible(false);
+bestScoreText=this.add.text(16,64,'Best: '+highScore,{
+        fontFamily:'Poppins', fontSize:'28px',
+        color:'#fff', stroke:'#000', strokeThickness:3
       }).setDepth(2).setVisible(false);
 
       // initialize highScore from localStorage if using guest
