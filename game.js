@@ -340,27 +340,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       }
 
       // START
-document.getElementById('startBtn').addEventListener('click', ()=>{
-  sfx.uiClick.play();
-  fadeIn(() => {
-    document.getElementById('user-info').style.display='none';
-    document.getElementById('viewLeaderboardBtn').style.display='none';
-    document.getElementById('start-screen').style.display='none';
-    muteBtnHome.style.display='none';
-    gameStarted=true;
-    document.querySelector('canvas').style.visibility='visible';
-    scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
-    pauseIcon.setVisible(true);
-    muteIcon.setVisible(true);
-    scheduleSpawn();
-    fadeOut();
-  });
-});
-
-
-      document.getElementById('homeBtn').addEventListener('click', () => {
-        fadeIn(() => window.location.href = window.location.href);
       });
 
 
