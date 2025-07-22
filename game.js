@@ -130,6 +130,7 @@ let bestScoreText;
 
 
     
+
 function applyMuteState() {
   if (muteIcon) muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
