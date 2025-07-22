@@ -2,10 +2,7 @@
    Pi.init({ version: "2.0", sandbox: true });
 const muteBtnHome = document.getElementById('muteToggleHome');
 
-  
-
-
-   // —— Pi Authentication setup ——
+// —— Pi Authentication setup ——
     const scopes = ['username'];
     let piUsername = 'Guest';
     let highScore = 0;
