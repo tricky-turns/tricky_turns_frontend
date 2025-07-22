@@ -1,10 +1,9 @@
 
-   Pi.init({ versconst muteBtnHome = muteBtnHome;
-ion: "2.0", sandbox: true });
+   Pi.init({ version: "2.0", sandbox: true });
   
 
 
-   // \E2\80\94\E2\80\94 Pi Authentication setup \E2\80\94\E2\80\94
+   // —— Pi Authentication setup ——
     const scopes = ['username'];
     let piUsername = 'Guest';
     let highScore = 0;
@@ -83,7 +82,7 @@ function fadeOut(callback, duration = 600) {
 }
 
 
-    // \E2\80\94\E2\80\94 Show Home Leaderboard \E2\80\94\E2\80\94
+    // —— Show Home Leaderboard ——
     // Fetch and display the top 100 leaderboard on the start screen
 async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
@@ -103,14 +102,14 @@ li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
       document.getElementById('leaderboard-screen').style.display = 'none';
     });
 
-    // \E2\80\94\E2\80\94 Game & Leaderboard logic \E2\80\94\E2\80\94
+    // —— Game & Leaderboard logic ——
     const LANES = [];
     let gameStarted=false, gameOver=false, gamePaused=false;
     let direction=1, angle=0, radius=100, speed=3, maxSpeed=6;
     let circle1,circle2,obstacles,points,score=0;
     let scoreText,pauseIcon,pauseOverlay,countdownText;
     let sfx={}, isMuted=false;
-    const muteBtnHome = muteBtnHome;
+    const muteBtnHome = document.getElementById('muteToggleHome');
     if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
     if (muteBtnHome) {
@@ -219,22 +218,22 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       this.sound.mute = isMuted;
       if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
-      if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-      if (muteBtnHome) {
-        muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
+      if (document.getElementById('muteToggleHome')) {
+        document.getElementById('muteToggleHome').src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       pauseOverlay=document.getElementById('pause-overlay');
 
@@ -256,7 +255,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         isMuted=!isMuted;
         this.sound.mute=isMuted;
         muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-        const homeBtn = muteBtnHome;
+        const homeBtn = document.getElementById('muteToggleHome');
         if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
         if(!isMuted) sfx.uiClick.play();
       });
@@ -342,7 +341,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
     document.getElementById('user-info').style.display='none';
     document.getElementById('viewLeaderboardBtn').style.display='none';
     document.getElementById('start-screen').style.display='none';
-    muteBtnHome.style.display='none';
+    document.getElementById('muteToggleHome').style.display='none';
     gameStarted=true;
     document.querySelector('canvas').style.visibility='visible';
     scoreText.setVisible(true);
@@ -365,7 +364,10 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
 
 
 
-
+document.getElementById('homeBtn').addEventListener('click', () => {
+  fadeIn(() => {
+    window.location.href = window.location.href;
+  });
 });
 
 
@@ -459,13 +461,13 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
             const rankMessage = document.getElementById('rankMessage');
             if (rankMessage) {
               if (rank >= 0) {
-                rankMessage.innerText = `\F0\9F\8F\85 Your Global Rank: #${rank + 1}`;
+                rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
               } else {
-                rankMessage.innerText = `\F0\9F\92\A1 You're currently unranked \E2\80\94 keep playing!`;
+                rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
               }
             }
 
-            muteBtnHome.style.display='none';
+            document.getElementById('muteToggleHome').style.display='none';
             document.getElementById('game-over-screen').style.display='flex';
           }).catch(console.error);
 
