@@ -165,7 +165,8 @@ function scheduleSpawn(){
   scene.time.delayedCall(getSpawnInterval(), () => {
     if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
     scheduleSpawn();
-  }
+  });
+}}
 
 function create() {
       if (obstacles) obstacles.clear(true, true);
