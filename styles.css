@@ -16,7 +16,7 @@
     #user-info button {
       background:rgba(255,255,255,0.8);
       border:none; border-radius:0.3rem;
-      padding:0.2rem 0.6rem; p0; cursor:pointer;
+      padding:0.2rem 0.6rem; cursor:pointer;
     }
 
     /* clouds visible but don’t catch taps */
@@ -44,7 +44,6 @@
     #start-screen h1 {
     color: #fff;
     font-size: 4rem;
-    p0;
     text-transform: uppercase;
     letter-spacing: 0.1rem;
     text-align: center;
@@ -63,7 +62,6 @@
     background: #3EAFF6;
     color: #fff;
     font-size: 1.4rem;
-    p0;
     padding: 0.8rem 2.5rem;
     border: none;
     border-radius: 2rem;
@@ -87,7 +85,6 @@
   .btn-secondary {
   background: rgba(255,255,255,0.8);
   color: #000;
-  p0;
   padding: 0.2rem 0.6rem;
   font-size: 0.9rem;
   border: none;
@@ -104,7 +101,6 @@
       background: #3EAFF6;
       color: #fff;
       font-size: 1.4rem;
-      p0;
       padding: 0.8rem 2.5rem;
       border: none;
       border-radius: 2rem;
@@ -155,8 +151,7 @@
       background:rgba(0,0,0,0.4); z-index:4; pointer-events:none;
     }
     #pause-overlay .paused-text {
-      font-family:'Poppins',sans-serif; font-size:4rem; p0;
-      color:#fff; text-transform:uppercase; letter-spacing:.1rem;
+      font-family:'Poppins',sans-serif; font-size:4rem; color:#fff; text-transform:uppercase; letter-spacing:.1rem;
       -webkit-text-stroke:1px #000;
     }
 
@@ -166,8 +161,7 @@
       z-index:3; cursor:pointer;
     }
     #game-over-screen h2 {
-      font-family:'Poppins',sans-serif; color:#3EAFF6; font-size:4rem; p0;
-      text-transform:uppercase; letter-spacing:.1rem; -webkit-text-stroke:1px #000;
+      font-family:'Poppins',sans-serif; color:#3EAFF6; font-size:4rem; text-transform:uppercase; letter-spacing:.1rem; -webkit-text-stroke:1px #000;
     }
     .result-wrapper { position:relative; width:300px; height:300px; }
     .orb-bg {
@@ -177,8 +171,7 @@
     }
     .results {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      color:#fff; font-size:2rem; p0;
-      text-transform:uppercase; letter-spacing:.15rem;
+      color:#fff; font-size:2rem; text-transform:uppercase; letter-spacing:.15rem;
       -webkit-text-stroke:2px #000; text-align:center; line-height:1.3;
     }
 
@@ -215,8 +208,7 @@
       position:absolute; top:1rem; right:1rem;
       background:#3EAFF6; color:#fff;
       border:none; border-radius:0.3rem;
-      padding:0.5rem 1rem; p0;
-      cursor:pointer;
+      padding:0.5rem 1rem; cursor:pointer;
     }
     #leaderboard-screen ol {
       color:#fff; list-style-position:inside;
@@ -251,7 +243,6 @@
     content: attr(data-rank);
     background: #3EAFF6;
     color: #fff;
-    p0;
     font-size: 0.9rem;
     padding: 0.25rem 0.6rem;
     border-radius: 1rem;
