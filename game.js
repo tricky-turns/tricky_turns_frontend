@@ -256,12 +256,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         updateMuteIcons();
         if (!isMuted) sfx.uiClick.play();
       });
-        isMuted=!isMuted;
-        this.sound.mute=isMuted;
-        const homeBtn = muteBtnHome;
-        if (homeBtn) homeBtn.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
-        if(!isMuted) sfx.uiClick.play();
-      });
 
       // pause/play toggle
       pauseIcon.on('pointerdown',(_,x,y,e)=>{
