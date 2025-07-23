@@ -390,33 +390,36 @@ function handleGoHome() {
 
 // —— Play Again handler ——
 function handlePlayAgain() {
+  // play click SFX
   sfx.uiClick.play();
-  fadeIn(() => {
-    const scene = window.game.scene.keys.default;
-    scene.scene.restart();
 
-    // Reset game state
-    score = 0;
-    gameStarted = true;
-    gameOver = false;
-    gamePaused = false;
+  // immediately restart the Phaser scene
+  const scene = window.game.scene.keys.default;
+  scene.scene.restart();
 
-    // Hide Game Over UI
-    document.getElementById('game-over-screen').style.display = 'none';
+  // reset all your game-state globals
+  score = 0;
+  speed = 3;           // back to your initial speed
+  direction = 1;       // reset orbit direction if you ever flipped it
+  gameStarted = true;
+  gameOver   = false;
+  gamePaused = false;
 
-    // Show canvas & HUD
-    document.querySelector('canvas').style.visibility = 'visible';
-    scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
-    pauseIcon.setVisible(true);
-    muteIcon.setVisible(true);
+  // hide the Game Over overlay
+  document.getElementById('game-over-screen').style.display = 'none';
 
-    // Resume spawning
-    scheduleSpawn();
+  // bring the canvas and HUD back
+  document.querySelector('canvas').style.visibility = 'visible';
+  scoreText .setVisible(true);
+  bestScoreText.setVisible(true);
+  pauseIcon .setVisible(true);
+  muteIcon  .setVisible(true);
 
-    fadeOut();
-  });
+  // clear any old timer, then kick off spawning again
+  if (spawnTimer) spawnTimer.remove(false);
+  scheduleSpawn();
 }
+
 
 
 
