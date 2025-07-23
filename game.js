@@ -393,12 +393,10 @@ function handleGoHome() {
     // Use direct onclick assignments to avoid duplicate listeners on restart
     startBtn.onclick = handleStartGame;
     homeBtn.onclick = handleGoHome;
-
-
-     // Play Again button
+    // Play Again button listener
     const playAgainBtn = document.getElementById('playAgainBtn');
     if (playAgainBtn) {
-      playAgainBtn.onclick = () => {
+      playAgainBtn.addEventListener('click', () => {
         sfx.uiClick.play();
         fadeIn(() => {
           // Restart the Phaser scene cleanly
@@ -426,7 +424,7 @@ function handleGoHome() {
 
           fadeOut();
         });
-      };
+      });
     }
 }
 
