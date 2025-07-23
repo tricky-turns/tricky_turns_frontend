@@ -1,15 +1,48 @@
-const muteBtnHome = document.getElementById('muteToggleHome');
+// --- Core Game State & Config (declare before anything else) ---
+let isMuted = false; // <-- MUST be first!
+const LANES = [];
+let gameStarted = false, gameOver = false, gamePaused = false;
+let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
+let circle1, circle2, obstacles, points, score = 0;
+let muteIcon;
+let bestScoreText;
+let scoreText, pauseIcon, countdownText;
+let spawnTimer;
+let sfx = {};
 
-// Initialize Pi SDK (with sandbox for local dev)
+// --- Utility: DOM Access Helpers ---
+function $(id) { return document.getElementById(id); }
+function $qs(selector) { return document.querySelector(selector); }
+
+// --- Cache important DOM elements ---
+const muteBtnHome = $('muteToggleHome');
+const usernameElem = $('username');
+const loginBtn = $('loginBtn');
+const userInfo = $('user-info');
+const viewLeaderboardBtn = $('viewLeaderboardBtn');
+const startScreen = $('start-screen');
+const fadeScreen = $('fade-screen');
+const pauseOverlay = $('pause-overlay');
+const startBtn = $('startBtn');
+const homeBtn = $('homeBtn');
+const playAgainBtn = $('playAgainBtn');
+const gameOverScreen = $('game-over-screen');
+const leaderboardEntriesHome = $('leaderboardEntriesHome');
+const leaderboardScreen = $('leaderboard-screen');
+const leaderboardEntries = $('leaderboardEntries');
+const leaderboardDiv = $('leaderboard');
+const rankMessage = $('rankMessage');
+const finalScoreElem = $('finalScore');
+const bestScoreElem = $('bestScore');
+
+// --- Pi SDK Initialization ---
 let piInitPromise = null;
 function initPi() {
-  if (!piInitPromise) {
-    piInitPromise = Pi.init({ version: "2.0", sandbox: true });
-  }
+  if (!piInitPromise) piInitPromise = Pi.init({ version: "2.0", sandbox: true });
   return piInitPromise;
 }
 
-// —— Pi Authentication setup ——
+// --- Pi Authentication setup ---
 const scopes = ['username'];
 let piUsername = 'Guest';
 let highScore = 0;
@@ -24,8 +57,8 @@ async function initAuth() {
   try {
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
     piUsername = auth.user.username;
-    document.getElementById('username').innerText = piUsername;
-    document.getElementById('loginBtn').style.display = 'none';
+    if (usernameElem) usernameElem.textContent = piUsername;
+    if (loginBtn) loginBtn.style.display = 'none';
     useLocalHighScore = false;
     const res = await fetch(`/api/leaderboard/${piUsername}`);
     if (res.ok) {
@@ -37,15 +70,13 @@ async function initAuth() {
     localStorage.setItem('tricky_high_score', highScore);
     if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
   } catch (e) {
-    console.log('Not signed in:', e);
+    console.error('Not signed in:', e);
   }
 }
 
-initAuth();
-document.getElementById('loginBtn').addEventListener('click', initAuth);
-
-// Simple fade helpers
+// --- Utility: Fade In/Out helpers ---
 function fadeInElement(el, duration = 500, displayType = 'flex') {
+  if (!el) return;
   el.style.opacity = 0;
   el.style.display = displayType;
   requestAnimationFrame(() => {
@@ -55,82 +86,81 @@ function fadeInElement(el, duration = 500, displayType = 'flex') {
 }
 
 function fadeOutElement(el, duration = 500) {
+  if (!el) return;
   el.style.transition = `opacity ${duration}ms ease`;
   el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, duration);
+  setTimeout(() => { el.style.display = 'none'; }, duration);
 }
 
 function fadeIn(callback, duration = 600) {
-  const fade = document.getElementById('fade-screen');
-  fade.classList.add('fade-in');
-  setTimeout(() => {
-    callback?.();
-  }, duration);
+  if (fadeScreen) fadeScreen.classList.add('fade-in');
+  setTimeout(() => { callback?.(); }, duration);
 }
 
 function fadeOut(callback, duration = 600) {
-  const fade = document.getElementById('fade-screen');
-  fade.classList.remove('fade-in');
-  setTimeout(() => {
-    callback?.();
-  }, duration);
+  if (fadeScreen) fadeScreen.classList.remove('fade-in');
+  setTimeout(() => { callback?.(); }, duration);
 }
 
-// —— Show Home Leaderboard ——
+// --- Utility: Mute State Handler ---
+function currentMuteIcon() { return isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg'; }
+function setMuteState(muted) {
+  isMuted = muted;
+  if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+  if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+  if (window.game && window.game.sound) window.game.sound.mute = isMuted;
+}
+
+// --- Show Home Leaderboard ---
 async function showHomeLeaderboard() {
-  const list = document.getElementById('leaderboardEntriesHome');
-  while (list.firstChild) list.removeChild(list.firstChild);
-  const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
-  data.forEach((e, i) => {
-    const li = document.createElement('li');
-    li.setAttribute('data-rank', `#${i + 1}`);
-    li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-    list.appendChild(li);
-  });
-  document.getElementById('leaderboard-screen').style.display = 'flex';
+  if (!leaderboardEntriesHome) return;
+  while (leaderboardEntriesHome.firstChild) leaderboardEntriesHome.removeChild(leaderboardEntriesHome.firstChild);
+  try {
+    const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+    data.forEach((e, i) => {
+      const li = document.createElement('li');
+      li.setAttribute('data-rank', `#${i + 1}`);
+      // Use textContent to avoid injection
+      const userSpan = document.createElement('strong');
+      userSpan.textContent = e.username;
+      const scoreSpan = document.createElement('strong');
+      scoreSpan.textContent = e.score;
+      li.appendChild(userSpan);
+      li.appendChild(scoreSpan);
+      leaderboardEntriesHome.appendChild(li);
+    });
+    if (leaderboardScreen) leaderboardScreen.style.display = 'flex';
+  } catch (e) {
+    alert('Failed to load leaderboard. Please try again later.');
+    console.error(e);
+  }
 }
-document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
-document.getElementById('closeLeaderboardBtn').addEventListener('click', ()=>{
-  document.getElementById('leaderboard-screen').style.display = 'none';
-});
 
-// —— Game & Leaderboard logic ——
-const LANES = [];
-let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
-let circle1, circle2, obstacles, points, score = 0;
-let muteIcon;
-let bestScoreText;
-let scoreText, pauseIcon, pauseOverlay, countdownText;
-let spawnTimer;
-let sfx = {}, isMuted = false;
-
-const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
+// --- Mute button setup ---
 if (muteBtnHome) {
   muteBtnHome.src = currentMuteIcon();
-  muteBtnHome.addEventListener('click', () => {
-    isMuted = !isMuted;
-    if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-    muteBtnHome.src = currentMuteIcon();
-    if (window.game && window.game.sound) {
-      window.game.sound.mute = isMuted;
-    }
-  });
+  muteBtnHome.onclick = () => setMuteState(!isMuted);
 }
 
-// Phaser 3 game configuration
-const config = {
+// --- Login button setup ---
+if (loginBtn) loginBtn.onclick = initAuth;
+
+// --- Leaderboard buttons setup ---
+if (viewLeaderboardBtn) viewLeaderboardBtn.onclick = showHomeLeaderboard;
+$('closeLeaderboardBtn')?.addEventListener('click', () => {
+  if (leaderboardScreen) leaderboardScreen.style.display = 'none';
+});
+
+// --- Phaser & Game State ---
+window.game = new Phaser.Game({
   type: Phaser.AUTO,
   transparent: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: false } },
   scene: { key: 'default', preload, create, update }
-};
-window.game = new Phaser.Game(config);
+});
 
-// Preload audio assets used throughout the game (SFX)
+// --- Phaser Scene: Preload ---
 function preload() {
   this.load.audio('explode', 'assets/explode.wav');
   this.load.audio('move', 'assets/move.wav');
@@ -144,13 +174,14 @@ function preload() {
   this.load.image('iconUnmute', 'assets/icon-unmute.svg');
 }
 
-// Main game setup: initialize UI, player orbs, physics, input, and scheduling
+// --- Phaser Scene: Create ---
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
   LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
+
+  // Clean up previous textures
   if (this.textures.exists('orb')) this.textures.remove('orb');
-  // generate textures
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
     .fillStyle(0xffffff, 1).fillCircle(50, 50, 20)
@@ -167,13 +198,13 @@ function create() {
     .closePath().fillPath()
     .generateTexture('point', 50, 50).destroy();
 
-  // orbit sprites
+  // Orbit sprites
   circle1 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
   circle2 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
-  // trail
+  // Trail
   if (this.trail) { this.trail.destroy(); this.trail = null; }
   this.trail = this.add.particles('orb');
   [circle1, circle2].forEach(c => this.trail.createEmitter({
@@ -181,12 +212,7 @@ function create() {
     scale: { start: 0.3, end: 0 }, alpha: { start: 0.4, end: 0 },
     frequency: 50, blendMode: 'ADD'
   }));
-  this.events.on('shutdown', () => {
-    if (this.trail) {
-      this.trail.destroy();
-      this.trail = null;
-    }
-  });
+  this.events.on('shutdown', () => { if (this.trail) { this.trail.destroy(); this.trail = null; } });
 
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
@@ -196,15 +222,16 @@ function create() {
     fontFamily: 'Poppins', fontSize: '36px',
     color: '#fff', stroke: '#000', strokeThickness: 4
   }).setDepth(2).setVisible(false);
+
   bestScoreText = this.add.text(16, 64, 'Best: ' + highScore, {
     fontFamily: 'Poppins', fontSize: '28px',
     color: '#fff', stroke: '#000', strokeThickness: 3
   }).setDepth(2).setVisible(false);
 
-  // initialize highScore from localStorage if using guest
+  // Initialize highScore from localStorage if using guest
   if (useLocalHighScore) {
     highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
-    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+    bestScoreText.setText('Best: ' + highScore);
   }
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
@@ -215,43 +242,35 @@ function create() {
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
-  pauseOverlay = document.getElementById('pause-overlay');
-
   countdownText = this.add.text(cx, cy, '', {
     fontFamily: 'Poppins', fontSize: '96px',
     color: '#fff', stroke: '#000', strokeThickness: 6
   }).setOrigin(0.5).setDepth(5).setVisible(false);
 
-  // SFX
-  sfx.explode = this.sound.add('explode');
-  sfx.move = this.sound.add('move');
-  sfx.point = this.sound.add('point');
-  sfx.newBest = this.sound.add('newBest');
-  sfx.uiClick = this.sound.add('uiClick');
-  sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
+  // SFX map
+  const sfxNames = ['explode', 'move', 'point', 'newBest', 'uiClick', 'pauseWhoosh'];
+  sfx = {};
+  sfxNames.forEach(name => { sfx[name] = this.sound.add(name); });
 
-  // mute toggle
+  // --- Mute toggle ---
   muteIcon.on('pointerdown', () => {
-    isMuted = !isMuted;
-    this.sound.mute = isMuted;
-    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    setMuteState(!isMuted);
     if (!isMuted) sfx.uiClick.play();
   });
 
-  // pause/play toggle
+  // --- Pause/play toggle ---
   pauseIcon.on('pointerdown', (_, x, y, e) => {
-    e.stopPropagation();
+    e?.stopPropagation?.();
     if (!gameStarted || gameOver) return;
     if (!gamePaused) {
       gamePaused = true;
       pauseIcon.setTexture('iconPlay');
       sfx.pauseWhoosh.play();
+      if (pauseOverlay) pauseOverlay.style.display = 'flex';
       this.physics.pause();
-      pauseOverlay.style.display = 'flex';
     } else {
       sfx.pauseWhoosh.play();
-      pauseOverlay.style.display = 'none';
+      if (pauseOverlay) pauseOverlay.style.display = 'none';
       let count = 3;
       countdownText.setText(count).setVisible(true);
       this.time.addEvent({
@@ -270,7 +289,7 @@ function create() {
     }
   });
 
-  // rotate on tap
+  // --- Rotate on tap ---
   this.input.on('pointerdown', () => {
     if (gameStarted && !gameOver && !gamePaused) {
       direction *= -1;
@@ -283,13 +302,13 @@ function create() {
     }
   });
 
-  // collisions
+  // --- Collisions ---
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 
-  // speed ramp
+  // --- Speed ramp ---
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
@@ -300,7 +319,7 @@ function create() {
     }
   });
 
-  // spawn scheduler
+  // --- Spawn scheduler ---
   function getSpawnInterval() {
     const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
     return Phaser.Math.Linear(1500, 500, t);
@@ -313,98 +332,34 @@ function create() {
     }, []);
   }
 
-  // START
-  const startBtn = document.getElementById('startBtn');
-  const homeBtn = document.getElementById('homeBtn');
-
+  // --- START BUTTON ---
   function handleStartGame() {
-
-    sfx.uiClick.play();
-
-    fadeIn(() => {
-
-      document.getElementById('user-info').style.display = 'none';
-
-      document.getElementById('viewLeaderboardBtn').style.display = 'none';
-
-      document.getElementById('start-screen').style.display = 'none';
-
-      muteBtnHome.style.display = 'none';
-
-      if (document.querySelector('canvas')) document.querySelector('canvas').style.visibility = 'visible';
-
-      scoreText.setVisible(false);
-
-      bestScoreText.setVisible(false);
-
-      pauseIcon.setVisible(false);
-
-      muteIcon.setVisible(false);
-
-      let count = 3;
-
-      countdownText.setText(count).setVisible(true);
-
-      const scene = window.game.scene.keys.default;
-
-      scene.time.addEvent({
-
-        delay: 1000,
-
-        repeat: 2,
-
-        callback: () => {
-
-          count--;
-
-          if (count > 0) {
-
-            countdownText.setText(count);
-
-          } else if (count === 0) {
-
-            countdownText.setText('GO!');
-
-          }
-
-        },
-
-        callbackScope: scene,
-
-        onComplete: () => {
-
-          setTimeout(() => {
-
-            countdownText.setVisible(false);
-
-            gameStarted = true;
-
-            scoreText.setVisible(true);
-
-            bestScoreText.setVisible(true);
-
-            pauseIcon.setVisible(true);
-
-            muteIcon.setVisible(true);
-
-            scheduleSpawn();
-
-            fadeOut();
-
-          }, 500);
-
-        }
-
-      });
-
-    });
-
-  }
- else if (count === 0) {
+  sfx.uiClick.play();
+  fadeIn(() => {
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('viewLeaderboardBtn').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'none';
+    muteBtnHome.style.display = 'none';
+    if (document.querySelector('canvas')) document.querySelector('canvas').style.visibility = 'visible';
+    scoreText.setVisible(false);
+    bestScoreText.setVisible(false);
+    pauseIcon.setVisible(false);
+    muteIcon.setVisible(false);
+    let count = 3;
+    countdownText.setText(count).setVisible(true);
+    const scene = window.game.scene.keys.default;
+    scene.time.addEvent({
+      delay: 1000,
+      repeat: 2,
+      callback: () => {
+        count--;
+        if (count > 0) {
+          countdownText.setText(count);
+        } else if (count === 0) {
           countdownText.setText('GO!');
         }
       },
-      callbackScope: window.game.scene.keys.default,
+      callbackScope: scene,
       onComplete: () => {
         setTimeout(() => {
           countdownText.setVisible(false);
@@ -415,39 +370,55 @@ function create() {
           muteIcon.setVisible(true);
           scheduleSpawn();
           fadeOut();
-        }, 500); // "GO!" visible for 0.5s
+        }, 500);
       }
     });
   });
 }
+    sfx.uiClick.play();
+    fadeIn(() => {
+      if (userInfo) userInfo.style.display = 'none';
+      if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'none';
+      if (startScreen) startScreen.style.display = 'none';
+      if (muteBtnHome) muteBtnHome.style.display = 'none';
+      gameStarted = true;
+      if ($qs('canvas')) $qs('canvas').style.visibility = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
+      scheduleSpawn();
+      fadeOut();
+    });
+  }
 
-
+  // --- HOME BUTTON ---
   function handleGoHome() {
     fadeIn(() => {
       const scene = window.game.scene.keys.default;
       scene.scene.restart();
       score = 0;
+      speed = 3;
+      direction = 1;
       gameStarted = false;
       gameOver = false;
       gamePaused = false;
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.getElementById('user-info').style.display = 'flex';
-      document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-      document.getElementById('start-screen').style.display = 'flex';
-      document.getElementById('pause-overlay').style.display = 'none';
-      muteBtnHome.style.display = 'block';
-      document.querySelector('canvas').style.visibility = 'hidden';
+      if (gameOverScreen) gameOverScreen.style.display = 'none';
+      if (userInfo) userInfo.style.display = 'flex';
+      if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'inline-block';
+      if (startScreen) startScreen.style.display = 'flex';
+      if (pauseOverlay) pauseOverlay.style.display = 'none';
+      if (muteBtnHome) muteBtnHome.style.display = 'block';
+      if ($qs('canvas')) $qs('canvas').style.visibility = 'hidden';
       fadeOut();
     });
   }
 
+  // --- PLAY AGAIN BUTTON ---
   function handlePlayAgain() {
     sfx.uiClick.play();
     const scene = window.game.scene.keys.default;
-    if (scene.trail) {
-      scene.trail.destroy();
-      scene.trail = null;
-    }
+    if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
     scene.scene.restart();
     setTimeout(() => {
       score = 0;
@@ -456,31 +427,28 @@ function create() {
       gameStarted = true;
       gameOver = false;
       gamePaused = false;
-      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
+      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard']
+        .forEach(id => { const el = $(id); if (el) el.style.display = 'none'; });
       if (muteBtnHome) muteBtnHome.style.display = 'none';
-      const userInfo = document.getElementById('user-info');
       if (userInfo) userInfo.style.display = 'none';
-      const viewLb = document.getElementById('viewLeaderboardBtn');
-      if (viewLb) viewLb.style.display = 'none';
-      const canvas = document.querySelector('canvas');
-      if (canvas) canvas.style.visibility = 'visible';
-      if (scoreText) scoreText.setVisible(true);
-      if (bestScoreText) bestScoreText.setVisible(true);
-      if (pauseIcon) pauseIcon.setVisible(true);
-      if (muteIcon) muteIcon.setVisible(true);
+      if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'none';
+      if ($qs('canvas')) $qs('canvas').style.visibility = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
       if (spawnTimer) spawnTimer.remove(false);
       scheduleSpawn();
     }, 0);
   }
-  startBtn.onclick = handleStartGame;
-  homeBtn.onclick = handleGoHome;
-  const playAgainBtn = document.getElementById('playAgainBtn');
+
+  // --- Bind UI Buttons ---
+  if (startBtn) startBtn.onclick = handleStartGame;
+  if (homeBtn) homeBtn.onclick = handleGoHome;
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 }
 
+// --- Phaser Scene: Update ---
 function update() {
   if (!gameStarted || gameOver || gamePaused) return;
   angle += 0.05 * direction;
@@ -492,6 +460,7 @@ function update() {
   points.children.iterate(p => p.x -= speed);
 }
 
+// --- Spawn Objects ---
 function spawnObjects() {
   const y = Phaser.Math.RND.pick(LANES);
   const fromLeft = Phaser.Math.Between(0, 1) === 0;
@@ -510,6 +479,7 @@ function spawnObjects() {
   }
 }
 
+// --- Game Over Logic ---
 function triggerGameOver() {
   if (spawnTimer) spawnTimer.remove(false);
   if (gameOver) return;
@@ -526,56 +496,64 @@ function triggerGameOver() {
     this.time.delayedCall(1000, () => emitter.manager.destroy());
   });
   sfx.explode.play();
-  this.time.delayedCall(700, () => {
+  this.time.delayedCall(700, async () => {
     this.physics.pause();
-    document.querySelector('canvas').style.visibility = 'hidden';
-    document.getElementById('finalScore').innerText = score;
+    if ($qs('canvas')) $qs('canvas').style.visibility = 'hidden';
+    if (finalScoreElem) finalScoreElem.textContent = score;
     if (score > highScore) {
-      bestScoreText.setText('Best: ' + score);
-      highScore = score;
+      highScore = score; // Set score first!
+      bestScoreText.setText('Best: ' + highScore);
       sfx.newBest.play();
     }
-    document.getElementById('bestScore').innerText = highScore;
+    if (bestScoreElem) bestScoreElem.textContent = highScore;
     bestScoreText.setText('Best: ' + highScore);
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
-      if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+      bestScoreText.setText('Best: ' + highScore);
     }
     if (!useLocalHighScore) {
-      fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: piUsername, score: highScore })
-      }).catch(console.error);
+      try {
+        await fetch('/api/leaderboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: piUsername, score: highScore })
+        });
+      } catch (e) { console.error('Failed to submit score:', e); }
     }
-    fetch('/api/leaderboard?top=100')
-      .then(r => r.json()).then(data => {
-        const list = document.getElementById('leaderboardEntries');
-        if (list) {
-          while (list.firstChild) list.removeChild(list.firstChild);
-          data.forEach((e, i) => {
-            const li = document.createElement('li');
-            li.setAttribute('data-rank', `#${i + 1}`);
-            li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-            list.appendChild(li);
-          });
-          document.getElementById('leaderboard').style.display = 'block';
-        }
-        const rank = data.findIndex(e => e.username === piUsername);
-        const rankMessage = document.getElementById('rankMessage');
-        if (rankMessage) {
-          if (rank >= 0) {
-            rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
-          } else {
-            rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-          }
-        }
-        muteBtnHome.style.display = 'none';
-        document.getElementById('game-over-screen').style.display = 'flex';
-      }).catch(console.error);
+    try {
+      const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+      if (leaderboardEntries) {
+        while (leaderboardEntries.firstChild) leaderboardEntries.removeChild(leaderboardEntries.firstChild);
+        data.forEach((e, i) => {
+          const li = document.createElement('li');
+          li.setAttribute('data-rank', `#${i + 1}`);
+          // Securely inject username and score
+          const userSpan = document.createElement('strong');
+          userSpan.textContent = e.username;
+          const scoreSpan = document.createElement('strong');
+          scoreSpan.textContent = e.score;
+          li.appendChild(userSpan);
+          li.appendChild(scoreSpan);
+          leaderboardEntries.appendChild(li);
+        });
+        if (leaderboardDiv) leaderboardDiv.style.display = 'block';
+      }
+      const rank = data.findIndex(e => e.username === piUsername);
+      if (rankMessage) {
+        rankMessage.textContent = rank >= 0
+          ? `🏅 Your Global Rank: #${rank + 1}`
+          : `💡 You're currently unranked — keep playing!`;
+      }
+      if (muteBtnHome) muteBtnHome.style.display = 'none';
+      if (gameOverScreen) gameOverScreen.style.display = 'flex';
+    } catch (e) {
+      alert('Failed to load leaderboard. Please try again later.');
+      console.error(e);
+    }
   });
 }
 
+// --- Collect Point Logic ---
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
   pt.destroy();
@@ -588,3 +566,6 @@ function collectPoint(_, pt) {
     yoyo: true, duration: 80, ease: 'Sine.easeOut'
   });
 }
+
+// --- Initialize Auth (on load) ---
+initAuth();
