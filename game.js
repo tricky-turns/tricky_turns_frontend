@@ -157,6 +157,10 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
+  if (spawnTimer) {
+    spawnTimer.remove(false);
+    spawnTimer = null;
+  }
       obstacles = this.physics.add.group();
 points = this.physics.add.group();
 
@@ -384,6 +388,10 @@ function handleGoHome() {
 
     // Restart Phaser scene cleanly
     const scene = window.game.scene.keys.default;
+    if (scene && scene.time && spawnTimer) {
+      spawnTimer.remove(false);
+      spawnTimer = null;
+    }
     scene.scene.stop();
     scene.scene.start();
 
