@@ -393,38 +393,32 @@ function handleGoHome() {
     // Use direct onclick assignments to avoid duplicate listeners on restart
     startBtn.onclick = handleStartGame;
     homeBtn.onclick = handleGoHome;
-    // Play Again button listener
+    // Play Again button
     const playAgainBtn = document.getElementById('playAgainBtn');
     if (playAgainBtn) {
-      playAgainBtn.addEventListener('click', () => {
+      playAgainBtn.onclick = () => {
         sfx.uiClick.play();
         fadeIn(() => {
-          // Restart the Phaser scene cleanly
           const scene = window.game.scene.keys.default;
           scene.scene.restart();
-
           // Reset game state
           score = 0;
           gameStarted = true;
           gameOver = false;
           gamePaused = false;
-
           // Hide Game Over UI
           document.getElementById('game-over-screen').style.display = 'none';
-
           // Show canvas & HUD
           document.querySelector('canvas').style.visibility = 'visible';
           scoreText.setVisible(true);
           bestScoreText.setVisible(true);
           pauseIcon.setVisible(true);
           muteIcon.setVisible(true);
-
-          // Kick off spawning again
+          // Resume spawning
           scheduleSpawn();
-
           fadeOut();
         });
-      });
+      };
     }
 }
 
