@@ -167,9 +167,14 @@ function preload() {
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
-  LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
+
+  // Lanes
+  LANES[0] = cy - radius;
+  LANES[1] = cy;
+  LANES[2] = cy + radius;
+
+  // Pre-generate textures
   if (this.textures.exists('orb')) this.textures.remove('orb');
-  // generate textures
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
     .fillStyle(0xffffff, 1).fillCircle(50, 50, 20)
@@ -186,13 +191,13 @@ function create() {
     .closePath().fillPath()
     .generateTexture('point', 50, 50).destroy();
 
-  // orbit sprites
+  // Orbit sprites
   circle1 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
   circle2 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
-  // trail
+  // Trail
   if (this.trail) { this.trail.destroy(); this.trail = null; }
   this.trail = this.add.particles('orb');
   [circle1, circle2].forEach(c => this.trail.createEmitter({
@@ -201,55 +206,48 @@ function create() {
     frequency: 50, blendMode: 'ADD'
   }));
   this.events.on('shutdown', () => {
-    if (this.trail) {
-      this.trail.destroy();
-      this.trail = null;
-    }
+    if (this.trail) { this.trail.destroy(); this.trail = null; }
   });
 
+  // Groups
   obstacles = this.physics.add.group();
-  points = this.physics.add.group();
+  points    = this.physics.add.group();
 
   // HUD
-  scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins', fontSize: '36px',
-    color: '#fff', stroke: '#000', strokeThickness: 4
-  }).setDepth(2).setVisible(false);
-  bestScoreText = this.add.text(16, 64, 'Best: ' + highScore, {
-    fontFamily: 'Poppins', fontSize: '28px',
-    color: '#fff', stroke: '#000', strokeThickness: 3
-  }).setDepth(2).setVisible(false);
-
-  // initialize highScore from localStorage if using guest
+  scoreText     = this.add.text(16, 16, 'Score: 0', { fontFamily:'Poppins', fontSize:'36px', color:'#fff', stroke:'#000', strokeThickness:4 })
+                      .setDepth(2).setVisible(false);
+  bestScoreText = this.add.text(16, 64, `Best: ${highScore}`, { fontFamily:'Poppins', fontSize:'28px', color:'#fff', stroke:'#000', strokeThickness:3 })
+                      .setDepth(2).setVisible(false);
   if (useLocalHighScore) {
     highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
-    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+    bestScoreText.setText(`Best: ${highScore}`);
   }
 
+  // Pause & mute icons
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
-    .setInteractive().setDepth(3).setVisible(false);
-  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute')
-    .setInteractive().setDepth(3).setVisible(false);
+                  .setInteractive().setDepth(3).setVisible(false);
+  muteIcon  = this.add.image(cam.width -100, 40, 'iconUnmute')
+                  .setInteractive().setDepth(3).setVisible(false);
   window.muteIcon = muteIcon;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
+  // Countdown text
   countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins', fontSize: '96px',
-    color: '#fff', stroke: '#000', strokeThickness: 6
+    fontFamily:'Poppins', fontSize:'96px', color:'#fff', stroke:'#000', strokeThickness:6
   }).setOrigin(0.5).setDepth(5).setVisible(false);
 
   // SFX
-  sfx.explode = this.sound.add('explode');
-  sfx.move = this.sound.add('move');
-  sfx.point = this.sound.add('point');
-  sfx.newBest = this.sound.add('newBest');
-  sfx.uiClick = this.sound.add('uiClick');
-  sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
+  sfx.explode    = this.sound.add('explode');
+  sfx.move       = this.sound.add('move');
+  sfx.point      = this.sound.add('point');
+  sfx.newBest    = this.sound.add('newBest');
+  sfx.uiClick    = this.sound.add('uiClick');
+  sfx.pauseWhoosh= this.sound.add('pauseWhoosh');
 
-  // mute toggle
+  // Mute toggle (in‑game)
   muteIcon.on('pointerdown', () => {
     isMuted = !isMuted;
     this.sound.mute = isMuted;
@@ -258,7 +256,7 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-  // pause/play toggle
+  // Pause/play toggle
   pauseIcon.on('pointerdown', (_, x, y, e) => {
     e.stopPropagation();
     if (!gameStarted || gameOver) return;
@@ -271,13 +269,14 @@ function create() {
     } else {
       sfx.pauseWhoosh.play();
       pauseOverlay.style.display = 'none';
-      let count = 3;
-      countdownText.setText(count).setVisible(true);
+      // 3‑2‑1 countdown before resume
+      let cnt = 3;
+      countdownText.setText(cnt).setVisible(true);
       this.time.addEvent({
-        delay: 1000, repeat: 2,
-        callback: () => {
-          count--;
-          if (count > 0) countdownText.setText(count);
+        delay:1000, repeat:2,
+        callback: ()=>{
+          cnt--;
+          if (cnt>0) countdownText.setText(cnt);
           else {
             countdownText.setVisible(false);
             gamePaused = false;
@@ -289,37 +288,36 @@ function create() {
     }
   });
 
-  // rotate on tap
+  // Rotate on tap
   this.input.on('pointerdown', () => {
     if (gameStarted && !gameOver && !gamePaused) {
       direction *= -1;
       sfx.move.play();
       this.tweens.add({
         targets: [circle1, circle2],
-        scaleX: 1.15, scaleY: 1.15,
-        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+        scaleX:1.15, scaleY:1.15,
+        yoyo:true, duration:100, ease:'Quad.easeInOut'
       });
     }
   });
 
-  // collisions
+  // Collisions
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
-  this.physics.add.overlap(circle1, points, collectPoint, null, this);
-  this.physics.add.overlap(circle2, points, collectPoint, null, this);
+  this.physics.add.overlap(circle1, points,    collectPoint,    null, this);
+  this.physics.add.overlap(circle2, points,    collectPoint,    null, this);
 
-  // speed ramp
+  // Speed ramp
   this.time.addEvent({
-    delay: 1000, loop: true,
-    callback: () => {
+    delay:1000, loop:true,
+    callback: ()=>{
       if (gameStarted && !gameOver && !gamePaused) {
-        if (speed > 1.5) speed += 0.006;
-        else if (speed >= 1.2) speed += 0.0015;
+        speed += speed > 1.5 ? 0.006 : (speed >= 1.2 ? 0.0015 : 0);
       }
     }
   });
 
-  // spawn scheduler
+  // Spawn scheduler
   function getSpawnInterval() {
     const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
     return Phaser.Math.Linear(1500, 500, t);
@@ -329,39 +327,97 @@ function create() {
     spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
       if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
       scheduleSpawn();
-    }, []);
+    }, [], this);
   }
 
-  // START
-  const startBtn = document.getElementById('startBtn');
-  const homeBtn = document.getElementById('homeBtn');
+  // --- Start / Home / Play Again buttons ---
+  const startBtn     = document.getElementById('startBtn');
+  const homeBtn      = document.getElementById('homeBtn');
+  const playAgainBtn = document.getElementById('playAgainBtn');
 
-  
+  function handleStartGame() {
+    sfx.uiClick.play();
+    fadeIn(() => {
+      document.getElementById('user-info').style.display        = 'none';
+      document.getElementById('viewLeaderboardBtn').style.display= 'none';
+      document.getElementById('start-screen').style.display      = 'none';
+      if (muteBtnHome) muteBtnHome.style.display                = 'none';
+      document.querySelector('canvas').style.visibility          = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
 
-function handleStartGame() {
-  sfx.uiClick.play();
-  fadeIn(() => {
-    document.getElementById('user-info').style.display = 'none';
-    document.getElementById('viewLeaderboardBtn').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'none';
-    muteBtnHome.style.display = 'none';
-    document.querySelector('canvas').style.visibility = 'visible';
-    scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
-    pauseIcon.setVisible(true);
-    muteIcon.setVisible(true);
+      const scene = window.game.scene.keys.default;
+      showCountdown(scene, () => {
+        gameStarted = true;
+        scheduleSpawn();
+        fadeOut();
+      });
+    });
+  }
 
-    // --- Countdown here ---
-    const scene = window.game.scene.keys.default;
-    showCountdown(scene, () => {
-      gameStarted = true;
+  function handleGoHome() {
+    fadeIn(() => {
+      const scene = window.game.scene.keys.default;
+      scene.scene.restart();
+
+      // reset game state
+      score = 0; speed = 3; direction = 1;
+      gameStarted = false; gameOver = false; gamePaused = false;
+
+      // hide all in‑game overlays
+      ['game-over-screen','leaderboard-screen','pause-overlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+
+      // show initial menu
+      document.getElementById('start-screen').style.display       = 'flex';
+      document.getElementById('user-info').style.display         = 'flex';
+      document.getElementById('viewLeaderboardBtn').style.display= 'block';
+      if (muteBtnHome) muteBtnHome.style.display                = 'block';
+      document.querySelector('canvas').style.visibility          = 'hidden';
+
+      fadeOut();
+    });
+  }
+
+  function handlePlayAgain() {
+    sfx.uiClick.play();
+    fadeIn(() => {
+      const scene = window.game.scene.keys.default;
+      scene.scene.restart();
+
+      // reset and start immediately
+      score = 0; speed = 3; direction = 1;
+      gameStarted = true; gameOver = false; gamePaused = false;
+
+      // hide all overlays & menus
+      ['game-over-screen','leaderboard-screen','pause-overlay','start-screen'].forEach(id =>{
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      if (muteBtnHome) muteBtnHome.style.display = 'none';
+      document.getElementById('user-info').style.display         = 'none';
+      document.getElementById('viewLeaderboardBtn').style.display= 'none';
+      document.querySelector('canvas').style.visibility          = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
+
+      if (spawnTimer) spawnTimer.remove(false);
       scheduleSpawn();
       fadeOut();
     });
-  });
-}
+  }
 
-    });
+  // Bind
+  startBtn.onclick     = handleStartGame;
+  homeBtn.onclick      = handleGoHome;
+  playAgainBtn.onclick = handlePlayAgain;
+});
 }
 );
   }
