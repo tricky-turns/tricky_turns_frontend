@@ -363,34 +363,7 @@ function handleStartGame() {
 }
 
 function handleGoHome() {
-  fadeIn(() => {
-    // Reset global state
-    gameStarted = false;
-    gameOver = false;
-    gamePaused = false;
-    score = 0;
-    speed = 3;
-
-    // Hide in-game UI
-    document.getElementById('game-over-screen').style.display = 'none';
-    document.getElementById('pause-overlay').style.display = 'none';
-    document.querySelector('canvas').style.visibility = 'hidden';
-
-    // Show home screen UI
-    document.getElementById('start-screen').style.display = 'flex';
-    document.getElementById('user-info').style.display = 'flex';
-    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-    muteBtnHome.style.display = 'inline-block';
-
-    // Fully reset the Phaser scene
-    const scene = window.game.scene.keys.default;
-    scene.scene.stop();
-    scene.scene.start();
-
-    fadeOut();
-  });
-});
-});
+  fadeIn(() => window.location.href = window.location.href);
 }
 
 startBtn.removeEventListener('click', handleStartGame);
