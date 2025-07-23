@@ -113,7 +113,7 @@ let muteIcon;
 let bestScoreText;
 
     let scoreText,pauseIcon,pauseOverlay,countdownText;
-
+let spawnTimer;
     let sfx={}, isMuted=false;
     if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
@@ -157,26 +157,8 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-  let spawnTimer = null;
-  const getSpawnInterval = () => {
-    const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
-    return Phaser.Math.Linear(1500, 500, t);
-  };
-  const scheduleSpawn = () => {
-    spawnTimer = this.time.delayedCall(getSpawnInterval(), () => {
-      if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(this);
-      scheduleSpawn.call(this);
-    });
-  };
-  this.events.on('shutdown', () => {
-    if (spawnTimer) {
-      spawnTimer.remove(false);
-      spawnTimer = null;
-    }
-  });
-  }
-      obstacles = this.physics.add.group();
-points = this.physics.add.group();
+      if (obstacles) obstacles.clear(true, true);
+      if (points) points.clear(true, true);
 
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
@@ -350,6 +332,13 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
         return Phaser.Math.Linear(1500,500,t);
       }
+      function scheduleSpawn(){
+  const scene = window.game.scene.keys.default;
+  spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
+    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
+    scheduleSpawn();
+  }, []);
+      }
 
       // START
 const startBtn = document.getElementById('startBtn');
@@ -368,41 +357,13 @@ function handleStartGame() {
     bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
+    scheduleSpawn();
     fadeOut();
   });
 }
 
 function handleGoHome() {
-  fadeIn(() => {
-    // Reset global game state
-    gameStarted = false;
-    gameOver = false;
-    gamePaused = false;
-    score = 0;
-    speed = 3;
-
-    // Hide game-over screen
-    document.getElementById('game-over-screen').style.display = 'none';
-    document.getElementById('pause-overlay').style.display = 'none';
-    document.querySelector('canvas').style.visibility = 'hidden';
-
-    // Show home UI
-    document.getElementById('start-screen').style.display = 'flex';
-    document.getElementById('user-info').style.display = 'flex';
-    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-    muteBtnHome.style.display = 'inline-block';
-
-    // Restart Phaser scene cleanly
-    const scene = window.game.scene.keys.default;
-    if (scene && scene.time && ) {
-      .remove(false);
-      = null;
-    }
-    scene.scene.stop();
-    scene.scene.start();
-
-    fadeOut();
-  });
+  fadeIn(() => window.location.href = window.location.href);
 }
 
 startBtn.removeEventListener('click', handleStartGame);
@@ -450,7 +411,7 @@ homeBtn.addEventListener('click', handleGoHome);
     }
 
     function triggerGameOver(){
-      if () .remove(false);
+      if (spawnTimer) spawnTimer.remove(false);
       if(gameOver) return;
       gameOver=true;
       [circle1,circle2].forEach(c=>{
