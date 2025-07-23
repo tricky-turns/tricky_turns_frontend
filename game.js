@@ -584,6 +584,10 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
   document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
+  document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+    document.getElementById('leaderboard-screen').style.display = 'none';
+  });
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 });
+
