@@ -157,9 +157,9 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-  if () {
-    .remove(false);
-    = null;
+  if (spawnTimer) {
+    spawnTimer.remove(false);
+    spawnTimer = null;
   }
       obstacles = this.physics.add.group();
 points = this.physics.add.group();
