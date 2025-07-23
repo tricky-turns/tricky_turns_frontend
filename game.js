@@ -1,5 +1,7 @@
 
-   Pi.init({ version: "2.0" });
+   Pi.init({ version: "2.0",
+    parentOrigin: window.location.origin
+    });
 const muteBtnHome = document.getElementById('muteToggleHome');
 
   
