@@ -135,7 +135,7 @@ async function showHomeLeaderboard() {
 // —— Game & Leaderboard logic ——
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0, radius = 100, speed = 300, maxSpeed = 3000;
+let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 30;
 let circle1, circle2, obstacles, points, score = 0;
 let muteIcon;
 let bestScoreText;
