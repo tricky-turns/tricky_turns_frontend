@@ -390,35 +390,41 @@ function handleGoHome() {
 
 // —— Play Again handler ——
 function handlePlayAgain() {
-  // play click SFX
+  // 1) play the click SFX
   sfx.uiClick.play();
 
-  // immediately restart the Phaser scene
+  // 2) restart the Phaser scene
   const scene = window.game.scene.keys.default;
   scene.scene.restart();
 
-  // reset all your game-state globals
-  score = 0;
-  speed = 3;           // back to your initial speed
-  direction = 1;       // reset orbit direction if you ever flipped it
-  gameStarted = true;
-  gameOver   = false;
-  gamePaused = false;
+  // 3) on the next tick (after 'create' has re-run), reset & re-show everything
+  setTimeout(() => {
+    // -- Reset core game state --
+    score     = 0;
+    speed     = 3;      // back to your initial speed
+    direction = 1;      // reset orbit direction
+    gameStarted = true;
+    gameOver   = false;
+    gamePaused = false;
 
-  // hide the Game Over overlay
-  document.getElementById('game-over-screen').style.display = 'none';
+    // -- Hide any leftover overlays --
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('pause-overlay').   style.display = 'none';
+    document.getElementById('leaderboard').      style.display = 'none';
 
-  // bring the canvas and HUD back
-  document.querySelector('canvas').style.visibility = 'visible';
-  scoreText .setVisible(true);
-  bestScoreText.setVisible(true);
-  pauseIcon .setVisible(true);
-  muteIcon  .setVisible(true);
+    // -- Show the canvas & HUD --
+    document.querySelector('canvas').style.visibility = 'visible';
+    scoreText .setVisible(true);
+    bestScoreText.setVisible(true);
+    pauseIcon .setVisible(true);
+    muteIcon  .setVisible(true);
 
-  // clear any old timer, then kick off spawning again
-  if (spawnTimer) spawnTimer.remove(false);
-  scheduleSpawn();
+    // -- Clear old spawnTimer and start spawning obstacles/points again --
+    if (spawnTimer) spawnTimer.remove(false);
+    scheduleSpawn();
+  }, 0);
 }
+
 
 
 
