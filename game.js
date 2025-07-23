@@ -388,8 +388,6 @@ function handleGoHome() {
     scene.scene.start();
 
     fadeOut();
-  });
-});
 }
 startBtn.removeEventListener('click', handleStartGame);
 homeBtn.removeEventListener('click', handleGoHome);
@@ -521,4 +519,4 @@ homeBtn.addEventListener('click', handleGoHome);
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-  
+}
