@@ -361,17 +361,19 @@ function create() {
     muteBtnHome.style.display = 'none';
     document.querySelector('canvas').style.visibility = 'visible';
     fadeOut(() => {
-      // Directly start the countdown on the visible canvas/HUD
-      startCountdown.call(window.game.scene.keys.default, function() {
+      // Show HUD BEFORE countdown so it's visible during countdown
+      const scene = window.game.scene.keys.default;
+      scene.scoreText.setVisible(true);
+      scene.bestScoreText.setVisible(true);
+      scene.pauseIcon.setVisible(true);
+      scene.muteIcon.setVisible(true);
+
+      startCountdown.call(scene, function() {
         gameStarted = true;
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
         scheduleSpawn();
       });
     }, 200);
-  }
+
 
   function handleGoHome() {
     fadeIn(() => {
@@ -422,14 +424,17 @@ function create() {
       const canvas = document.querySelector('canvas');
       if (canvas) canvas.style.visibility = 'visible';
       // Directly show countdown over HUD, do not fade
-      startCountdown.call(window.game.scene.keys.default, function() {
+      const scene = window.game.scene.keys.default;
+      scene.scoreText.setVisible(true);
+      scene.bestScoreText.setVisible(true);
+      scene.pauseIcon.setVisible(true);
+      scene.muteIcon.setVisible(true);
+
+      startCountdown.call(scene, function() {
         gameStarted = true;
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
         scheduleSpawn();
       });
+
     }, 0);
   }
 
