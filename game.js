@@ -397,44 +397,40 @@ function handlePlayAgain() {
   const scene = window.game.scene.keys.default;
   scene.scene.restart();
 
-  // --- Reset core game state ---
-  score       = 0;
-  speed       = 3;
-  direction   = 1;
-  gameStarted = true;
-  gameOver    = false;
-  gamePaused  = false;
+  // on next tick to ensure create() has re-run
+  setTimeout(() => {
+    // Reset core game state
+    score = 0;
+    speed = 3;
+    direction = 1;
+    gameStarted = true;
+    gameOver = false;
+    gamePaused = false;
 
-  // --- Hide every overlay / screen ---
-  ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  if (muteBtnHome) muteBtnHome.style.display = 'none';
-  const userInfo = document.getElementById('user-info');
-  if (userInfo) userInfo.style.display = 'none';
-  const viewLb  = document.getElementById('viewLeaderboardBtn');
-  if (viewLb) viewLb.style.display = 'none';
+    // Hide all overlays/screens
+    ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) userInfo.style.display = 'none';
+    const viewLb = document.getElementById('viewLeaderboardBtn');
+    if (viewLb) viewLb.style.display = 'none';
 
-  // --- Show canvas & HUD ---
-  const canvas = document.querySelector('canvas');
-  if (canvas) canvas.style.visibility = 'visible';
-  if (scoreText)     scoreText.setVisible(true);
-  if (bestScoreText) bestScoreText.setVisible(true);
-  if (pauseIcon)     pauseIcon.setVisible(true);
-  if (muteIcon)      muteIcon.setVisible(true);
+    // Show canvas & HUD
+    const canvas = document.querySelector('canvas');
+    if (canvas) canvas.style.visibility = 'visible';
+    if (scoreText) scoreText.setVisible(true);
+    if (bestScoreText) bestScoreText.setVisible(true);
+    if (pauseIcon) pauseIcon.setVisible(true);
+    if (muteIcon) muteIcon.setVisible(true);
 
-  // --- Clear old timer & restart spawning obstacles/points ---
-  if (spawnTimer) spawnTimer.remove(false);
-  scheduleSpawn();
+    // Clear old timer & restart spawning
+    if (spawnTimer) spawnTimer.remove(false);
+    scheduleSpawn();
+  }, 0);
 }
-
-
-
-
-
-
-
     // Use direct onclick assignments to avoid duplicate listeners on restart
     startBtn.onclick = handleStartGame;
     homeBtn.onclick = handleGoHome;
