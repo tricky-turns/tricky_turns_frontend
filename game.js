@@ -187,12 +187,19 @@ function create() {
       circle2.body.setCircle(22.5,27.5,27.5);
 
       // trail
-      const trail=this.add.particles('orb');
-      [circle1,circle2].forEach(c=>trail.createEmitter({
+      this.trail = this.add.particles('orb');
+      [circle1,circle2].forEach(c=>this.trail.createEmitter({
         follow:c, lifespan:300, speed:0,
         scale:{start:0.3,end:0}, alpha:{start:0.4,end:0},
         frequency:50, blendMode:'ADD'
       }));
+          // destroy trail on scene shutdown
+          this.events.on('shutdown', () => {
+              if (this.trail) {
+                  this.trail.destroy();
+                  this.trail = null;
+              }
+          });
 
       obstacles=this.physics.add.group();
       points=this.physics.add.group();
@@ -450,21 +457,23 @@ function handlePlayAgain() {
     }
 
     function spawnObjects(){
-      const y=Phaser.Math.RND.pick(LANES);
-      const fromLeft=Phaser.Math.Between(0,1)===0;
-      const x=fromLeft?-50:this.cameras.main.width+50;
-      const vx=(fromLeft?speed:-speed)*60;
-      if(Phaser.Math.Between(1,100)<=35){
-        this.add.image(x,y,'pointGlow').setDepth(1).setBlendMode('ADD');
-        const p=this.physics.add.image(x,y,'point').setDepth(2);
+      const y = Phaser.Math.RND.pick(LANES);
+      const fromLeft = Phaser.Math.Between(0,1) === 0;
+      const x = fromLeft ? -50 : this.cameras.main.width + 50;
+      const vx = (fromLeft ? speed : -speed) * 60;
+      if (Phaser.Math.Between(1,100) <= 35) {
+        const glow = this.add.image(x, y, 'pointGlow').setDepth(1).setBlendMode('ADD');
+        const p    = this.physics.add.image(x, y, 'point').setDepth(2);
+        p.glow    = glow;
         p.body.setSize(50,50).setOffset(-25,-25).setVelocityX(vx);
         points.add(p);
       } else {
-        const o=this.physics.add.image(x,y,'obstacle').setDepth(1);
+        const o = this.physics.add.image(x, y, 'obstacle').setDepth(1);
         o.body.setSize(50,50).setOffset(-25,-25).setImmovable(true).setVelocityX(vx);
         obstacles.add(o);
       }
     }
+
 
     function triggerGameOver(){
       if (spawnTimer) spawnTimer.remove(false);
@@ -541,15 +550,17 @@ function handlePlayAgain() {
       });
     }
 
-    function collectPoint(_,pt){
+    function collectPoint(_, pt) {
+      if (pt.glow) pt.glow.destroy();
       pt.destroy();
       score++;
       sfx.point.play();
-      scoreText.setText('Score: '+score);
+      scoreText.setText('Score: ' + score);
       this.tweens.add({
-        targets:scoreText,
-        scaleX:1.1, scaleY:1.1,
-        yoyo:true, duration:80, ease:'Sine.easeOut'
+        targets: scoreText,
+        scaleX: 1.1, scaleY: 1.1,
+        yoyo: true, duration: 80, ease: 'Sine.easeOut'
       });
     }
+
   
