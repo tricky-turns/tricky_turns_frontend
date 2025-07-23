@@ -238,7 +238,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       window.muteIcon = muteIcon
                        .setInteractive().setDepth(3).setVisible(false);
       this.sound.mute = isMuted;
-      if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       if (muteBtnHome) {
         muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
@@ -248,7 +247,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
       }
       this.sound.mute = isMuted;
-      if (!window.muteIcon) window.muteIcon = muteIcon;
       muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
       if (muteBtnHome) {
         muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
