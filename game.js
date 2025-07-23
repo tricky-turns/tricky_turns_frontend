@@ -440,15 +440,23 @@ function create() {
 }
 
 function update() {
-  if (!gameStarted || gameOver || gamePaused) return;
-  angle += 0.05 * direction;
+  // Always position the orbs unless the game is over (so they are centered for the countdown too)
+  if (gameOver) return;
+
+  let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
+  angle += dt;
   const o1 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(radius);
   const o2 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle + Math.PI).scale(radius);
+
   circle1.setPosition(this.cameras.main.centerX + o1.x, this.cameras.main.centerY + o1.y);
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
-  obstacles.children.iterate(o => o.x -= speed);
-  points.children.iterate(p => p.x -= speed);
+
+  if (gameStarted && !gamePaused) {
+    obstacles.children.iterate(o => o.x -= speed);
+    points.children.iterate(p => p.x -= speed);
+  }
 }
+
 
 function spawnObjects() {
   const y = Phaser.Math.RND.pick(LANES);
