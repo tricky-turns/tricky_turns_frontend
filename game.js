@@ -424,17 +424,14 @@ function create() {
       const canvas = document.querySelector('canvas');
       if (canvas) canvas.style.visibility = 'visible';
       // Directly show countdown over HUD, do not fade
-      const scene = window.game.scene.keys.default;
-      scene.scoreText.setVisible(true);
-      scene.bestScoreText.setVisible(true);
-      scene.pauseIcon.setVisible(true);
-      scene.muteIcon.setVisible(true);
-
-      startCountdown.call(scene, function() {
+      startCountdown.call(window.game.scene.keys.default, function() {
         gameStarted = true;
+        this.scoreText.setVisible(true);
+        this.bestScoreText.setVisible(true);
+        this.pauseIcon.setVisible(true);
+        this.muteIcon.setVisible(true);
         scheduleSpawn();
       });
-
     }, 0);
   }
 
