@@ -318,22 +318,59 @@ function create() {
   const homeBtn = document.getElementById('homeBtn');
 
   function handleStartGame() {
-    sfx.uiClick.play();
-    fadeIn(() => {
-      document.getElementById('user-info').style.display = 'none';
-      document.getElementById('viewLeaderboardBtn').style.display = 'none';
-      document.getElementById('start-screen').style.display = 'none';
-      muteBtnHome.style.display = 'none';
-      gameStarted = true;
-      document.querySelector('canvas').style.visibility = 'visible';
-      scoreText.setVisible(true);
-      bestScoreText.setVisible(true);
-      pauseIcon.setVisible(true);
-      muteIcon.setVisible(true);
-      scheduleSpawn();
-      fadeOut();
+  sfx.uiClick.play();
+  fadeIn(() => {
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('viewLeaderboardBtn').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'none';
+    muteBtnHome.style.display = 'none';
+    if (document.querySelector('canvas')) document.querySelector('canvas').style.visibility = 'visible';
+
+    // Use this-scene context for everything Phaser-related!
+    const scene = window.game.scene.keys.default;
+
+    // Hide HUD until countdown done
+    scene.scoreText.setVisible(false);
+    scene.bestScoreText.setVisible(false);
+    scene.pauseIcon.setVisible(false);
+    scene.muteIcon.setVisible(false);
+
+    let count = 3;
+    scene.countdownText.setText(count).setVisible(true);
+
+    scene.time.addEvent({
+      delay: 1000,
+      repeat: 2,
+      callback: () => {
+        count--;
+        if (count > 0) {
+          scene.countdownText.setText(count);
+        } else if (count === 0) {
+          scene.countdownText.setText('GO!');
+        }
+      },
+      callbackScope: scene,
+      onComplete: () => {
+        setTimeout(() => {
+          scene.countdownText.setVisible(false);
+          gameStarted = true;
+          scene.scoreText.setVisible(true);
+          scene.bestScoreText.setVisible(true);
+          scene.pauseIcon.setVisible(true);
+          scene.muteIcon.setVisible(true);
+          // scheduleSpawn should be accessible either as global or closure
+          if (typeof scheduleSpawn === 'function') {
+            scheduleSpawn();
+          } else if (typeof scene.scheduleSpawn === 'function') {
+            scene.scheduleSpawn();
+          }
+          fadeOut();
+        }, 500); // "GO!" visible for 0.5s
+      }
     });
-  }
+  });
+}
+
 
   function handleGoHome() {
     fadeIn(() => {
