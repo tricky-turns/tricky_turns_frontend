@@ -1,3 +1,5 @@
+// PATCHED GAME.JS — 2024-07-23
+
 const muteBtnHome = document.getElementById('muteToggleHome');
 
 // Initialize Pi SDK (with sandbox for local dev)
@@ -149,6 +151,8 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
   LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
+
+  // Remove previous textures, make sure orb starts clean every time
   if (this.textures.exists('orb')) this.textures.remove('orb');
   // generate textures
   this.make.graphics({ add: false })
@@ -167,10 +171,12 @@ function create() {
     .closePath().fillPath()
     .generateTexture('point', 50, 50).destroy();
 
-  // orbit sprites
-  circle1 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle1);
+  // orbit sprites — always at normal scale, always centered
+  circle1 = this.add.image(0, 0, 'orb').setScale(1);
+  this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
-  circle2 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle2);
+  circle2 = this.add.image(0, 0, 'orb').setScale(1);
+  this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
   // trail
@@ -217,21 +223,23 @@ function create() {
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
+  // Countdown text, always above everything else
   countdownText = this.add.text(cx, cy, '', {
     fontFamily: 'Poppins', fontSize: '96px',
     color: '#fff', stroke: '#000', strokeThickness: 6
-  }).setOrigin(0.5).setDepth(5).setVisible(false);
+  }).setOrigin(0.5).setDepth(1000).setVisible(false);
   this.countdownText = countdownText;
   this.scoreText = scoreText;
   this.bestScoreText = bestScoreText;
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  // ---- COUNTDOWN FUNCTION WITH PROPER CONTEXT ----
+  // ---- COUNTDOWN FUNCTION, HUD-only, always on top ----
   function startCountdown(callback) {
     let count = 3;
     const scene = this;
     scene.countdownText.setText(count).setVisible(true);
+    scene.countdownText.setDepth(1000);
     const countdownEvent = scene.time.addEvent({
       delay: 1000,
       repeat: 3,
@@ -282,7 +290,7 @@ function create() {
       sfx.pauseWhoosh.play();
       pauseOverlay.style.display = 'none';
       let count = 3;
-      countdownText.setText(count).setVisible(true);
+      countdownText.setText(count).setVisible(true).setDepth(1000);
       this.time.addEvent({
         delay: 1000, repeat: 2,
         callback: () => {
@@ -342,31 +350,30 @@ function create() {
     }, []);
   }
 
-  // START
-  const startBtn = document.getElementById('startBtn');
-  const homeBtn = document.getElementById('homeBtn');
+  // --- UI Event Handlers (patched, fade only between major screens) ---
 
-  // ---- COUNTDOWN ON START ----
+  // START BUTTON HANDLER
   function handleStartGame() {
     sfx.uiClick.play();
-    fadeIn(() => {
-      document.getElementById('user-info').style.display = 'none';
-      document.getElementById('viewLeaderboardBtn').style.display = 'none';
-      document.getElementById('start-screen').style.display = 'none';
-      muteBtnHome.style.display = 'none';
-      startCountdown.call(window.game.scene.keys.default, function() {
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('viewLeaderboardBtn').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'none';
+    muteBtnHome.style.display = 'none';
+    document.querySelector('canvas').style.visibility = 'visible';
+    fadeOut(() => {
+      // Show HUD BEFORE countdown so it's visible during countdown
+      const scene = window.game.scene.keys.default;
+      scene.scoreText.setVisible(true);
+      scene.bestScoreText.setVisible(true);
+      scene.pauseIcon.setVisible(true);
+      scene.muteIcon.setVisible(true);
+
+      startCountdown.call(scene, function() {
         gameStarted = true;
-        document.querySelector('canvas').style.visibility = 'visible';
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
         scheduleSpawn();
-        fadeOut();
       });
-    });
-  }
-  // ----------------------------------
+    }, 200);
+
 
   function handleGoHome() {
     fadeIn(() => {
@@ -387,14 +394,13 @@ function create() {
     });
   }
 
-  // ---- COUNTDOWN ON PLAY AGAIN ----
+  // PLAY AGAIN HANDLER
   function handlePlayAgain() {
     sfx.uiClick.play();
     const scene = window.game.scene.keys.default;
-    if (scene.trail) {
-      scene.trail.destroy();
-      scene.trail = null;
-    }
+    // Clean up before restart
+    if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
+    if (spawnTimer) spawnTimer.remove(false);
     scene.scene.restart();
     setTimeout(() => {
       score = 0;
@@ -403,7 +409,10 @@ function create() {
       gameStarted = false;
       gameOver = false;
       gamePaused = false;
-      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
+      [
+        'game-over-screen', 'leaderboard-screen', 'pause-overlay',
+        'start-screen', 'leaderboard'
+      ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -414,18 +423,20 @@ function create() {
       if (viewLb) viewLb.style.display = 'none';
       const canvas = document.querySelector('canvas');
       if (canvas) canvas.style.visibility = 'visible';
-      if (spawnTimer) spawnTimer.remove(false);
-      startCountdown.call(window.game.scene.keys.default, function() {
+      // Directly show countdown over HUD, do not fade
+      const scene = window.game.scene.keys.default;
+      scene.scoreText.setVisible(true);
+      scene.bestScoreText.setVisible(true);
+      scene.pauseIcon.setVisible(true);
+      scene.muteIcon.setVisible(true);
+
+      startCountdown.call(scene, function() {
         gameStarted = true;
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
         scheduleSpawn();
       });
+
     }, 0);
   }
-  // ----------------------------------------
 
   startBtn.onclick = handleStartGame;
   homeBtn.onclick = handleGoHome;
@@ -434,15 +445,23 @@ function create() {
 }
 
 function update() {
-  if (!gameStarted || gameOver || gamePaused) return;
-  angle += 0.05 * direction;
+  // Always position the orbs unless the game is over (so they are centered for the countdown too)
+  if (gameOver) return;
+
+  let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
+  angle += dt;
   const o1 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(radius);
   const o2 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle + Math.PI).scale(radius);
+
   circle1.setPosition(this.cameras.main.centerX + o1.x, this.cameras.main.centerY + o1.y);
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
-  obstacles.children.iterate(o => o.x -= speed);
-  points.children.iterate(p => p.x -= speed);
+
+  if (gameStarted && !gamePaused) {
+    obstacles.children.iterate(o => o.x -= speed);
+    points.children.iterate(p => p.x -= speed);
+  }
 }
+
 
 function spawnObjects() {
   const y = Phaser.Math.RND.pick(LANES);
