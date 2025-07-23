@@ -113,7 +113,7 @@ let muteIcon;
 let bestScoreText;
 
     let scoreText,pauseIcon,pauseOverlay,countdownText;
-let spawnTimer;
+
     let sfx={}, isMuted=false;
     if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
@@ -157,9 +157,9 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-  if (spawnTimer) {
-    spawnTimer.remove(false);
-    spawnTimer = null;
+  if () {
+    .remove(false);
+    = null;
   }
       obstacles = this.physics.add.group();
 points = this.physics.add.group();
@@ -336,12 +336,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
         return Phaser.Math.Linear(1500,500,t);
       }
-      function scheduleSpawn(){
-  const scene = window.game.scene.keys.default;
-  spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
-    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
-    scheduleSpawn();
-  }, []);
+      , []);
       }
 
       // START
@@ -361,7 +356,7 @@ function handleStartGame() {
     bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
-    scheduleSpawn();
+    scheduleSpawn.call(this);
     fadeOut();
   });
 }
@@ -388,9 +383,9 @@ function handleGoHome() {
 
     // Restart Phaser scene cleanly
     const scene = window.game.scene.keys.default;
-    if (scene && scene.time && spawnTimer) {
-      spawnTimer.remove(false);
-      spawnTimer = null;
+    if (scene && scene.time && ) {
+      .remove(false);
+      = null;
     }
     scene.scene.stop();
     scene.scene.start();
@@ -444,7 +439,7 @@ homeBtn.addEventListener('click', handleGoHome);
     }
 
     function triggerGameOver(){
-      if (spawnTimer) spawnTimer.remove(false);
+      if () .remove(false);
       if(gameOver) return;
       gameOver=true;
       [circle1,circle2].forEach(c=>{
