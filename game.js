@@ -80,6 +80,9 @@ function fadeOut(callback, duration = 600) {
   fade.classList.remove('fade-in');
   setTimeout(() => {
     callback?.();
+  }, duration);
+    callback?.();
+}
   }
 
 function resetGameEntities(scene) {
