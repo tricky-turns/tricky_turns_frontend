@@ -443,7 +443,7 @@ function create() {
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 }
-
+}
 function update() {
   // Always position the orbs unless the game is over (so they are centered for the countdown too)
   if (gameOver) return;
