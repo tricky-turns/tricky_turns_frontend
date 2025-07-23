@@ -1,26 +1,6 @@
-// ==== DOM CACHE ==== //
 const muteBtnHome = document.getElementById('muteToggleHome');
-const usernameEl = document.getElementById('username');
-const loginBtn = document.getElementById('loginBtn');
-const startBtn = document.getElementById('startBtn');
-const homeBtn = document.getElementById('homeBtn');
-const playAgainBtn = document.getElementById('playAgainBtn');
-const pauseOverlayEl = document.getElementById('pause-overlay');
-const userInfoEl = document.getElementById('user-info');
-const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
-const leaderboardScreenEl = document.getElementById('leaderboard-screen');
-const leaderboardEntriesHomeEl = document.getElementById('leaderboardEntriesHome');
-const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
-const gameOverScreenEl = document.getElementById('game-over-screen');
-const leaderboardEntriesEl = document.getElementById('leaderboardEntries');
-const leaderboardEl = document.getElementById('leaderboard');
-const rankMessageEl = document.getElementById('rankMessage');
-const finalScoreEl = document.getElementById('finalScore');
-const bestScoreEl = document.getElementById('bestScore');
-const startScreenEl = document.getElementById('start-screen');
-const fadeScreenEl = document.getElementById('fade-screen');
 
-// ==== PI SDK ==== //
+// Initialize Pi SDK (with sandbox for local dev)
 let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
@@ -28,55 +8,24 @@ function initPi() {
   }
   return piInitPromise;
 }
+
+// —— Pi Authentication setup ——
 const scopes = ['username'];
 let piUsername = 'Guest';
 let highScore = 0;
 let useLocalHighScore = true;
 
-// ==== SFX/State ==== //
-let sfx = {}, isMuted = false;
-const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
-
-// ==== FADE HELPERS ==== //
-function fadeInElement(el, duration = 500, displayType = 'flex') {
-  if (!el) return;
-  el.style.opacity = 0;
-  el.style.display = displayType;
-  requestAnimationFrame(() => {
-    el.style.transition = `opacity ${duration}ms ease`;
-    el.style.opacity = 1;
-  });
-}
-function fadeOutElement(el, duration = 500) {
-  if (!el) return;
-  el.style.transition = `opacity ${duration}ms ease`;
-  el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, duration);
-}
-function fadeIn(callback, duration = 600) {
-  if (!fadeScreenEl) return callback?.();
-  fadeScreenEl.classList.add('fade-in');
-  setTimeout(() => callback?.(), duration);
-}
-function fadeOut(callback, duration = 600) {
-  if (!fadeScreenEl) return callback?.();
-  fadeScreenEl.classList.remove('fade-in');
-  setTimeout(() => callback?.(), duration);
-}
-
-// ==== PI AUTH ==== //
 function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
 }
+
 async function initAuth() {
   await initPi();
   try {
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
     piUsername = auth.user.username;
-    if (usernameEl) usernameEl.innerText = piUsername;
-    if (loginBtn) loginBtn.style.display = 'none';
+    document.getElementById('username').innerText = piUsername;
+    document.getElementById('loginBtn').style.display = 'none';
     useLocalHighScore = false;
     const res = await fetch(`/api/leaderboard/${piUsername}`);
     if (res.ok) {
@@ -91,44 +40,87 @@ async function initAuth() {
     console.log('Not signed in:', e);
   }
 }
-initAuth();
-if (loginBtn) loginBtn.addEventListener('click', initAuth);
 
-// ==== LEADERBOARD ==== //
-async function showHomeLeaderboard() {
-  if (!leaderboardEntriesHomeEl) return;
-  while (leaderboardEntriesHomeEl.firstChild) leaderboardEntriesHomeEl.removeChild(leaderboardEntriesHomeEl.firstChild);
-  try {
-    const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
-    data.forEach((e, i) => {
-      const li = document.createElement('li');
-      li.setAttribute('data-rank', `#${i + 1}`);
-      li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-      leaderboardEntriesHomeEl.appendChild(li);
-    });
-    if (leaderboardScreenEl) leaderboardScreenEl.style.display = 'flex';
-  } catch(e) {
-    // Handle API error gracefully
-  }
+initAuth();
+document.getElementById('loginBtn').addEventListener('click', initAuth);
+
+// Simple fade helpers
+function fadeInElement(el, duration = 500, displayType = 'flex') {
+  el.style.opacity = 0;
+  el.style.display = displayType;
+  requestAnimationFrame(() => {
+    el.style.transition = `opacity ${duration}ms ease`;
+    el.style.opacity = 1;
+  });
 }
-if (viewLeaderboardBtn) viewLeaderboardBtn.addEventListener('click', showHomeLeaderboard);
-if (closeLeaderboardBtn) closeLeaderboardBtn.addEventListener('click', ()=>{
-  if (leaderboardScreenEl) leaderboardScreenEl.style.display = 'none';
+
+function fadeOutElement(el, duration = 500) {
+  el.style.transition = `opacity ${duration}ms ease`;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, duration);
+}
+
+function fadeIn(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.add('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+
+function fadeOut(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.remove('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+
+// —— Show Home Leaderboard ——
+async function showHomeLeaderboard() {
+  const list = document.getElementById('leaderboardEntriesHome');
+  while (list.firstChild) list.removeChild(list.firstChild);
+  const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
+  data.forEach((e, i) => {
+    const li = document.createElement('li');
+    li.setAttribute('data-rank', `#${i + 1}`);
+    li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+    list.appendChild(li);
+  });
+  document.getElementById('leaderboard-screen').style.display = 'flex';
+}
+document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
+document.getElementById('closeLeaderboardBtn').addEventListener('click', ()=>{
+  document.getElementById('leaderboard-screen').style.display = 'none';
 });
 
-// ==== GAME LOGIC STATE ==== //
+// —— Game & Leaderboard logic ——
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
 let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
-let circle1, circle2, score = 0;
-let muteIcon, bestScoreText, scoreText, pauseIcon, countdownText;
+let circle1, circle2, obstacles, points, score = 0;
+let muteIcon;
+let bestScoreText;
+let scoreText, pauseIcon, pauseOverlay, countdownText;
 let spawnTimer;
-let obstacles, points;
+let sfx = {}, isMuted = false;
 
-// ==== OBJECT POOLING GROUPS ==== //
-let obstaclePool, pointPool, pointGlowPool;
+const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
+if (muteBtnHome) {
+  muteBtnHome.src = currentMuteIcon();
+  muteBtnHome.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    muteBtnHome.src = currentMuteIcon();
+    if (window.game && window.game.sound) {
+      window.game.sound.mute = isMuted;
+    }
+  });
+}
 
-// ==== PHASER CONFIG ==== //
+// Phaser 3 game configuration
 const config = {
   type: Phaser.AUTO,
   transparent: true,
@@ -138,7 +130,7 @@ const config = {
 };
 window.game = new Phaser.Game(config);
 
-// ==== PRELOAD ==== //
+// Preload audio assets used throughout the game (SFX)
 function preload() {
   this.load.audio('explode', 'assets/explode.wav');
   this.load.audio('move', 'assets/move.wav');
@@ -152,15 +144,13 @@ function preload() {
   this.load.image('iconUnmute', 'assets/icon-unmute.svg');
 }
 
-// ==== CREATE ==== //
+// Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-  // ---- SETUP ---- //
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
   LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
-
-  // ---- TEXTURES ---- //
   if (this.textures.exists('orb')) this.textures.remove('orb');
+  // generate textures
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
     .fillStyle(0xffffff, 1).fillCircle(50, 50, 20)
@@ -177,18 +167,13 @@ function create() {
     .closePath().fillPath()
     .generateTexture('point', 50, 50).destroy();
 
-  // ---- OBJECT POOLS ---- //
-  obstaclePool = this.add.group({ classType: Phaser.GameObjects.Image, maxSize: 30, runChildUpdate: false });
-  pointPool = this.add.group({ classType: Phaser.GameObjects.Image, maxSize: 15, runChildUpdate: false });
-  pointGlowPool = this.add.group({ classType: Phaser.GameObjects.Image, maxSize: 15, runChildUpdate: false });
-
-  // ---- ORBIT SPRITES ---- //
+  // orbit sprites
   circle1 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
   circle2 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
-  // ---- TRAIL ---- //
+  // trail
   if (this.trail) { this.trail.destroy(); this.trail = null; }
   this.trail = this.add.particles('orb');
   [circle1, circle2].forEach(c => this.trail.createEmitter({
@@ -201,14 +186,12 @@ function create() {
       this.trail.destroy();
       this.trail = null;
     }
-    if (spawnTimer) spawnTimer.remove(false);
   });
 
-  // ---- GAME OBJECT GROUPS ---- //
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  // ---- HUD ---- //
+  // HUD
   scoreText = this.add.text(16, 16, 'Score: 0', {
     fontFamily: 'Poppins', fontSize: '36px',
     color: '#fff', stroke: '#000', strokeThickness: 4
@@ -218,9 +201,10 @@ function create() {
     color: '#fff', stroke: '#000', strokeThickness: 3
   }).setDepth(2).setVisible(false);
 
+  // initialize highScore from localStorage if using guest
   if (useLocalHighScore) {
     highScore = Number(localStorage.getItem('tricky_high_score')) || 0;
-    if (bestScoreText) bestScoreText.setText('Best: ' + highScore);
+    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
   }
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
@@ -231,12 +215,14 @@ function create() {
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+  pauseOverlay = document.getElementById('pause-overlay');
+
   countdownText = this.add.text(cx, cy, '', {
     fontFamily: 'Poppins', fontSize: '96px',
     color: '#fff', stroke: '#000', strokeThickness: 6
   }).setOrigin(0.5).setDepth(5).setVisible(false);
 
-  // ---- SFX ---- //
+  // SFX
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
@@ -244,7 +230,7 @@ function create() {
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
 
-  // ---- MUTE HANDLERS ---- //
+  // mute toggle
   muteIcon.on('pointerdown', () => {
     isMuted = !isMuted;
     this.sound.mute = isMuted;
@@ -253,7 +239,7 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-  // ---- PAUSE/PLAY HANDLERS ---- //
+  // pause/play toggle
   pauseIcon.on('pointerdown', (_, x, y, e) => {
     e.stopPropagation();
     if (!gameStarted || gameOver) return;
@@ -261,11 +247,11 @@ function create() {
       gamePaused = true;
       pauseIcon.setTexture('iconPlay');
       sfx.pauseWhoosh.play();
-      if (pauseOverlayEl) pauseOverlayEl.style.display = 'flex';
       this.physics.pause();
+      pauseOverlay.style.display = 'flex';
     } else {
       sfx.pauseWhoosh.play();
-      if (pauseOverlayEl) pauseOverlayEl.style.display = 'none';
+      pauseOverlay.style.display = 'none';
       let count = 3;
       countdownText.setText(count).setVisible(true);
       this.time.addEvent({
@@ -284,7 +270,7 @@ function create() {
     }
   });
 
-  // ---- INPUT ---- //
+  // rotate on tap
   this.input.on('pointerdown', () => {
     if (gameStarted && !gameOver && !gamePaused) {
       direction *= -1;
@@ -297,13 +283,13 @@ function create() {
     }
   });
 
-  // ---- COLLISIONS ---- //
+  // collisions
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 
-  // ---- SPEED RAMP ---- //
+  // speed ramp
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
@@ -314,100 +300,100 @@ function create() {
     }
   });
 
-  // ---- SPAWN SCHEDULER ---- //
-  this.scheduleSpawn = scheduleSpawn.bind(this);
-  this.scheduleSpawn();
-
-  // ---- START/HOME/PLAY AGAIN HANDLERS ---- //
-  if (startBtn) startBtn.onclick = () => handleStartGame.call(this);
-  if (homeBtn) homeBtn.onclick = () => handleGoHome.call(this);
-  if (playAgainBtn) playAgainBtn.onclick = () => handlePlayAgain.call(this);
-}
-
-// ---- SPAWN FUNCTIONS ---- //
-function getSpawnInterval() {
-  const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
-  return Phaser.Math.Linear(1500, 500, t);
-}
-function scheduleSpawn() {
-  spawnTimer = this.time.delayedCall(getSpawnInterval(), () => {
-    if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(this);
-    if (typeof this.scheduleSpawn === "function") this.scheduleSpawn();
-  }, []);
-}
-
-// ---- GAME EVENT HANDLERS ---- //
-function handleStartGame() {
-  sfx.uiClick.play();
-  fadeIn(() => {
-    if (userInfoEl) userInfoEl.style.display = 'none';
-    if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'none';
-    if (startScreenEl) startScreenEl.style.display = 'none';
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
-    gameStarted = true;
-    const canvas = document.querySelector('canvas');
-    if (canvas) canvas.style.visibility = 'visible';
-    if (scoreText) scoreText.setVisible(true);
-    if (bestScoreText) bestScoreText.setVisible(true);
-    if (pauseIcon) pauseIcon.setVisible(true);
-    if (muteIcon) muteIcon.setVisible(true);
-    this.scheduleSpawn();
-    fadeOut();
-  });
-}
-function handleGoHome() {
-  fadeIn(() => {
-    const scene = window.game.scene.keys.default;
-    scene.scene.restart();
-    score = 0;
-    gameStarted = false;
-    gameOver = false;
-    gamePaused = false;
-    if (gameOverScreenEl) gameOverScreenEl.style.display = 'none';
-    if (userInfoEl) userInfoEl.style.display = 'flex';
-    if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'inline-block';
-    if (startScreenEl) startScreenEl.style.display = 'flex';
-    if (pauseOverlayEl) pauseOverlayEl.style.display = 'none';
-    if (muteBtnHome) muteBtnHome.style.display = 'block';
-    const canvas = document.querySelector('canvas');
-    if (canvas) canvas.style.visibility = 'hidden';
-    fadeOut();
-  });
-}
-function handlePlayAgain() {
-  sfx.uiClick.play();
-  const scene = window.game.scene.keys.default;
-  if (scene.trail) {
-    scene.trail.destroy();
-    scene.trail = null;
+  // spawn scheduler
+  function getSpawnInterval() {
+    const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
+    return Phaser.Math.Linear(1500, 500, t);
   }
-  scene.scene.restart();
-  setTimeout(() => {
-    score = 0;
-    speed = 3;
-    direction = 1;
-    gameStarted = true;
-    gameOver = false;
-    gamePaused = false;
-    ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
+  function scheduleSpawn() {
+    const scene = window.game.scene.keys.default;
+    spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
+      if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
+      scheduleSpawn();
+    }, []);
+  }
+
+  // START
+  const startBtn = document.getElementById('startBtn');
+  const homeBtn = document.getElementById('homeBtn');
+
+  function handleStartGame() {
+    sfx.uiClick.play();
+    fadeIn(() => {
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('viewLeaderboardBtn').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'none';
+      muteBtnHome.style.display = 'none';
+      gameStarted = true;
+      document.querySelector('canvas').style.visibility = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
+      scheduleSpawn();
+      fadeOut();
     });
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
-    if (userInfoEl) userInfoEl.style.display = 'none';
-    if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'none';
-    const canvas = document.querySelector('canvas');
-    if (canvas) canvas.style.visibility = 'visible';
-    if (scoreText) scoreText.setVisible(true);
-    if (bestScoreText) bestScoreText.setVisible(true);
-    if (pauseIcon) pauseIcon.setVisible(true);
-    if (muteIcon) muteIcon.setVisible(true);
-    if (spawnTimer) spawnTimer.remove(false);
-    this.scheduleSpawn();
-  }, 0);
+  }
+
+  function handleGoHome() {
+    fadeIn(() => {
+      const scene = window.game.scene.keys.default;
+      scene.scene.restart();
+      score = 0;
+      gameStarted = false;
+      gameOver = false;
+      gamePaused = false;
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.getElementById('user-info').style.display = 'flex';
+      document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
+      document.getElementById('start-screen').style.display = 'flex';
+      document.getElementById('pause-overlay').style.display = 'none';
+      muteBtnHome.style.display = 'block';
+      document.querySelector('canvas').style.visibility = 'hidden';
+      fadeOut();
+    });
+  }
+
+  function handlePlayAgain() {
+    sfx.uiClick.play();
+    const scene = window.game.scene.keys.default;
+    if (scene.trail) {
+      scene.trail.destroy();
+      scene.trail = null;
+    }
+    scene.scene.restart();
+    setTimeout(() => {
+      score = 0;
+      speed = 3;
+      direction = 1;
+      gameStarted = true;
+      gameOver = false;
+      gamePaused = false;
+      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      if (muteBtnHome) muteBtnHome.style.display = 'none';
+      const userInfo = document.getElementById('user-info');
+      if (userInfo) userInfo.style.display = 'none';
+      const viewLb = document.getElementById('viewLeaderboardBtn');
+      if (viewLb) viewLb.style.display = 'none';
+      const canvas = document.querySelector('canvas');
+      if (canvas) canvas.style.visibility = 'visible';
+      if (scoreText) scoreText.setVisible(true);
+      if (bestScoreText) bestScoreText.setVisible(true);
+      if (pauseIcon) pauseIcon.setVisible(true);
+      if (muteIcon) muteIcon.setVisible(true);
+      if (spawnTimer) spawnTimer.remove(false);
+      scheduleSpawn();
+    }, 0);
+  }
+  startBtn.onclick = handleStartGame;
+  homeBtn.onclick = handleGoHome;
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 }
 
-// ---- UPDATE ---- //
 function update() {
   if (!gameStarted || gameOver || gamePaused) return;
   angle += 0.05 * direction;
@@ -419,41 +405,24 @@ function update() {
   points.children.iterate(p => p.x -= speed);
 }
 
-// ---- OBJECT POOL SPAWN ---- //
 function spawnObjects() {
   const y = Phaser.Math.RND.pick(LANES);
   const fromLeft = Phaser.Math.Between(0, 1) === 0;
   const x = fromLeft ? -50 : this.cameras.main.width + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
-
   if (Phaser.Math.Between(1, 100) <= 35) {
-    // Use pooled point & glow
-    let glow = pointGlowPool.get(x, y, 'pointGlow');
-    if (!glow) glow = this.add.image(x, y, 'pointGlow').setDepth(1).setBlendMode('ADD');
-    else glow.setActive(true).setVisible(true).setDepth(1).setBlendMode('ADD').setPosition(x, y);
-    let p = pointPool.get(x, y, 'point');
-    if (!p) p = this.physics.add.image(x, y, 'point').setDepth(2);
-    else {
-      this.physics.add.existing(p);
-      p.setActive(true).setVisible(true).setDepth(2).setPosition(x, y);
-    }
+    const glow = this.add.image(x, y, 'pointGlow').setDepth(1).setBlendMode('ADD');
+    const p = this.physics.add.image(x, y, 'point').setDepth(2);
     p.glow = glow;
     p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
     points.add(p);
   } else {
-    // Use pooled obstacle
-    let o = obstaclePool.get(x, y, 'obstacle');
-    if (!o) o = this.physics.add.image(x, y, 'obstacle').setDepth(1);
-    else {
-      this.physics.add.existing(o);
-      o.setActive(true).setVisible(true).setDepth(1).setPosition(x, y);
-    }
+    const o = this.physics.add.image(x, y, 'obstacle').setDepth(1);
     o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
     obstacles.add(o);
   }
 }
 
-// ---- GAME OVER ---- //
 function triggerGameOver() {
   if (spawnTimer) spawnTimer.remove(false);
   if (gameOver) return;
@@ -472,19 +441,18 @@ function triggerGameOver() {
   sfx.explode.play();
   this.time.delayedCall(700, () => {
     this.physics.pause();
-    const canvas = document.querySelector('canvas');
-    if (canvas) canvas.style.visibility = 'hidden';
-    if (finalScoreEl) finalScoreEl.innerText = score;
+    document.querySelector('canvas').style.visibility = 'hidden';
+    document.getElementById('finalScore').innerText = score;
     if (score > highScore) {
-      if (bestScoreText) bestScoreText.setText('Best: ' + score);
+      bestScoreText.setText('Best: ' + score);
       highScore = score;
       sfx.newBest.play();
     }
-    if (bestScoreEl) bestScoreEl.innerText = highScore;
-    if (bestScoreText) bestScoreText.setText('Best: ' + highScore);
+    document.getElementById('bestScore').innerText = highScore;
+    bestScoreText.setText('Best: ' + highScore);
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
-      if (bestScoreText) bestScoreText.setText('Best: ' + highScore);
+      if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
     if (!useLocalHighScore) {
       fetch('/api/leaderboard', {
@@ -495,58 +463,41 @@ function triggerGameOver() {
     }
     fetch('/api/leaderboard?top=100')
       .then(r => r.json()).then(data => {
-        if (leaderboardEntriesEl) {
-          while (leaderboardEntriesEl.firstChild) leaderboardEntriesEl.removeChild(leaderboardEntriesEl.firstChild);
+        const list = document.getElementById('leaderboardEntries');
+        if (list) {
+          while (list.firstChild) list.removeChild(list.firstChild);
           data.forEach((e, i) => {
             const li = document.createElement('li');
             li.setAttribute('data-rank', `#${i + 1}`);
             li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-            leaderboardEntriesEl.appendChild(li);
+            list.appendChild(li);
           });
-          if (leaderboardEl) leaderboardEl.style.display = 'block';
+          document.getElementById('leaderboard').style.display = 'block';
         }
         const rank = data.findIndex(e => e.username === piUsername);
-        if (rankMessageEl) {
+        const rankMessage = document.getElementById('rankMessage');
+        if (rankMessage) {
           if (rank >= 0) {
-            rankMessageEl.innerText = `🏅 Your Global Rank: #${rank + 1}`;
+            rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
           } else {
-            rankMessageEl.innerText = `💡 You're currently unranked — keep playing!`;
+            rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
           }
         }
-        if (muteBtnHome) muteBtnHome.style.display = 'none';
-        if (gameOverScreenEl) gameOverScreenEl.style.display = 'flex';
+        muteBtnHome.style.display = 'none';
+        document.getElementById('game-over-screen').style.display = 'flex';
       }).catch(console.error);
   });
 }
 
-// ---- COLLECT POINT ---- //
 function collectPoint(_, pt) {
-  if (pt.glow) {
-    pt.glow.setActive(false).setVisible(false);
-    pointGlowPool.killAndHide(pt.glow);
-    pt.glow = null;
-  }
-  pt.setActive(false).setVisible(false);
-  pointPool.killAndHide(pt);
+  if (pt.glow) pt.glow.destroy();
+  pt.destroy();
   score++;
   sfx.point.play();
-  if (scoreText) scoreText.setText('Score: ' + score);
+  scoreText.setText('Score: ' + score);
   this.tweens.add({
     targets: scoreText,
     scaleX: 1.1, scaleY: 1.1,
     yoyo: true, duration: 80, ease: 'Sine.easeOut'
-  });
-}
-
-// ---- MUTE BUTTON ON HOME ---- //
-if (muteBtnHome) {
-  muteBtnHome.src = currentMuteIcon();
-  muteBtnHome.addEventListener('click', () => {
-    isMuted = !isMuted;
-    if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-    muteBtnHome.src = currentMuteIcon();
-    if (window.game && window.game.sound) {
-      window.game.sound.mute = isMuted;
-    }
   });
 }
