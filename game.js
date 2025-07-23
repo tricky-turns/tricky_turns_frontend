@@ -360,7 +360,7 @@ function handleStartGame() {
     scheduleSpawn();
     fadeOut();
   });
-  });
+}
 
 function handleGoHome() {
   fadeIn(() => {
@@ -388,7 +388,11 @@ function handleGoHome() {
     scene.scene.start();
 
     fadeOut();
+  });
+});
+});
 }
+
 startBtn.removeEventListener('click', handleStartGame);
 homeBtn.removeEventListener('click', handleGoHome);
 startBtn.addEventListener('click', handleStartGame);
@@ -519,4 +523,4 @@ homeBtn.addEventListener('click', handleGoHome);
         yoyo:true, duration:80, ease:'Sine.easeOut'
       });
     }
-}
+  
