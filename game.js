@@ -390,9 +390,7 @@ function handleGoHome() {
     fadeOut();
   });
 });
-});
 }
-
 startBtn.removeEventListener('click', handleStartGame);
 homeBtn.removeEventListener('click', handleGoHome);
 startBtn.addEventListener('click', handleStartGame);
