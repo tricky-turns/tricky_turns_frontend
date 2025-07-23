@@ -318,91 +318,21 @@ function create() {
   const homeBtn = document.getElementById('homeBtn');
 
   function handleStartGame() {
-
     sfx.uiClick.play();
-
     fadeIn(() => {
-
       document.getElementById('user-info').style.display = 'none';
-
       document.getElementById('viewLeaderboardBtn').style.display = 'none';
-
       document.getElementById('start-screen').style.display = 'none';
-
       muteBtnHome.style.display = 'none';
-
-      if (document.querySelector('canvas')) document.querySelector('canvas').style.visibility = 'visible';
-
-      // Hide HUD until countdown is done
-
-      scoreText.setVisible(false);
-
-      bestScoreText.setVisible(false);
-
-      pauseIcon.setVisible(false);
-
-      muteIcon.setVisible(false);
-
-      let count = 3;
-
-      countdownText.setText(count).setVisible(true);
-
-      // Phaser timer for 3-2-1-GO!
-
-      window.game.scene.keys.default.time.addEvent({
-
-        delay: 1000,
-
-        repeat: 2,
-
-        callback: () => {
-
-          count--;
-
-          if (count > 0) {
-
-            countdownText.setText(count);
-
-          } else if (count === 0) {
-
-            countdownText.setText('GO!');
-
-          }
-
-        },
-
-        callbackScope: window.game.scene.keys.default,
-
-        onComplete: () => {
-
-          setTimeout(() => {
-
-            countdownText.setVisible(false);
-
-            gameStarted = true;
-
-            scoreText.setVisible(true);
-
-            bestScoreText.setVisible(true);
-
-            pauseIcon.setVisible(true);
-
-            muteIcon.setVisible(true);
-
-            scheduleSpawn();
-
-            fadeOut();
-
-          }, 500); // GO! visible for 0.5s
-
-        }
-
-      });
-
+      gameStarted = true;
+      document.querySelector('canvas').style.visibility = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
+      scheduleSpawn();
+      fadeOut();
     });
-
-  }
-);
   }
 
   function handleGoHome() {
