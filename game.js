@@ -1,5 +1,5 @@
 
-   Pi.init({ version: "2.0", sandbox: true });
+   Pi.init({ version: "2.0" });
 const muteBtnHome = document.getElementById('muteToggleHome');
 
   
@@ -157,9 +157,6 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-      if (obstacles) obstacles.clear(true, true);
-      if (points) points.clear(true, true);
-
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
       LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
@@ -362,25 +359,39 @@ function handleStartGame() {
   });
 }
 
+
 function handleGoHome() {
-  fadeIn(() => window.location.href = window.location.href);
+  fadeIn(() => {
+    // Restart the Phaser scene cleanly
+    const scene = window.game.scene.keys.default;
+    scene.scene.restart(); // reset all game objects & physics
+
+    // Reset UI and game state
+    score = 0;
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('pause-overlay').style.display = 'none';
+    muteBtnHome.style.display = 'block';
+
+    // Hide the canvas until next start
+    document.querySelector('canvas').style.visibility = 'hidden';
+
+    fadeOut();
+  });
 }
 
-startBtn.removeEventListener('click', handleStartGame);
-homeBtn.removeEventListener('click', handleGoHome);
-startBtn.addEventListener('click', handleStartGame);
-homeBtn.addEventListener('click', handleGoHome);
 
 
-
-
-
-
-
-
-
-
-    }
+    // Use direct onclick assignments to avoid duplicate listeners on restart
+    startBtn.onclick = handleStartGame;
+    homeBtn.onclick = handleGoHome;
+}
 
     function update(){
       if(!gameStarted||gameOver||gamePaused) return;
