@@ -390,40 +390,45 @@ function handleGoHome() {
 
 // —— Play Again handler ——
 function handlePlayAgain() {
-  // 1) play the click SFX
+  // play click SFX
   sfx.uiClick.play();
 
-  // 2) restart the Phaser scene
+  // restart the Phaser scene
   const scene = window.game.scene.keys.default;
   scene.scene.restart();
 
-  // 3) on the next tick (after 'create' has re-run), reset & re-show everything
-  setTimeout(() => {
-    // -- Reset core game state --
-    score     = 0;
-    speed     = 3;      // back to your initial speed
-    direction = 1;      // reset orbit direction
-    gameStarted = true;
-    gameOver   = false;
-    gamePaused = false;
+  // --- Reset core game state ---
+  score       = 0;
+  speed       = 3;
+  direction   = 1;
+  gameStarted = true;
+  gameOver    = false;
+  gamePaused  = false;
 
-    // -- Hide any leftover overlays --
-    document.getElementById('game-over-screen').style.display = 'none';
-    document.getElementById('pause-overlay').   style.display = 'none';
-    document.getElementById('leaderboard').      style.display = 'none';
+  // --- Hide every overlay / screen ---
+  ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  if (muteBtnHome) muteBtnHome.style.display = 'none';
+  const userInfo = document.getElementById('user-info');
+  if (userInfo) userInfo.style.display = 'none';
+  const viewLb  = document.getElementById('viewLeaderboardBtn');
+  if (viewLb) viewLb.style.display = 'none';
 
-    // -- Show the canvas & HUD --
-    document.querySelector('canvas').style.visibility = 'visible';
-    scoreText .setVisible(true);
-    bestScoreText.setVisible(true);
-    pauseIcon .setVisible(true);
-    muteIcon  .setVisible(true);
+  // --- Show canvas & HUD ---
+  const canvas = document.querySelector('canvas');
+  if (canvas) canvas.style.visibility = 'visible';
+  if (scoreText)     scoreText.setVisible(true);
+  if (bestScoreText) bestScoreText.setVisible(true);
+  if (pauseIcon)     pauseIcon.setVisible(true);
+  if (muteIcon)      muteIcon.setVisible(true);
 
-    // -- Clear old spawnTimer and start spawning obstacles/points again --
-    if (spawnTimer) spawnTimer.remove(false);
-    scheduleSpawn();
-  }, 0);
+  // --- Clear old timer & restart spawning obstacles/points ---
+  if (spawnTimer) spawnTimer.remove(false);
+  scheduleSpawn();
 }
+
 
 
 
