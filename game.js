@@ -221,6 +221,35 @@ function create() {
     fontFamily: 'Poppins', fontSize: '96px',
     color: '#fff', stroke: '#000', strokeThickness: 6
   }).setOrigin(0.5).setDepth(5).setVisible(false);
+  this.countdownText = countdownText;
+  this.scoreText = scoreText;
+  this.bestScoreText = bestScoreText;
+  this.pauseIcon = pauseIcon;
+  this.muteIcon = muteIcon;
+
+  // ---- COUNTDOWN FUNCTION WITH PROPER CONTEXT ----
+  function startCountdown(callback) {
+    let count = 3;
+    const scene = this;
+    scene.countdownText.setText(count).setVisible(true);
+    const countdownEvent = scene.time.addEvent({
+      delay: 1000,
+      repeat: 3,
+      callback: () => {
+        count--;
+        if (count > 0) {
+          scene.countdownText.setText(count);
+        } else if (count === 0) {
+          scene.countdownText.setText('Go!');
+        } else {
+          scene.countdownText.setVisible(false);
+          countdownEvent.remove(false);
+          if (typeof callback === "function") callback.call(scene);
+        }
+      }
+    });
+  }
+  // -------------------------------------------------
 
   // SFX
   sfx.explode = this.sound.add('explode');
@@ -317,6 +346,7 @@ function create() {
   const startBtn = document.getElementById('startBtn');
   const homeBtn = document.getElementById('homeBtn');
 
+  // ---- COUNTDOWN ON START ----
   function handleStartGame() {
     sfx.uiClick.play();
     fadeIn(() => {
@@ -324,16 +354,19 @@ function create() {
       document.getElementById('viewLeaderboardBtn').style.display = 'none';
       document.getElementById('start-screen').style.display = 'none';
       muteBtnHome.style.display = 'none';
-      gameStarted = true;
-      document.querySelector('canvas').style.visibility = 'visible';
-      scoreText.setVisible(true);
-      bestScoreText.setVisible(true);
-      pauseIcon.setVisible(true);
-      muteIcon.setVisible(true);
-      scheduleSpawn();
-      fadeOut();
+      startCountdown.call(window.game.scene.keys.default, function() {
+        gameStarted = true;
+        document.querySelector('canvas').style.visibility = 'visible';
+        this.scoreText.setVisible(true);
+        this.bestScoreText.setVisible(true);
+        this.pauseIcon.setVisible(true);
+        this.muteIcon.setVisible(true);
+        scheduleSpawn();
+        fadeOut();
+      });
     });
   }
+  // ----------------------------------
 
   function handleGoHome() {
     fadeIn(() => {
@@ -354,6 +387,7 @@ function create() {
     });
   }
 
+  // ---- COUNTDOWN ON PLAY AGAIN ----
   function handlePlayAgain() {
     sfx.uiClick.play();
     const scene = window.game.scene.keys.default;
@@ -366,7 +400,7 @@ function create() {
       score = 0;
       speed = 3;
       direction = 1;
-      gameStarted = true;
+      gameStarted = false;
       gameOver = false;
       gamePaused = false;
       ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
@@ -380,14 +414,19 @@ function create() {
       if (viewLb) viewLb.style.display = 'none';
       const canvas = document.querySelector('canvas');
       if (canvas) canvas.style.visibility = 'visible';
-      if (scoreText) scoreText.setVisible(true);
-      if (bestScoreText) bestScoreText.setVisible(true);
-      if (pauseIcon) pauseIcon.setVisible(true);
-      if (muteIcon) muteIcon.setVisible(true);
       if (spawnTimer) spawnTimer.remove(false);
-      scheduleSpawn();
+      startCountdown.call(window.game.scene.keys.default, function() {
+        gameStarted = true;
+        this.scoreText.setVisible(true);
+        this.bestScoreText.setVisible(true);
+        this.pauseIcon.setVisible(true);
+        this.muteIcon.setVisible(true);
+        scheduleSpawn();
+      });
     }, 0);
   }
+  // ----------------------------------------
+
   startBtn.onclick = handleStartGame;
   homeBtn.onclick = handleGoHome;
   const playAgainBtn = document.getElementById('playAgainBtn');
