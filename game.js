@@ -337,26 +337,31 @@ function create() {
   const homeBtn = document.getElementById('homeBtn');
 
   
-function handleStartGame() {
-    sfx.uiClick.play();
-    fadeIn(() => {
-      document.getElementById('user-info').style.display = 'none';
-      document.getElementById('viewLeaderboardBtn').style.display = 'none';
-      document.getElementById('start-screen').style.display = 'none';
-      muteBtnHome.style.display = 'none';
-      document.querySelector('canvas').style.visibility = 'visible';
-      scoreText.setVisible(true);
-      bestScoreText.setVisible(true);
-      pauseIcon.setVisible(true);
-      muteIcon.setVisible(true);
 
-      // --- Countdown here ---
-      const scene = window.game.scene.keys.default;
-      showCountdown(scene, () => {
-        gameStarted = true;
-        scheduleSpawn();
-        fadeOut();
-      }});
+function handleStartGame() {
+  sfx.uiClick.play();
+  fadeIn(() => {
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('viewLeaderboardBtn').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'none';
+    muteBtnHome.style.display = 'none';
+    document.querySelector('canvas').style.visibility = 'visible';
+    scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
+    pauseIcon.setVisible(true);
+    muteIcon.setVisible(true);
+
+    // --- Countdown here ---
+    const scene = window.game.scene.keys.default;
+    showCountdown(scene, () => {
+      gameStarted = true;
+      scheduleSpawn();
+      fadeOut();
+    });
+  });
+}
+
+    });
 }
 );
   }
@@ -364,35 +369,19 @@ function handleStartGame() {
   function handleGoHome() {
     fadeIn(() => {
       const scene = window.game.scene.keys.default;
-      scene.scene.restart();
-      score = 0;
-      gameStarted = false;
-      gameOver = false;
-      gamePaused = false;
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.getElementById('user-info').style.display = 'flex';
-      document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-      document.getElementById('start-screen').style.display = 'flex';
-      document.getElementById('pause-overlay').style.display = 'none';
-      muteBtnHome.style.display = 'block';
-      document.querySelector('canvas').style.visibility = 'hidden';
-      fadeOut();
-    });
-  }
+      );
+  }, 0);
+}
+);
+    }, 0);
+}
 
-  
-function handlePlayAgain() {
-    sfx.uiClick.play();
-    const scene = window.game.scene.keys.default;
-    if (scene.trail) {
-      scene.trail.destroy();
-      scene.trail = null;
-    }
     scene.scene.restart();
     setTimeout(() => {
       score = 0;
       speed = 3;
       direction = 1;
+      gameStarted = true;
       gameOver = false;
       gamePaused = false;
       ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
@@ -411,14 +400,8 @@ function handlePlayAgain() {
       if (pauseIcon) pauseIcon.setVisible(true);
       if (muteIcon) muteIcon.setVisible(true);
       if (spawnTimer) spawnTimer.remove(false);
-
-      // --- Countdown here ---
-      showCountdown(scene, () => {
-        gameStarted = true;
-        scheduleSpawn();
-      });
-}
-, 0);
+      scheduleSpawn();
+    }, 0);
   }
   startBtn.onclick = handleStartGame;
   homeBtn.onclick = handleGoHome;
