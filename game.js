@@ -424,6 +424,8 @@ function handlePlayAgain() {
     // Use direct onclick assignments to avoid duplicate listeners on restart
     startBtn.onclick = handleStartGame;
     homeBtn.onclick = handleGoHome;
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 }
 
     function update(){
