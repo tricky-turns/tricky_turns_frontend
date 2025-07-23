@@ -1,5 +1,5 @@
 
-   Pi.init({ version: "2.0", sandbox: true });
+   Pi.init({ version: "2.0" });
 const muteBtnHome = document.getElementById('muteToggleHome');
 
   
@@ -157,9 +157,6 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-      if (obstacles) obstacles.clear(true, true);
-      if (points) points.clear(true, true);
-
       const cam=this.cameras.main;
       const cx=cam.centerX, cy=cam.centerY;
       LANES[0]=cy-radius; LANES[1]=cy; LANES[2]=cy+radius;
@@ -362,13 +359,14 @@ function handleStartGame() {
   });
 }
 
+
 function handleGoHome() {
   fadeIn(() => {
-    // Reset Phaser scene
+    // Restart the Phaser scene cleanly
     const scene = window.game.scene.keys.default;
     scene.scene.restart(); // reset all game objects & physics
 
-    // Reset UI and state
+    // Reset UI and game state
     score = 0;
     gameStarted = false;
     gameOver = false;
@@ -381,12 +379,13 @@ function handleGoHome() {
     document.getElementById('pause-overlay').style.display = 'none';
     muteBtnHome.style.display = 'block';
 
-    // Hide canvas again
+    // Hide the canvas until next start
     document.querySelector('canvas').style.visibility = 'hidden';
 
     fadeOut();
   });
 }
+
 
 startBtn.removeEventListener('click', handleStartGame);
 homeBtn.removeEventListener('click', handleGoHome);
