@@ -1,6 +1,8 @@
 // PATCHED GAME.JS — 2024-07-23
 
 const muteBtnHome = document.getElementById('muteToggleHome');
+let isLeaderboardLoading = false;
+
 
 // Initialize Pi SDK (with sandbox for local dev)
 let piInitPromise = null;
@@ -81,27 +83,59 @@ function fadeOut(callback, duration = 600) {
 }
 
 // —— Show Home Leaderboard ——
+// Replace your existing showHomeLeaderboard function and related event handler:
 async function showHomeLeaderboard() {
+  if (isLeaderboardLoading) return; // Prevent multiple loads
+
+  isLeaderboardLoading = true;
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
+
   const list = document.getElementById('leaderboardEntriesHome');
   while (list.firstChild) list.removeChild(list.firstChild);
-  const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
-  data.forEach((e, i) => {
-    const li = document.createElement('li');
-    li.setAttribute('data-rank', `#${i + 1}`);
-    li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-    list.appendChild(li);
-  });
-  document.getElementById('leaderboard-screen').style.display = 'flex';
+
+  // Optional: Show a loading indicator
+  const loadingLi = document.createElement('li');
+  loadingLi.textContent = 'Loading...';
+  loadingLi.style.fontStyle = 'italic';
+  loadingLi.style.textAlign = 'center';
+  list.appendChild(loadingLi);
+
+  try {
+    const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+
+    // Clear loading message
+    while (list.firstChild) list.removeChild(list.firstChild);
+
+    data.forEach((e, i) => {
+      const li = document.createElement('li');
+      li.setAttribute('data-rank', `#${i + 1}`);
+      li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+      list.appendChild(li);
+    });
+
+    document.getElementById('leaderboard-screen').style.display = 'flex';
+  } catch (e) {
+    // Clear loading message
+    while (list.firstChild) list.removeChild(list.firstChild);
+
+    // Show error message
+    const errorLi = document.createElement('li');
+    errorLi.textContent = 'Failed to load leaderboard.';
+    errorLi.style.color = '#F66';
+    errorLi.style.fontStyle = 'italic';
+    errorLi.style.textAlign = 'center';
+    list.appendChild(errorLi);
+  } finally {
+    isLeaderboardLoading = false;
+    if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = false;
+  }
 }
-document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
-document.getElementById('closeLeaderboardBtn').addEventListener('click', ()=>{
-  document.getElementById('leaderboard-screen').style.display = 'none';
-});
 
 // —— Game & Leaderboard logic ——
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
+let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 25;
 let circle1, circle2, obstacles, points, score = 0;
 let muteIcon;
 let bestScoreText;
@@ -549,6 +583,7 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
+  document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 });
