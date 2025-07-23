@@ -363,7 +363,35 @@ function handleStartGame() {
 }
 
 function handleGoHome() {
-  fadeIn(() => window.location.href = window.location.href);
+  fadeIn(() => {
+    // Reset game state
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+    score = 0;
+    speed = 3;
+    pauseIcon.setTexture('iconPause');
+
+    // Clear groups
+    obstacles.clear(true, true);
+    points.clear(true, true);
+
+    // Hide canvas
+    document.querySelector('canvas').style.visibility = 'hidden';
+
+    // Reset UI
+    scoreText.setVisible(false);
+    bestScoreText.setVisible(false);
+    pauseIcon.setVisible(false);
+    muteIcon.setVisible(false);
+    muteBtnHome.style.display = 'block';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+
+    fadeOut();
+  });
 }
 
 startBtn.removeEventListener('click', handleStartGame);
