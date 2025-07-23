@@ -234,30 +234,37 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  // ---- COUNTDOWN FUNCTION, HUD-only, always on top ----
-  function startCountdown(callback) {
+  // --- Helper to start countdown from outside ---
+  this.startCountdown = function(callback) {
     let count = 3;
-    const scene = this;
-    scene.countdownText.setText(count).setVisible(true);
-    scene.countdownText.setDepth(1000);
-    const countdownEvent = scene.time.addEvent({
+    this.countdownText.setText(count).setVisible(true);
+    this.countdownText.setDepth(1000);
+    const countdownEvent = this.time.addEvent({
       delay: 1000,
       repeat: 3,
       callback: () => {
         count--;
         if (count > 0) {
-          scene.countdownText.setText(count);
+          this.countdownText.setText(count);
         } else if (count === 0) {
-          scene.countdownText.setText('Go!');
+          this.countdownText.setText('Go!');
         } else {
-          scene.countdownText.setVisible(false);
+          this.countdownText.setVisible(false);
           countdownEvent.remove(false);
-          if (typeof callback === "function") callback.call(scene);
+          if (typeof callback === "function") callback.call(this);
         }
       }
     });
-  }
-  // -------------------------------------------------
+  };
+
+  // --- Helper to schedule spawn from outside ---
+  this.scheduleSpawn = function() {
+    const scene = this;
+    spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
+      if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
+      scene.scheduleSpawn();
+    }, []);
+  };
 
   // SFX
   sfx.explode = this.sound.add('explode');
@@ -342,107 +349,9 @@ function create() {
     const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
     return Phaser.Math.Linear(1500, 500, t);
   }
-  function scheduleSpawn() {
-    const scene = window.game.scene.keys.default;
-    spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
-      if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
-      scheduleSpawn();
-    }, []);
-  }
-
-  // --- UI Event Handlers (patched, fade only between major screens) ---
-
-  // START BUTTON HANDLER
-  function handleStartGame() {
-    sfx.uiClick.play();
-    document.getElementById('user-info').style.display = 'none';
-    document.getElementById('viewLeaderboardBtn').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'none';
-    muteBtnHome.style.display = 'none';
-    document.querySelector('canvas').style.visibility = 'visible';
-    fadeOut(() => {
-      // Show HUD BEFORE countdown so it's visible during countdown
-      const scene = window.game.scene.keys.default;
-      scene.scoreText.setVisible(true);
-      scene.bestScoreText.setVisible(true);
-      scene.pauseIcon.setVisible(true);
-      scene.muteIcon.setVisible(true);
-
-      startCountdown.call(scene, function() {
-        gameStarted = true;
-        scheduleSpawn();
-      });
-    }, 200);
-
-
-  function handleGoHome() {
-    fadeIn(() => {
-      const scene = window.game.scene.keys.default;
-      scene.scene.restart();
-      score = 0;
-      gameStarted = false;
-      gameOver = false;
-      gamePaused = false;
-      document.getElementById('game-over-screen').style.display = 'none';
-      document.getElementById('user-info').style.display = 'flex';
-      document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-      document.getElementById('start-screen').style.display = 'flex';
-      document.getElementById('pause-overlay').style.display = 'none';
-      muteBtnHome.style.display = 'block';
-      document.querySelector('canvas').style.visibility = 'hidden';
-      fadeOut();
-    });
-  }
-
-  // PLAY AGAIN HANDLER
-  function handlePlayAgain() {
-    sfx.uiClick.play();
-    const scene = window.game.scene.keys.default;
-    // Clean up before restart
-    if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
-    if (spawnTimer) spawnTimer.remove(false);
-    scene.scene.restart();
-    setTimeout(() => {
-      score = 0;
-      speed = 3;
-      direction = 1;
-      gameStarted = false;
-      gameOver = false;
-      gamePaused = false;
-      [
-        'game-over-screen', 'leaderboard-screen', 'pause-overlay',
-        'start-screen', 'leaderboard'
-      ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-      if (muteBtnHome) muteBtnHome.style.display = 'none';
-      const userInfo = document.getElementById('user-info');
-      if (userInfo) userInfo.style.display = 'none';
-      const viewLb = document.getElementById('viewLeaderboardBtn');
-      if (viewLb) viewLb.style.display = 'none';
-      const canvas = document.querySelector('canvas');
-      if (canvas) canvas.style.visibility = 'visible';
-      // Directly show countdown over HUD, do not fade
-      startCountdown.call(window.game.scene.keys.default, function() {
-        gameStarted = true;
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
-        scheduleSpawn();
-      });
-    }, 0);
-  }
-
-  startBtn.onclick = handleStartGame;
-  homeBtn.onclick = handleGoHome;
-  const playAgainBtn = document.getElementById('playAgainBtn');
-  if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 }
 
 function update() {
-  // Always position the orbs unless the game is over (so they are centered for the countdown too)
   if (gameOver) return;
 
   let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
@@ -459,20 +368,19 @@ function update() {
   }
 }
 
-
 function spawnObjects() {
   const y = Phaser.Math.RND.pick(LANES);
   const fromLeft = Phaser.Math.Between(0, 1) === 0;
   const x = fromLeft ? -50 : this.cameras.main.width + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
   if (Phaser.Math.Between(1, 100) <= 35) {
-    const glow = this.add.image(x, y, 'pointGlow').setDepth(1).setBlendMode('ADD');
-    const p = this.physics.add.image(x, y, 'point').setDepth(2);
+    const glow = window.game.scene.keys.default.add.image(x, y, 'pointGlow').setDepth(1).setBlendMode('ADD');
+    const p = window.game.scene.keys.default.physics.add.image(x, y, 'point').setDepth(2);
     p.glow = glow;
     p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
     points.add(p);
   } else {
-    const o = this.physics.add.image(x, y, 'obstacle').setDepth(1);
+    const o = window.game.scene.keys.default.physics.add.image(x, y, 'obstacle').setDepth(1);
     o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
     obstacles.add(o);
   }
@@ -484,18 +392,18 @@ function triggerGameOver() {
   gameOver = true;
   [circle1, circle2].forEach(c => {
     const px = c.x, py = c.y; c.destroy();
-    const emitter = this.add.particles('orb').createEmitter({
+    const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
       x: px, y: py,
       speed: { min: 150, max: 350 },
       angle: { min: 0, max: 360 },
       scale: { start: 0.8, end: 0 },
       lifespan: 500, blendMode: 'ADD', quantity: 8
     });
-    this.time.delayedCall(1000, () => emitter.manager.destroy());
+    window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
   });
   sfx.explode.play();
-  this.time.delayedCall(700, () => {
-    this.physics.pause();
+  window.game.scene.keys.default.time.delayedCall(700, () => {
+    window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
     document.getElementById('finalScore').innerText = score;
     if (score > highScore) {
@@ -538,7 +446,7 @@ function triggerGameOver() {
             rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
           }
         }
-        muteBtnHome.style.display = 'none';
+        if (muteBtnHome) muteBtnHome.style.display = 'none';
         document.getElementById('game-over-screen').style.display = 'flex';
       }).catch(console.error);
   });
@@ -550,9 +458,97 @@ function collectPoint(_, pt) {
   score++;
   sfx.point.play();
   scoreText.setText('Score: ' + score);
-  this.tweens.add({
+  window.game.scene.keys.default.tweens.add({
     targets: scoreText,
     scaleX: 1.1, scaleY: 1.1,
     yoyo: true, duration: 80, ease: 'Sine.easeOut'
   });
 }
+
+// --- BUTTON HANDLERS ---
+
+function handleStartGame() {
+  sfx.uiClick.play();
+  document.getElementById('user-info').style.display = 'none';
+  document.getElementById('viewLeaderboardBtn').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'none';
+  if (muteBtnHome) muteBtnHome.style.display = 'none';
+  document.querySelector('canvas').style.visibility = 'visible';
+  fadeOut(() => {
+    const scene = window.game.scene.keys.default;
+    scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.pauseIcon.setVisible(true);
+    scene.muteIcon.setVisible(true);
+    scene.startCountdown(function() {
+      gameStarted = true;
+      scene.scheduleSpawn();
+    });
+  }, 200);
+}
+
+function handleGoHome() {
+  fadeIn(() => {
+    const scene = window.game.scene.keys.default;
+    scene.scene.restart();
+    score = 0;
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('pause-overlay').style.display = 'none';
+    if (muteBtnHome) muteBtnHome.style.display = 'block';
+    document.querySelector('canvas').style.visibility = 'hidden';
+    fadeOut();
+  });
+}
+
+function handlePlayAgain() {
+  sfx.uiClick.play();
+  const scene = window.game.scene.keys.default;
+  if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
+  if (spawnTimer) spawnTimer.remove(false);
+  scene.scene.restart();
+  setTimeout(() => {
+    score = 0;
+    speed = 3;
+    direction = 1;
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+    [
+      'game-over-screen', 'leaderboard-screen', 'pause-overlay',
+      'start-screen', 'leaderboard'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) userInfo.style.display = 'none';
+    const viewLb = document.getElementById('viewLeaderboardBtn');
+    if (viewLb) viewLb.style.display = 'none';
+    const canvas = document.querySelector('canvas');
+    if (canvas) canvas.style.visibility = 'visible';
+    const scene = window.game.scene.keys.default;
+    scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.pauseIcon.setVisible(true);
+    scene.muteIcon.setVisible(true);
+    scene.startCountdown(function() {
+      gameStarted = true;
+      scene.scheduleSpawn();
+    });
+  }, 0);
+}
+
+// Assign handlers globally after DOM is ready
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('startBtn').onclick = handleStartGame;
+  document.getElementById('homeBtn').onclick = handleGoHome;
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
+});
