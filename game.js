@@ -393,32 +393,36 @@ function handleGoHome() {
     // Use direct onclick assignments to avoid duplicate listeners on restart
     startBtn.onclick = handleStartGame;
     homeBtn.onclick = handleGoHome;
-    // Play Again button
+    // Play Again button listener
     const playAgainBtn = document.getElementById('playAgainBtn');
     if (playAgainBtn) {
-      playAgainBtn.onclick = () => {
+      playAgainBtn.addEventListener('click', () => {
         sfx.uiClick.play();
         fadeIn(() => {
           const scene = window.game.scene.keys.default;
-          scene.scene.restart();
-          // Reset game state
-          score = 0;
-          gameStarted = true;
-          gameOver = false;
-          gamePaused = false;
           // Hide Game Over UI
           document.getElementById('game-over-screen').style.display = 'none';
-          // Show canvas & HUD
-          document.querySelector('canvas').style.visibility = 'visible';
-          scoreText.setVisible(true);
-          bestScoreText.setVisible(true);
-          pauseIcon.setVisible(true);
-          muteIcon.setVisible(true);
-          // Resume spawning
-          scheduleSpawn();
-          fadeOut();
+          // After scene restart, re-init HUD and spawning
+          scene.events.once('create', () => {
+            // Reset game state
+            score = 0;
+            gameStarted = true;
+            gameOver = false;
+            gamePaused = false;
+            // Show canvas & HUD
+            document.querySelector('canvas').style.visibility = 'visible';
+            scoreText.setVisible(true);
+            bestScoreText.setVisible(true);
+            pauseIcon.setVisible(true);
+            muteIcon.setVisible(true);
+            // Kick off spawning again
+            scheduleSpawn();
+            fadeOut();
+          });
+          // Restart the Phaser scene cleanly
+          scene.scene.restart();
         });
-      };
+      });
     }
 }
 
