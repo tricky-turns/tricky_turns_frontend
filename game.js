@@ -88,7 +88,7 @@ function fadeOut(callback, duration = 600) {
     // Fetch and display the top 100 leaderboard on the start screen
 async function showHomeLeaderboard() {
       const list = document.getElementById('leaderboardEntriesHome');
-      list.innerHTML = '';
+      while (list.firstChild) list.removeChild(list.firstChild);
       const data = await fetch('/api/leaderboard?top=100').then(r=>r.json());
       data.forEach((e, i) => {
   const li = document.createElement('li');
@@ -113,6 +113,7 @@ let muteIcon;
 let bestScoreText;
 
     let scoreText,pauseIcon,pauseOverlay,countdownText;
+let spawnTimer;
     let sfx={}, isMuted=false;
     if (muteBtnHome) muteBtnHome.src = 'assets/' + (isMuted ? 'icon-unmute.svg' : 'icon-mute.svg');
     const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
@@ -333,7 +334,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
       }
       function scheduleSpawn(){
   const scene = window.game.scene.keys.default;
-  scene.time.delayedCall(getSpawnInterval(), () => {
+  spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
     if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
     scheduleSpawn();
   }, []);
@@ -410,17 +411,19 @@ homeBtn.addEventListener('click', handleGoHome);
     }
 
     function triggerGameOver(){
+      if (spawnTimer) spawnTimer.remove(false);
       if(gameOver) return;
       gameOver=true;
       [circle1,circle2].forEach(c=>{
         const px=c.x, py=c.y; c.destroy();
-        this.add.particles('orb').createEmitter({
+        const emitter = this.add.particles('orb').createEmitter({
           x:px,y:py,
           speed:{min:150,max:350},
           angle:{min:0,max:360},
           scale:{start:0.8,end:0},
           lifespan:500,blendMode:'ADD',quantity:8
         });
+        this.time.delayedCall(1000, () => emitter.manager.destroy());
       });
       sfx.explode.play();
       this.time.delayedCall(700,()=>{
@@ -454,7 +457,7 @@ homeBtn.addEventListener('click', handleGoHome);
           .then(r=>r.json()).then(data=>{
             const list=document.getElementById('leaderboardEntries');
             if (list) {
-              list.innerHTML = '';
+              while (list.firstChild) list.removeChild(list.firstChild);
               data.forEach((e, i) => {
                 const li = document.createElement('li');
                 li.setAttribute('data-rank', `#${i + 1}`);
