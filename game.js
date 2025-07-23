@@ -364,7 +364,7 @@ function handleStartGame() {
 
 function handleGoHome() {
   fadeIn(() => {
-    // Reset game state
+    // Reset global state
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
@@ -382,12 +382,14 @@ function handleGoHome() {
     document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
     muteBtnHome.style.display = 'inline-block';
 
-    // Restart the Phaser scene
+    // Fully reset the Phaser scene
     const scene = window.game.scene.keys.default;
-    scene.scene.restart();
+    scene.scene.stop();
+    scene.scene.start();
 
     fadeOut();
   });
+});
 }
 
 startBtn.removeEventListener('click', handleStartGame);
