@@ -192,9 +192,11 @@ function create() {
     .generateTexture('point', 50, 50).destroy();
 
   // Orbit sprites
-  circle1 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle1);
+  circle1 = this.add.image(0, 0, 'orb');
+  this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
-  circle2 = this.add.image(0, 0, 'orb'); this.physics.add.existing(circle2);
+  circle2 = this.add.image(0, 0, 'orb');
+  this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
   // Trail
@@ -257,7 +259,7 @@ function create() {
   });
 
   // Pause/play toggle
-  pauseIcon.on('pointerdown', (_, x, y, e) => {
+  pauseIcon.on('pointerdown', (_, __, __, e) => {
     e.stopPropagation();
     if (!gameStarted || gameOver) return;
     if (!gamePaused) {
@@ -269,14 +271,13 @@ function create() {
     } else {
       sfx.pauseWhoosh.play();
       pauseOverlay.style.display = 'none';
-      // 3‑2‑1 countdown before resume
       let cnt = 3;
       countdownText.setText(cnt).setVisible(true);
       this.time.addEvent({
-        delay:1000, repeat:2,
-        callback: ()=>{
+        delay: 1000, repeat: 2,
+        callback: () => {
           cnt--;
-          if (cnt>0) countdownText.setText(cnt);
+          if (cnt > 0) countdownText.setText(cnt);
           else {
             countdownText.setVisible(false);
             gamePaused = false;
@@ -295,8 +296,8 @@ function create() {
       sfx.move.play();
       this.tweens.add({
         targets: [circle1, circle2],
-        scaleX:1.15, scaleY:1.15,
-        yoyo:true, duration:100, ease:'Quad.easeInOut'
+        scaleX: 1.15, scaleY: 1.15,
+        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
       });
     }
   });
@@ -304,13 +305,13 @@ function create() {
   // Collisions
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
-  this.physics.add.overlap(circle1, points,    collectPoint,    null, this);
-  this.physics.add.overlap(circle2, points,    collectPoint,    null, this);
+  this.physics.add.overlap(circle1, points, collectPoint, null, this);
+  this.physics.add.overlap(circle2, points, collectPoint, null, this);
 
   // Speed ramp
   this.time.addEvent({
-    delay:1000, loop:true,
-    callback: ()=>{
+    delay: 1000, loop: true,
+    callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
         speed += speed > 1.5 ? 0.006 : (speed >= 1.2 ? 0.0015 : 0);
       }
@@ -327,27 +328,26 @@ function create() {
     spawnTimer = scene.time.delayedCall(getSpawnInterval(), () => {
       if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(scene);
       scheduleSpawn();
-    }, [], this);
+    });
   }
 
-  // --- Start / Home / Play Again buttons ---
-  const startBtn     = document.getElementById('startBtn');
-  const homeBtn      = document.getElementById('homeBtn');
+  // UI buttons
+  const startBtn = document.getElementById('startBtn');
+  const homeBtn = document.getElementById('homeBtn');
   const playAgainBtn = document.getElementById('playAgainBtn');
 
   function handleStartGame() {
     sfx.uiClick.play();
     fadeIn(() => {
-      document.getElementById('user-info').style.display        = 'none';
-      document.getElementById('viewLeaderboardBtn').style.display= 'none';
-      document.getElementById('start-screen').style.display      = 'none';
-      if (muteBtnHome) muteBtnHome.style.display                = 'none';
-      document.querySelector('canvas').style.visibility          = 'visible';
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('viewLeaderboardBtn').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'none';
+      if (muteBtnHome) muteBtnHome.style.display = 'none';
+      document.querySelector('canvas').style.visibility = 'visible';
       scoreText.setVisible(true);
       bestScoreText.setVisible(true);
       pauseIcon.setVisible(true);
       muteIcon.setVisible(true);
-
       const scene = window.game.scene.keys.default;
       showCountdown(scene, () => {
         gameStarted = true;
@@ -361,24 +361,17 @@ function create() {
     fadeIn(() => {
       const scene = window.game.scene.keys.default;
       scene.scene.restart();
-
-      // reset game state
       score = 0; speed = 3; direction = 1;
       gameStarted = false; gameOver = false; gamePaused = false;
-
-      // hide all in‑game overlays
       ['game-over-screen','leaderboard-screen','pause-overlay'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-
-      // show initial menu
-      document.getElementById('start-screen').style.display       = 'flex';
-      document.getElementById('user-info').style.display         = 'flex';
-      document.getElementById('viewLeaderboardBtn').style.display= 'block';
-      if (muteBtnHome) muteBtnHome.style.display                = 'block';
-      document.querySelector('canvas').style.visibility          = 'hidden';
-
+      document.getElementById('start-screen').style.display = 'flex';
+      document.getElementById('user-info').style.display = 'flex';
+      document.getElementById('viewLeaderboardBtn').style.display = 'block';
+      if (muteBtnHome) muteBtnHome.style.display = 'block';
+      document.querySelector('canvas').style.visibility = 'hidden';
       fadeOut();
     });
   }
@@ -388,92 +381,28 @@ function create() {
     fadeIn(() => {
       const scene = window.game.scene.keys.default;
       scene.scene.restart();
-
-      // reset and start immediately
       score = 0; speed = 3; direction = 1;
       gameStarted = true; gameOver = false; gamePaused = false;
-
-      // hide all overlays & menus
-      ['game-over-screen','leaderboard-screen','pause-overlay','start-screen'].forEach(id =>{
+      ['game-over-screen','leaderboard-screen','pause-overlay','start-screen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
       if (muteBtnHome) muteBtnHome.style.display = 'none';
-      document.getElementById('user-info').style.display         = 'none';
-      document.getElementById('viewLeaderboardBtn').style.display= 'none';
-      document.querySelector('canvas').style.visibility          = 'visible';
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('viewLeaderboardBtn').style.display = 'none';
+      document.querySelector('canvas').style.visibility = 'visible';
       scoreText.setVisible(true);
       bestScoreText.setVisible(true);
       pauseIcon.setVisible(true);
       muteIcon.setVisible(true);
-
-      if (spawnTimer) spawnTimer.remove(false);
       scheduleSpawn();
       fadeOut();
     });
   }
 
-  // Bind
-  startBtn.onclick     = handleStartGame;
-  homeBtn.onclick      = handleGoHome;
-  playAgainBtn.onclick = handlePlayAgain;
-});
-}
-);
-  }
-
-  function handleGoHome() {
-    fadeIn(() => {
-      const scene = window.game.scene.keys.default;
-      );
-  }, 0);
-}
-);
-    }, 0);
-}
-
-    scene.scene.restart();
-    setTimeout(() => {
-      score = 0;
-      speed = 3;
-      direction = 1;
-      gameStarted = true;
-      gameOver = false;
-      gamePaused = false;
-      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-      if (muteBtnHome) muteBtnHome.style.display = 'none';
-      const userInfo = document.getElementById('user-info');
-      if (userInfo) userInfo.style.display = 'none';
-      const viewLb = document.getElementById('viewLeaderboardBtn');
-      if (viewLb) viewLb.style.display = 'none';
-      const canvas = document.querySelector('canvas');
-      if (canvas) canvas.style.visibility = 'visible';
-      if (scoreText) scoreText.setVisible(true);
-      if (bestScoreText) bestScoreText.setVisible(true);
-      if (pauseIcon) pauseIcon.setVisible(true);
-      if (muteIcon) muteIcon.setVisible(true);
-      if (spawnTimer) spawnTimer.remove(false);
-      scheduleSpawn();
-    }, 0);
-  }
   startBtn.onclick = handleStartGame;
   homeBtn.onclick = handleGoHome;
-  const playAgainBtn = document.getElementById('playAgainBtn');
-  if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
-}
-
-function update() {
-  if (!gameStarted || gameOver || gamePaused) return;
-  angle += 0.05 * direction;
-  const o1 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(radius);
-  const o2 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle + Math.PI).scale(radius);
-  circle1.setPosition(this.cameras.main.centerX + o1.x, this.cameras.main.centerY + o1.y);
-  circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
-  obstacles.children.iterate(o => o.x -= speed);
-  points.children.iterate(p => p.x -= speed);
+  playAgainBtn.onclick = handlePlayAgain;
 }
 
 function spawnObjects() {
