@@ -340,45 +340,18 @@ function create() {
       if (viewLeaderboardBtn) viewLeaderboardBtn.style.display = 'none';
       if (startScreen) startScreen.style.display = 'none';
       if (muteBtnHome) muteBtnHome.style.display = 'none';
+      gameStarted = true;
       if ($qs('canvas')) $qs('canvas').style.visibility = 'visible';
+      scoreText.setVisible(true);
+      bestScoreText.setVisible(true);
+      pauseIcon.setVisible(true);
+      muteIcon.setVisible(true);
+      scheduleSpawn();
+fadeOut();
+      }, 500); // "GO!" stays for half a second
+    }
+  };
 
-      let count = 3;
-      countdownText.setText(count).setVisible(true);
-
-      scoreText.setVisible(false);
-      bestScoreText.setVisible(false);
-      pauseIcon.setVisible(false);
-      muteIcon.setVisible(false);
-
-      window.game.scene.keys.default.time.addEvent({
-        delay: 1000,
-        repeat: 2,
-        callback: () => {
-          count--;
-          if (count > 0) {
-            countdownText.setText(count);
-          } else if (count === 0) {
-            countdownText.setText('GO!');
-          }
-        },
-        callbackScope: window.game.scene.keys.default,
-        onComplete: () => {
-          setTimeout(() => {
-            countdownText.setVisible(false);
-            gameStarted = true;
-            scoreText.setVisible(true);
-            bestScoreText.setVisible(true);
-            pauseIcon.setVisible(true);
-            muteIcon.setVisible(true);
-            scheduleSpawn();
-            fadeOut();
-          }, 500); // "GO!" stays for half a second
-        }
-      });
-    });
-  }
-);
-  }
 
   // --- HOME BUTTON ---
   function handleGoHome() {
