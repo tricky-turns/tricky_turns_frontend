@@ -107,6 +107,25 @@ let scoreText, pauseIcon, pauseOverlay, countdownText;
 let spawnTimer;
 let sfx = {}, isMuted = false;
 
+function showCountdown(scene, onComplete) {
+  let count = 3;
+  scene.countdownText.setText(count).setVisible(true);
+  let timer = scene.time.addEvent({
+    delay: 1000,
+    repeat: 2,
+    callback: () => {
+      count--;
+      if (count > 0) {
+        scene.countdownText.setText(count);
+      } else {
+        scene.countdownText.setVisible(false);
+        if (onComplete) onComplete();
+      }
+    }
+  });
+}
+
+
 const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
 if (muteBtnHome) {
   muteBtnHome.src = currentMuteIcon();
@@ -317,22 +336,30 @@ function create() {
   const startBtn = document.getElementById('startBtn');
   const homeBtn = document.getElementById('homeBtn');
 
-  function handleStartGame() {
+  
+function handleStartGame() {
     sfx.uiClick.play();
     fadeIn(() => {
       document.getElementById('user-info').style.display = 'none';
       document.getElementById('viewLeaderboardBtn').style.display = 'none';
       document.getElementById('start-screen').style.display = 'none';
       muteBtnHome.style.display = 'none';
-      gameStarted = true;
       document.querySelector('canvas').style.visibility = 'visible';
       scoreText.setVisible(true);
       bestScoreText.setVisible(true);
       pauseIcon.setVisible(true);
       muteIcon.setVisible(true);
-      scheduleSpawn();
-      fadeOut();
+
+      // --- Countdown here ---
+      const scene = window.game.scene.keys.default;
+      showCountdown(scene, () => {
+        gameStarted = true;
+        scheduleSpawn();
+        fadeOut();
+      });
     });
+}
+);
   }
 
   function handleGoHome() {
@@ -354,13 +381,46 @@ function create() {
     });
   }
 
-  function handlePlayAgain() {
+  
+function handlePlayAgain() {
     sfx.uiClick.play();
     const scene = window.game.scene.keys.default;
     if (scene.trail) {
       scene.trail.destroy();
       scene.trail = null;
     }
+    scene.scene.restart();
+    setTimeout(() => {
+      score = 0;
+      speed = 3;
+      direction = 1;
+      gameOver = false;
+      gamePaused = false;
+      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      if (muteBtnHome) muteBtnHome.style.display = 'none';
+      const userInfo = document.getElementById('user-info');
+      if (userInfo) userInfo.style.display = 'none';
+      const viewLb = document.getElementById('viewLeaderboardBtn');
+      if (viewLb) viewLb.style.display = 'none';
+      const canvas = document.querySelector('canvas');
+      if (canvas) canvas.style.visibility = 'visible';
+      if (scoreText) scoreText.setVisible(true);
+      if (bestScoreText) bestScoreText.setVisible(true);
+      if (pauseIcon) pauseIcon.setVisible(true);
+      if (muteIcon) muteIcon.setVisible(true);
+      if (spawnTimer) spawnTimer.remove(false);
+
+      // --- Countdown here ---
+      showCountdown(scene, () => {
+        gameStarted = true;
+        scheduleSpawn();
+      });
+    }, 0);
+}
+
     scene.scene.restart();
     setTimeout(() => {
       score = 0;
