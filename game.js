@@ -1,7 +1,14 @@
-
-   Pi.init({ version: "2.0",
-    });
 const muteBtnHome = document.getElementById('muteToggleHome');
+// Initialize Pi SDK (with sandbox for local dev)
+// Ensures Pi.authenticate runs after init
+let piInitPromise = null;
+function initPi() {
+  if (!piInitPromise) {
+    piInitPromise = Pi.init({ version: "2.0", sandbox: true });
+  }
+  return piInitPromise;
+}
+
 
   
 
@@ -18,7 +25,8 @@ const muteBtnHome = document.getElementById('muteToggleHome');
 
     // Handles Pi authentication flow and user high score retrieval from server
 async function initAuth() {
-      try {
+      await initPi();  // wait for Pi SDK initialization
+try {
         const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
         piUsername = auth.user.username;
         document.getElementById('username').innerText = piUsername;
