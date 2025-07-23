@@ -363,7 +363,29 @@ function handleStartGame() {
 }
 
 function handleGoHome() {
-  fadeIn(() => window.location.href = window.location.href);
+  fadeIn(() => {
+    // Reset Phaser scene
+    const scene = window.game.scene.keys.default;
+    scene.scene.restart(); // reset all game objects & physics
+
+    // Reset UI and state
+    score = 0;
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('pause-overlay').style.display = 'none';
+    muteBtnHome.style.display = 'block';
+
+    // Hide canvas again
+    document.querySelector('canvas').style.visibility = 'hidden';
+
+    fadeOut();
+  });
 }
 
 startBtn.removeEventListener('click', handleStartGame);
