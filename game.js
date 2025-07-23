@@ -189,12 +189,7 @@ function create() {
       // trail
           // Clean up any existing trail emitter to avoid glow stacking
           if (this.trail) { this.trail.destroy(); this.trail = null; }
-      this.trail = this.add.particles('orb');
-      [circle1,circle2].forEach(c=>this.trail.createEmitter({
-        follow:c, lifespan:300, speed:0,
-        scale:{start:0.3,end:0}, alpha:{start:0.4,end:0},
-        frequency:50, blendMode:'ADD'
-      }));
+      
           // destroy trail on scene shutdown
           this.events.on('shutdown', () => {
               if (this.trail) {
