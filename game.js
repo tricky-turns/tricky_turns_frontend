@@ -103,7 +103,7 @@ let direction = 1, angle = 0, radius = 100, speed = 3, maxSpeed = 6;
 let circle1, circle2, obstacles, points, score = 0;
 let muteIcon;
 let bestScoreText;
-let scoreText, pauseIcon, pauseOverlay, countdownText;
+let scoreText, pauseIcon, pauseOverlay;
 let spawnTimer;
 let sfx = {}, isMuted = false;
 
@@ -217,39 +217,15 @@ function create() {
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
-  countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins', fontSize: '96px',
-    color: '#fff', stroke: '#000', strokeThickness: 6
-  }).setOrigin(0.5).setDepth(5).setVisible(false);
-  this.countdownText = countdownText;
-  this.scoreText = scoreText;
-  this.bestScoreText = bestScoreText;
-  this.pauseIcon = pauseIcon;
-  this.muteIcon = muteIcon;
-
-  // ---- COUNTDOWN FUNCTION WITH PROPER CONTEXT ----
-  function startCountdown(callback) {
-    let count = 3;
-    const scene = this;
-    scene.countdownText.setText(count).setVisible(true);
-    const countdownEvent = scene.time.addEvent({
-      delay: 1000,
-      repeat: 3,
-      callback: () => {
-        count--;
-        if (count > 0) {
-          scene.countdownText.setText(count);
-        } else if (count === 0) {
-          scene.countdownText.setText('Go!');
-        } else {
-          scene.countdownText.setVisible(false);
-          countdownEvent.remove(false);
-          if (typeof callback === "function") callback.call(scene);
-        }
-      }
-    });
+  // COUNTDOWN TEXT — persistently attached to the scene
+  if (!this.countdownText) {
+    this.countdownText = this.add.text(cx, cy, '', {
+      fontFamily: 'Poppins', fontSize: '96px',
+      color: '#fff', stroke: '#000', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(5).setVisible(false);
+  } else {
+    this.countdownText.setPosition(cx, cy).setVisible(false);
   }
-  // -------------------------------------------------
 
   // SFX
   sfx.explode = this.sound.add('explode');
@@ -282,14 +258,14 @@ function create() {
       sfx.pauseWhoosh.play();
       pauseOverlay.style.display = 'none';
       let count = 3;
-      countdownText.setText(count).setVisible(true);
+      this.countdownText.setText(count).setVisible(true);
       this.time.addEvent({
         delay: 1000, repeat: 2,
         callback: () => {
           count--;
-          if (count > 0) countdownText.setText(count);
+          if (count > 0) this.countdownText.setText(count);
           else {
-            countdownText.setVisible(false);
+            this.countdownText.setVisible(false);
             gamePaused = false;
             pauseIcon.setTexture('iconPause');
             this.physics.resume();
@@ -342,11 +318,32 @@ function create() {
     }, []);
   }
 
+  // COUNTDOWN FUNCTION — always uses this.countdownText
+  function startCountdown(callback) {
+    let count = 3;
+    this.countdownText.setText(count).setVisible(true);
+    const countdownEvent = this.time.addEvent({
+      delay: 1000,
+      repeat: 3,
+      callback: () => {
+        count--;
+        if (count > 0) {
+          this.countdownText.setText(count);
+        } else if (count === 0) {
+          this.countdownText.setText('Go!');
+        } else {
+          this.countdownText.setVisible(false);
+          countdownEvent.remove(false);
+          if (typeof callback === "function") callback.call(this);
+        }
+      }
+    });
+  }
+
   // START
   const startBtn = document.getElementById('startBtn');
   const homeBtn = document.getElementById('homeBtn');
 
-  // ---- COUNTDOWN ON START ----
   function handleStartGame() {
     sfx.uiClick.play();
     fadeIn(() => {
@@ -354,19 +351,18 @@ function create() {
       document.getElementById('viewLeaderboardBtn').style.display = 'none';
       document.getElementById('start-screen').style.display = 'none';
       muteBtnHome.style.display = 'none';
-      startCountdown.call(window.game.scene.keys.default, function() {
+      startCountdown.call(this, function() {
         gameStarted = true;
         document.querySelector('canvas').style.visibility = 'visible';
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
+        scoreText.setVisible(true);
+        bestScoreText.setVisible(true);
+        pauseIcon.setVisible(true);
+        muteIcon.setVisible(true);
         scheduleSpawn();
         fadeOut();
       });
     });
   }
-  // ----------------------------------
 
   function handleGoHome() {
     fadeIn(() => {
@@ -387,7 +383,6 @@ function create() {
     });
   }
 
-  // ---- COUNTDOWN ON PLAY AGAIN ----
   function handlePlayAgain() {
     sfx.uiClick.play();
     const scene = window.game.scene.keys.default;
@@ -417,17 +412,16 @@ function create() {
       if (spawnTimer) spawnTimer.remove(false);
       startCountdown.call(window.game.scene.keys.default, function() {
         gameStarted = true;
-        this.scoreText.setVisible(true);
-        this.bestScoreText.setVisible(true);
-        this.pauseIcon.setVisible(true);
-        this.muteIcon.setVisible(true);
+        scoreText.setVisible(true);
+        bestScoreText.setVisible(true);
+        pauseIcon.setVisible(true);
+        muteIcon.setVisible(true);
         scheduleSpawn();
       });
     }, 0);
   }
-  // ----------------------------------------
 
-  startBtn.onclick = handleStartGame;
+  startBtn.onclick = handleStartGame.bind(this);
   homeBtn.onclick = handleGoHome;
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
