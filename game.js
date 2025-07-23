@@ -388,13 +388,42 @@ function handleGoHome() {
   });
 }
 
+// —— Play Again handler ——
+function handlePlayAgain() {
+  sfx.uiClick.play();
+  fadeIn(() => {
+    const scene = window.game.scene.keys.default;
+    scene.scene.restart();
+
+    // Reset game state
+    score = 0;
+    gameStarted = true;
+    gameOver = false;
+    gamePaused = false;
+
+    // Hide Game Over UI
+    document.getElementById('game-over-screen').style.display = 'none';
+
+    // Show canvas & HUD
+    document.querySelector('canvas').style.visibility = 'visible';
+    scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
+    pauseIcon.setVisible(true);
+    muteIcon.setVisible(true);
+
+    // Resume spawning
+    scheduleSpawn();
+
+    fadeOut();
+  });
+}
+
+
 
 
     // Use direct onclick assignments to avoid duplicate listeners on restart
     startBtn.onclick = handleStartGame;
     homeBtn.onclick = handleGoHome;
-    const playAgainBtn = document.getElementById('playAgainBtn');
-    if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 }
 
     function update(){
