@@ -80,7 +80,39 @@ function fadeOut(callback, duration = 600) {
   fade.classList.remove('fade-in');
   setTimeout(() => {
     callback?.();
-  }, duration);
+  }
+
+function resetGameEntities(scene) {
+  // Reset score
+  score = 0;
+  scoreText.setText('Score: 0');
+  if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+
+  // Reset speed
+  speed = 3;
+
+  // Clear old objects
+  obstacles.clear(true, true);
+  points.clear(true, true);
+
+  // Recreate player orbs
+  if (circle1) circle1.destroy();
+  if (circle2) circle2.destroy();
+
+  circle1 = scene.add.image(0, 0, 'orb');
+  scene.physics.add.existing(circle1);
+  circle1.body.setCircle(22.5, 27.5, 27.5);
+
+  circle2 = scene.add.image(0, 0, 'orb');
+  scene.physics.add.existing(circle2);
+  circle2.body.setCircle(22.5, 27.5, 27.5);
+
+  // Restart angle/direction
+  direction = 1;
+  angle = 0;
+}
+
+, duration);
 }
 
 
@@ -345,6 +377,8 @@ const startBtn = document.getElementById('startBtn');
 const homeBtn = document.getElementById('homeBtn');
 
 function handleStartGame() {
+  const scene = window.game.scene.keys.default;
+  resetGameEntities(scene);
   sfx.uiClick.play();
   fadeIn(() => {
     document.getElementById('user-info').style.display = 'none';
