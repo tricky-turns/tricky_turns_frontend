@@ -402,6 +402,11 @@ function handlePlayAgain() {
 
   // restart the Phaser scene
   const scene = window.game.scene.keys.default;
+  // destroy existing trail emitter if any
+  if (scene.trail) {
+      scene.trail.destroy();
+      scene.trail = null;
+  }
   scene.scene.restart();
 
   // on next tick to ensure create() has re-run
