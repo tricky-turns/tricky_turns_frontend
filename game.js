@@ -356,8 +356,7 @@ function handleStartGame() {
         gameStarted = true;
         scheduleSpawn();
         fadeOut();
-      });
-    });
+      }});
 }
 );
   }
@@ -418,35 +417,8 @@ function handlePlayAgain() {
         gameStarted = true;
         scheduleSpawn();
       });
-    }, 0);
 }
-
-    scene.scene.restart();
-    setTimeout(() => {
-      score = 0;
-      speed = 3;
-      direction = 1;
-      gameStarted = true;
-      gameOver = false;
-      gamePaused = false;
-      ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen', 'leaderboard'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-      if (muteBtnHome) muteBtnHome.style.display = 'none';
-      const userInfo = document.getElementById('user-info');
-      if (userInfo) userInfo.style.display = 'none';
-      const viewLb = document.getElementById('viewLeaderboardBtn');
-      if (viewLb) viewLb.style.display = 'none';
-      const canvas = document.querySelector('canvas');
-      if (canvas) canvas.style.visibility = 'visible';
-      if (scoreText) scoreText.setVisible(true);
-      if (bestScoreText) bestScoreText.setVisible(true);
-      if (pauseIcon) pauseIcon.setVisible(true);
-      if (muteIcon) muteIcon.setVisible(true);
-      if (spawnTimer) spawnTimer.remove(false);
-      scheduleSpawn();
-    }, 0);
+, 0);
   }
   startBtn.onclick = handleStartGame;
   homeBtn.onclick = handleGoHome;
