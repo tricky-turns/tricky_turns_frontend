@@ -187,6 +187,8 @@ function create() {
       circle2.body.setCircle(22.5,27.5,27.5);
 
       // trail
+          // Clean up any existing trail emitter to avoid glow stacking
+          if (this.trail) { this.trail.destroy(); this.trail = null; }
       this.trail = this.add.particles('orb');
       [circle1,circle2].forEach(c=>this.trail.createEmitter({
         follow:c, lifespan:300, speed:0,
