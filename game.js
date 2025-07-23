@@ -360,7 +360,7 @@ function handleStartGame() {
     scheduleSpawn();
     fadeOut();
   });
-}
+  });
 
 function handleGoHome() {
   fadeIn(() => {
