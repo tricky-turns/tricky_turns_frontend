@@ -157,9 +157,23 @@ function preload() {
 
     // Main game setup: initialize UI, player orbs, physics, input, and scheduling
 function create() {
-  if (spawnTimer) {
-    spawnTimer.remove(false);
-    spawnTimer = null;
+  let spawnTimer = null;
+  const getSpawnInterval = () => {
+    const t = Phaser.Math.Clamp((speed - 3) / (maxSpeed - 3), 0, 1);
+    return Phaser.Math.Linear(1500, 500, t);
+  };
+  const scheduleSpawn = () => {
+    spawnTimer = this.time.delayedCall(getSpawnInterval(), () => {
+      if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(this);
+      scheduleSpawn.call(this);
+    });
+  };
+  this.events.on('shutdown', () => {
+    if (spawnTimer) {
+      spawnTimer.remove(false);
+      spawnTimer = null;
+    }
+  });
   }
       obstacles = this.physics.add.group();
 points = this.physics.add.group();
@@ -355,7 +369,6 @@ function handleStartGame() {
     bestScoreText.setVisible(true);
     pauseIcon.setVisible(true);
     muteIcon.setVisible(true);
-    scheduleSpawn.call(this);
     fadeOut();
   });
 }
