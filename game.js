@@ -276,6 +276,7 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
           pauseOverlay.style.display='flex';
         } else {
           sfx.pauseWhoosh.play();
+          pauseOverlay.style.display = 'none';
           let count=3;
           countdownText.setText(count).setVisible(true);
           this.time.addEvent({
@@ -288,7 +289,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
                 gamePaused=false;
                 pauseIcon.setTexture('iconPause');
                 this.physics.resume();
-                pauseOverlay.style.display='none';
               }
             }
           });
