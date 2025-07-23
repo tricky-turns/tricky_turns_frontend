@@ -350,7 +350,6 @@ bestScoreText=this.add.text(16,64,'Best: '+highScore,{
         const t=Phaser.Math.Clamp((speed-3)/(maxSpeed-3),0,1);
         return Phaser.Math.Linear(1500,500,t);
       }
-      }
 
       // START
 const startBtn = document.getElementById('startBtn');
