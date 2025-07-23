@@ -318,52 +318,102 @@ function create() {
   const homeBtn = document.getElementById('homeBtn');
 
   function handleStartGame() {
-  sfx.uiClick.play();
-  fadeIn(() => {
-    document.getElementById('user-info').style.display = 'none';
-    document.getElementById('viewLeaderboardBtn').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'none';
-    muteBtnHome.style.display = 'none';
-    if (document.querySelector('canvas')) document.querySelector('canvas').style.visibility = 'visible';
 
-    // Use this-scene context for everything Phaser-related!
-    const scene = window.game.scene.keys.default;
+    sfx.uiClick.play();
 
-    // Hide HUD until countdown done
-    scene.scoreText.setVisible(false);
-    scene.bestScoreText.setVisible(false);
-    scene.pauseIcon.setVisible(false);
-    scene.muteIcon.setVisible(false);
+    fadeIn(() => {
 
-    let count = 3;
-    scene.countdownText.setText(count).setVisible(true);
+      document.getElementById('user-info').style.display = 'none';
 
-    scene.time.addEvent({
-      delay: 1000,
-      repeat: 2,
-      callback: () => {
-        count--;
-        if (count > 0) {
-          scene.countdownText.setText(count);
-        } else if (count === 0) {
-          scene.countdownText.setText('GO!');
+      document.getElementById('viewLeaderboardBtn').style.display = 'none';
+
+      document.getElementById('start-screen').style.display = 'none';
+
+      muteBtnHome.style.display = 'none';
+
+      if (document.querySelector('canvas')) document.querySelector('canvas').style.visibility = 'visible';
+
+      scoreText.setVisible(false);
+
+      bestScoreText.setVisible(false);
+
+      pauseIcon.setVisible(false);
+
+      muteIcon.setVisible(false);
+
+      let count = 3;
+
+      countdownText.setText(count).setVisible(true);
+
+      const scene = window.game.scene.keys.default;
+
+      scene.time.addEvent({
+
+        delay: 1000,
+
+        repeat: 2,
+
+        callback: () => {
+
+          count--;
+
+          if (count > 0) {
+
+            countdownText.setText(count);
+
+          } else if (count === 0) {
+
+            countdownText.setText('GO!');
+
+          }
+
+        },
+
+        callbackScope: scene,
+
+        onComplete: () => {
+
+          setTimeout(() => {
+
+            countdownText.setVisible(false);
+
+            gameStarted = true;
+
+            scoreText.setVisible(true);
+
+            bestScoreText.setVisible(true);
+
+            pauseIcon.setVisible(true);
+
+            muteIcon.setVisible(true);
+
+            scheduleSpawn();
+
+            fadeOut();
+
+          }, 500);
+
+        }
+
+      });
+
+    });
+
+  }
+ else if (count === 0) {
+          countdownText.setText('GO!');
         }
       },
-      callbackScope: scene,
+      callbackScope: window.game.scene.keys.default,
       onComplete: () => {
         setTimeout(() => {
-          scene.countdownText.setVisible(false);
+          countdownText.setVisible(false);
           gameStarted = true;
-          scene.scoreText.setVisible(true);
-          scene.bestScoreText.setVisible(true);
-          scene.pauseIcon.setVisible(true);
-          scene.muteIcon.setVisible(true);
-          // scheduleSpawn should be accessible either as global or closure
-          if (typeof scheduleSpawn === 'function') {
-            scheduleSpawn();
-          } else if (typeof scene.scheduleSpawn === 'function') {
-            scene.scheduleSpawn();
-          }
+          scoreText.setVisible(true);
+          bestScoreText.setVisible(true);
+          pauseIcon.setVisible(true);
+          muteIcon.setVisible(true);
+          scheduleSpawn();
           fadeOut();
         }, 500); // "GO!" visible for 0.5s
       }
