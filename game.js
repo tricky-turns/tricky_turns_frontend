@@ -390,6 +390,7 @@ function handleGoHome() {
     fadeOut();
   });
 });
+});
 }
 
 startBtn.removeEventListener('click', handleStartGame);
