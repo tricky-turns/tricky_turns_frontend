@@ -8,7 +8,7 @@ let speed = 3;
 
 const NUM_LANES = 3;
 const SPAWN_BUFFER_X = 220;
-const FORCED_SPAWN_INTERVAL = 1500;
+const FORCED_SPAWN_INTERVAL = 1700;
 
 let laneLastObstacleXs = [null, null, null];
 let laneLastPointXs = [null, null, null];
@@ -262,9 +262,9 @@ function create() {
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.025, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.045, maxSpeed);
-        else                   speed = Math.min(speed + 0.07,  maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.05, maxSpeed);
+        else if (score < 50)   speed = Math.min(speed + 0.1, maxSpeed);
+        else                   speed = Math.min(speed + 0.15,  maxSpeed);
       }
       if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
