@@ -3,7 +3,7 @@
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 10;
+let maxSpeed = 30;
 let speed = 3;    // start speed
 
 const NUM_LANES = 3;
