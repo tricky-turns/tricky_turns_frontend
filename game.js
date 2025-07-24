@@ -419,7 +419,7 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  let pointChance = 100; // For maximum points under 20
+  let pointChance = 70; // For maximum points under 20
   if (score >= 20) pointChance = 50;
   if (score >= 50) pointChance = 35;
 
