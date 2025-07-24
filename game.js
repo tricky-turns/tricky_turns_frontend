@@ -126,9 +126,6 @@ let circle1, circle2, obstacles, points, score = 0;
 let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
 let sfx = {}, isMuted = false;
 
-// ====== Pause Lock Flag ======
-let pauseIconLocked = false;
-
 const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
 if (muteBtnHome) {
   muteBtnHome.src = currentMuteIcon();
@@ -311,31 +308,29 @@ function create() {
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
 
-  // ===== PATCHED: Pause icon anti-spam logic =====
+  muteIcon.on('pointerdown', () => {
+    isMuted = !isMuted;
+    this.sound.mute = isMuted;
+    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    if (!isMuted) sfx.uiClick.play();
+  });
+
   pauseIcon.on('pointerdown', (_, x, y, e) => {
-    if (pauseIconLocked) return; // Prevent spam taps
-    pauseIconLocked = true;
     e.stopPropagation();
-    if (!gameStarted || gameOver) {
-      pauseIconLocked = false;
-      return;
-    }
+    if (!gameStarted || gameOver) return;
     if (!gamePaused) {
       gamePaused = true;
       pauseIcon.setTexture('iconPlay');
       sfx.pauseWhoosh.play();
       this.physics.pause();
       pauseOverlay.style.display = 'flex';
-      // Unlock after a short delay to avoid accidental fast double-tap
-      setTimeout(() => { pauseIconLocked = false; }, 300);
     } else {
       sfx.pauseWhoosh.play();
       pauseOverlay.style.display = 'none';
       let count = 3;
       countdownText.setText(count).setVisible(true).setDepth(1000);
-
-      // Keep pause icon locked until countdown is done
-      const resumeEvent = this.time.addEvent({
+      this.time.addEvent({
         delay: 1000, repeat: 2,
         callback: () => {
           count--;
@@ -345,7 +340,6 @@ function create() {
             gamePaused = false;
             pauseIcon.setTexture('iconPause');
             this.physics.resume();
-            pauseIconLocked = false; // Unlock here!
           }
         }
       });
