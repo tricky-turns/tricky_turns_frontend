@@ -368,7 +368,7 @@ function update() {
   if (gameOver) return;
   // Angular speed scales with overall speed for more intense feel
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.018;
+  let ANGULAR_SCALE = 0.005;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
     : 0;
