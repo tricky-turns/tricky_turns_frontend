@@ -1,21 +1,18 @@
-// Tricky Turns game.js — 2024-07-23 (FINAL PATCHED)
+// Tricky Turns game.js — 2024-07-23 (FULL, PATCHED, FORMATTED)
 
-// --- CONFIG & SPAWN SAFETY BUFFERS ---
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
 let maxSpeed = 16; // Sensible cap for speed
 
-const NUM_LANES = 3;         // Number of vertical lanes
-const SPAWN_BUFFER_X = 220;  // Minimum horizontal px between obstacles/points in same or adjacent lanes
-const FORCED_SPAWN_INTERVAL = 1800; // Max ms allowed between any spawns
+const NUM_LANES = 3;
+const SPAWN_BUFFER_X = 220;
+const FORCED_SPAWN_INTERVAL = 1800;
 
-// Lane tracking for obstacle/point safety
-let laneLastObstacleXs = [null, null, null]; // per-lane last obstacle X
-let laneLastPointXs = [null, null, null];    // per-lane last point X
+let laneLastObstacleXs = [null, null, null];
+let laneLastPointXs = [null, null, null];
 let lastSpawnTimestamp = 0;
 
-// Pi Network SDK/auth variables...
 let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
@@ -28,7 +25,10 @@ let piUsername = 'Guest';
 let highScore = 0;
 let useLocalHighScore = true;
 
-function onIncompletePaymentFound(payment) { console.log('Incomplete payment found:', payment); }
+function onIncompletePaymentFound(payment) {
+  console.log('Incomplete payment found:', payment);
+}
+
 async function initAuth() {
   await initPi();
   try {
@@ -53,13 +53,39 @@ async function initAuth() {
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-// --- Simple Fade Helpers (unchanged) ---
-function fadeInElement(el, duration = 500, displayType = 'flex') { el.style.opacity = 0; el.style.display = displayType; requestAnimationFrame(() => { el.style.transition = `opacity ${duration}ms ease`; el.style.opacity = 1; }); }
-function fadeOutElement(el, duration = 500) { el.style.transition = `opacity ${duration}ms ease`; el.style.opacity = 0; setTimeout(() => { el.style.display = 'none'; }, duration); }
-function fadeIn(callback, duration = 600) { const fade = document.getElementById('fade-screen'); fade.classList.add('fade-in'); setTimeout(() => { callback?.(); }, duration); }
-function fadeOut(callback, duration = 600) { const fade = document.getElementById('fade-screen'); fade.classList.remove('fade-in'); setTimeout(() => { callback?.(); }, duration); }
+function fadeInElement(el, duration = 500, displayType = 'flex') {
+  el.style.opacity = 0;
+  el.style.display = displayType;
+  requestAnimationFrame(() => {
+    el.style.transition = `opacity ${duration}ms ease`;
+    el.style.opacity = 1;
+  });
+}
 
-// --- Leaderboard Display (unchanged) ---
+function fadeOutElement(el, duration = 500) {
+  el.style.transition = `opacity ${duration}ms ease`;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, duration);
+}
+
+function fadeIn(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.add('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+
+function fadeOut(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.remove('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+
 async function showHomeLeaderboard() {
   if (isLeaderboardLoading) return;
   isLeaderboardLoading = true;
@@ -72,6 +98,7 @@ async function showHomeLeaderboard() {
   loadingLi.style.fontStyle = 'italic';
   loadingLi.style.textAlign = 'center';
   list.appendChild(loadingLi);
+
   try {
     const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -96,7 +123,6 @@ async function showHomeLeaderboard() {
   }
 }
 
-// --- GAME STATE ---
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
 let direction = 1, angle = 0, radius = 100, speed = 3;
@@ -117,7 +143,6 @@ if (muteBtnHome) {
   });
 }
 
-// --- PHASER GAME ---
 const config = {
   type: Phaser.AUTO,
   transparent: true,
@@ -208,7 +233,6 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  // --- Countdown Helper ---
   this.startCountdown = function(callback) {
     let count = 3;
     this.countdownText.setText(count).setVisible(true);
@@ -231,7 +255,6 @@ function create() {
     });
   };
 
-  // --- SPAWN SCHEDULER + ANTI-DEADZONE ---
   function getSpawnInterval() {
     const minDelay = 650, maxDelay = 1300, baseSpeed = 3;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
@@ -250,7 +273,8 @@ function create() {
       spawnEvent.delay = getSpawnInterval();
     }
   });
-  // Force spawner to prevent deadzones
+
+  // Deadzone enforcement event
   this.time.addEvent({
     delay: 250,
     loop: true,
@@ -263,7 +287,6 @@ function create() {
     }
   });
 
-  // SFX
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
@@ -337,7 +360,6 @@ function create() {
   });
 }
 
-// --- UPDATE ---
 function update() {
   if (gameOver) return;
   let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
@@ -354,7 +376,6 @@ function update() {
   }
 }
 
-// --- SPAWN OBJECTS (adjacent lane safety + anti-overlap) ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -362,7 +383,6 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  // -- Obstacles: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
     let isSafe = true;
@@ -387,7 +407,6 @@ function spawnObjects() {
     laneLastObstacleXs[chosenLaneIdx] = x;
   }
 
-  // -- Points: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
     let isSafe = true;
@@ -414,11 +433,9 @@ function spawnObjects() {
     laneLastPointXs[pointLaneIdx] = x;
   }
 
-  // Always update lastSpawnTimestamp for anti-deadzone logic
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
-// --- GAME OVER & COLLISIONS (unchanged) ---
 function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;
@@ -498,7 +515,6 @@ function collectPoint(_, pt) {
   });
 }
 
-// --- BUTTON HANDLERS / EVENT BINDINGS (unchanged) ---
 function handleStartGame() {
   sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
