@@ -1,10 +1,9 @@
-// Tricky Turns game.js — 2024-07-23 — ENHANCED DYNAMICS PATCH
+// Tricky Turns game.js — 2024-07-23 (FULL, PATCHED, FORMATTED)
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 16;
-let speed = 3;    // start speed
+let maxSpeed = 25; // Sensible cap for speed
 
 const NUM_LANES = 3;
 const SPAWN_BUFFER_X = 220;
@@ -14,7 +13,6 @@ let laneLastObstacleXs = [null, null, null];
 let laneLastPointXs = [null, null, null];
 let lastSpawnTimestamp = 0;
 
-// ----------- Pi Network SDK and Auth (unchanged) -----------
 let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
@@ -30,6 +28,7 @@ let useLocalHighScore = true;
 function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
 }
+
 async function initAuth() {
   await initPi();
   try {
@@ -54,7 +53,6 @@ async function initAuth() {
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-// ---------- Fade helpers (unchanged) ----------
 function fadeInElement(el, duration = 500, displayType = 'flex') {
   el.style.opacity = 0;
   el.style.display = displayType;
@@ -63,6 +61,7 @@ function fadeInElement(el, duration = 500, displayType = 'flex') {
     el.style.opacity = 1;
   });
 }
+
 function fadeOutElement(el, duration = 500) {
   el.style.transition = `opacity ${duration}ms ease`;
   el.style.opacity = 0;
@@ -70,6 +69,7 @@ function fadeOutElement(el, duration = 500) {
     el.style.display = 'none';
   }, duration);
 }
+
 function fadeIn(callback, duration = 600) {
   const fade = document.getElementById('fade-screen');
   fade.classList.add('fade-in');
@@ -77,6 +77,7 @@ function fadeIn(callback, duration = 600) {
     callback?.();
   }, duration);
 }
+
 function fadeOut(callback, duration = 600) {
   const fade = document.getElementById('fade-screen');
   fade.classList.remove('fade-in');
@@ -85,7 +86,6 @@ function fadeOut(callback, duration = 600) {
   }, duration);
 }
 
-// ---------- Leaderboard Display (unchanged) ----------
 async function showHomeLeaderboard() {
   if (isLeaderboardLoading) return;
   isLeaderboardLoading = true;
@@ -98,6 +98,7 @@ async function showHomeLeaderboard() {
   loadingLi.style.fontStyle = 'italic';
   loadingLi.style.textAlign = 'center';
   list.appendChild(loadingLi);
+
   try {
     const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -122,10 +123,9 @@ async function showHomeLeaderboard() {
   }
 }
 
-// ---------- GAME STATE ----------
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0, radius = 100;
+let direction = 1, angle = 0, radius = 100, speed = 3;
 let circle1, circle2, obstacles, points, score = 0;
 let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
 let sfx = {}, isMuted = false;
@@ -255,24 +255,10 @@ function create() {
     });
   };
 
-  // --- Curved acceleration by score and speed ---
-  this.time.addEvent({
-    delay: 1000, loop: true,
-    callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.003, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.006, maxSpeed);
-        else                   speed = Math.min(speed + 0.01,  maxSpeed);
-      }
-    }
-  });
-
-  // --- Dynamic spawn event + anti-deadzone ---
   function getSpawnInterval() {
-    const minDelay = 650, maxDelay = 1200, baseSpeed = 3;
+    const minDelay = 650, maxDelay = 1300, baseSpeed = 3;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
-    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-    return interval + Phaser.Math.Between(-80, 80); // random jitter
+    return Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
   }
 
   if (spawnEvent) spawnEvent.remove(false);
@@ -288,6 +274,7 @@ function create() {
     }
   });
 
+  // Deadzone enforcement event
   this.time.addEvent({
     delay: 250,
     loop: true,
@@ -300,7 +287,6 @@ function create() {
     }
   });
 
-  // --- SFX/Controls/Bindings/Overlaps (unchanged) ---
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
@@ -362,9 +348,18 @@ function create() {
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
+
+  this.time.addEvent({
+    delay: 1000, loop: true,
+    callback: () => {
+      if (gameStarted && !gameOver && !gamePaused) {
+        if (speed > 1.5) speed = Math.min(speed + 0.006, maxSpeed);
+        else if (speed >= 1.2) speed = Math.min(speed + 0.0015, maxSpeed);
+      }
+    }
+  });
 }
 
-// --- UPDATE ---
 function update() {
   if (gameOver) return;
   let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
@@ -376,10 +371,12 @@ function update() {
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
 
   if (gameStarted && !gamePaused) {
+    // Clean up obstacles and reset lane tracking
     obstacles.children.iterate((o) => {
       if (o) {
         o.x -= speed;
         if (o.x < -100 || o.x > this.cameras.main.width + 100) {
+          // Find the lane index for this obstacle (by Y position)
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(o.y - LANES[i]) < 1e-2) {
               laneLastObstacleXs[i] = null;
@@ -390,6 +387,7 @@ function update() {
         }
       }
     });
+    // Clean up points and reset lane tracking
     points.children.iterate((p) => {
       if (p) {
         p.x -= speed;
@@ -407,7 +405,7 @@ function update() {
   }
 }
 
-// --- SPAWN OBJECTS ---
+
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -415,12 +413,6 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  // Adaptive point spawn frequency
-  let pointChance = 40;
-  if (speed > 10) pointChance = 32;
-  if (score > 50) pointChance = 25;
-
-  // Obstacles: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
     let isSafe = true;
@@ -445,7 +437,6 @@ function spawnObjects() {
     laneLastObstacleXs[chosenLaneIdx] = x;
   }
 
-  // Points: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
     let isSafe = true;
@@ -461,7 +452,7 @@ function spawnObjects() {
     if (isSafe) safePointLanes.push(lane);
   }
 
-  if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
+  if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= 40) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
     const pointLane = LANES[pointLaneIdx];
     const glow = scene.add.image(x, pointLane, 'pointGlow').setDepth(1).setBlendMode('ADD');
@@ -475,7 +466,6 @@ function spawnObjects() {
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
-// --- GAME OVER & COLLISIONS (unchanged) ---
 function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;
@@ -580,8 +570,6 @@ function handleGoHome() {
     const scene = window.game.scene.keys.default;
     scene.scene.restart();
     score = 0;
-    speed = 3;
-    direction = 1;
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
