@@ -215,7 +215,7 @@ if (muteBtnHome) {
 const config = {
   type: Phaser.AUTO,
   transparent: true,
-  scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: false } },
   scene: { key: 'default', preload, create, update }
 };
