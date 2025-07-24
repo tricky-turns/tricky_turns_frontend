@@ -273,3 +273,12 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 #game-over-screen .btn-primary {
   pointer-events: auto;
 }
+
+html, body {
+  background: #21263b !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
