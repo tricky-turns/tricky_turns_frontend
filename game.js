@@ -1,4 +1,4 @@
-// Tricky Turns game.js — PATCHED (2024-07-24, delta time)
+// Tricky Turns game.js — PATCHED (2024-07-24, ignore UI clicks for turn)
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -359,7 +359,13 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-  this.input.on('pointerdown', () => {
+  // ===== Do NOT flip direction on mute/pause icon clicks =====
+  this.input.on('pointerdown', (pointer, currentlyOver) => {
+    // If pointer is over the pause or mute icon, ignore
+    if (currentlyOver && currentlyOver.some(obj =>
+      obj === this.pauseIcon || obj === this.muteIcon
+    )) return;
+
     if (gameStarted && !gameOver && !gamePaused) {
       direction *= -1;
       sfx.move.play();
