@@ -416,8 +416,8 @@ function spawnObjects() {
 
   // Adaptive point spawn frequency
   let pointChance = 100;
-  if (score >= 20) pointChance = 40;
-  if (score >= 50) pointChance = 30;
+  if (score >= 20) pointChance = 75;
+  if (score >= 50) pointChance = 50;
 
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
