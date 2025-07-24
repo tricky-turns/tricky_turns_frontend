@@ -14,13 +14,13 @@ const GAME_CONFIG = {
   SPAWN_INTERVAL_MIN: 350,            // Minimum delay (ms) between spawn attempts. LOWER = more frequent spawns
   SPAWN_INTERVAL_MAX: 1100,           // Maximum delay (ms) between spawn attempts. HIGHER = potentially longer gaps
   SPAWN_INTERVAL_BASE_SPEED: 3,       // Used for spawn interval speed curve (should match SPEED_START)
-  FORCED_SPAWN_INTERVAL: 1800,        // Max time (ms) with no spawn before a "forced" spawn (with full safety checks)
+  FORCED_SPAWN_INTERVAL: 1500,        // Max time (ms) with no spawn before a "forced" spawn (with full safety checks)
   // --- Orb movement ---
   ANGULAR_BASE: 0.05,                 // Base angular increment per frame for player rotation. HIGHER = faster orbs, more difficulty
   ANGULAR_SCALE: 0.005,               // Scale up angular speed as overall speed increases
   // --- Obstacle/point speed ---
   SPEED_START: 3,                     // Starting speed (pixels/frame at 60 FPS). LOWER = easier
-  SPEED_MAX: 20,                      // Maximum speed (pixels/frame at 60 FPS)
+  SPEED_MAX: 15,                      // Maximum speed (pixels/frame at 60 FPS)
   // How much to ramp up speed, depending on score reached
   SPEED_RAMP: [
     { until: 20,   perTick: 0.05 },   // Up to score 20: ramp by 0.05/sec
@@ -29,9 +29,9 @@ const GAME_CONFIG = {
   ],
   // --- Point spawn probability (how often a point is favored over an obstacle) ---
   POINT_CHANCE: [
-    { until: 20,   percent: 65 },     // Up to score 20: 65% chance
-    { until: 50,   percent: 50 },     // Up to score 50: 50% chance
-    { until: 9999, percent: 35 }      // Beyond score 50: 35% chance
+    { until: 20,   percent: 60 },     // Up to score 20: 65% chance
+    { until: 50,   percent: 45 },     // Up to score 50: 50% chance
+    { until: 9999, percent: 30 }      // Beyond score 50: 35% chance
   ]
 };
 
