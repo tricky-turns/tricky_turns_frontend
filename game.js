@@ -1,9 +1,9 @@
-// Tricky Turns game.js — 2024-07-23 — FULL PATCH, RESTART FIX, ANGULAR SPEED
+// Tricky Turns game.js — PREFER POINTS OVER OBSTACLES (2024-07-23)
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 20;
+let maxSpeed = 16;
 let speed = 3;
 
 const NUM_LANES = 3;
@@ -366,9 +366,8 @@ function create() {
 
 function update() {
   if (gameOver) return;
-  // Angular speed scales with overall speed for more intense feel
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.005;
+  let ANGULAR_SCALE = 0.018;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
     : 0;
@@ -412,6 +411,7 @@ function update() {
   }
 }
 
+// -- KEY PATCH: Points spawn before obstacles --
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -419,49 +419,43 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  let pointChance = 100;
-  if (score >= 20) pointChance = 70;
-  if (score >= 50) pointChance = 50;
+  let pointChance = 100; // For maximum points under 20
+  if (score >= 20) pointChance = 50;
+  if (score >= 50) pointChance = 35;
 
+  // Figure out safe lanes for obstacles and points
   let safeObstacleLanes = [];
+  let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
-    let isSafe = true;
+    // Safe for obstacle: no obstacles (including adjacent) close by
+    let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
       if (checkLane < 0 || checkLane >= NUM_LANES) continue;
       let lastX = laneLastObstacleXs[checkLane];
       if (lastX !== null && Math.abs(lastX - x) < SPAWN_BUFFER_X) {
-        isSafe = false;
+        obsSafe = false;
         break;
       }
     }
-    if (isSafe) safeObstacleLanes.push(lane);
-  }
+    if (obsSafe) safeObstacleLanes.push(lane);
 
-  if (safeObstacleLanes.length > 0) {
-    const chosenLaneIdx = Phaser.Utils.Array.GetRandom(safeObstacleLanes);
-    const laneY = LANES[chosenLaneIdx];
-    const o = scene.physics.add.image(x, laneY, 'obstacle').setDepth(1);
-    o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
-    obstacles.add(o);
-    laneLastObstacleXs[chosenLaneIdx] = x;
-  }
-
-  let safePointLanes = [];
-  for (let lane = 0; lane < NUM_LANES; lane++) {
-    let isSafe = true;
+    // Safe for point: no obstacle (including adjacent) close by
+    let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
       if (checkLane < 0 || checkLane >= NUM_LANES) continue;
       let lastObsX = laneLastObstacleXs[checkLane];
       if (lastObsX !== null && Math.abs(lastObsX - x) < SPAWN_BUFFER_X) {
-        isSafe = false;
+        ptSafe = false;
         break;
       }
     }
-    if (isSafe) safePointLanes.push(lane);
+    if (ptSafe) safePointLanes.push(lane);
   }
 
+  // -- Points first: Spawn one point if possible and allowed by chance
+  let spawnedPointLane = null;
   if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
     const pointLane = LANES[pointLaneIdx];
@@ -471,6 +465,24 @@ function spawnObjects() {
     p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
     points.add(p);
     laneLastPointXs[pointLaneIdx] = x;
+    spawnedPointLane = pointLaneIdx;
+  }
+
+  // -- Obstacles: spawn only in lanes where we didn't just spawn a point
+  if (safeObstacleLanes.length > 0) {
+    // Remove lane used for point from obstacle candidates
+    let obstacleCandidates = spawnedPointLane !== null
+      ? safeObstacleLanes.filter(lane => lane !== spawnedPointLane)
+      : safeObstacleLanes;
+
+    if (obstacleCandidates.length > 0) {
+      const chosenLaneIdx = Phaser.Utils.Array.GetRandom(obstacleCandidates);
+      const laneY = LANES[chosenLaneIdx];
+      const o = scene.physics.add.image(x, laneY, 'obstacle').setDepth(1);
+      o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
+      obstacles.add(o);
+      laneLastObstacleXs[chosenLaneIdx] = x;
+    }
   }
 
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
