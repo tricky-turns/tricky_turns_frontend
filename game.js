@@ -1,4 +1,4 @@
-// Tricky Turns game.js — PATCHED (2024-07-24)
+// Tricky Turns game.js — PATCHED (2024-07-24, delta time)
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -377,7 +377,8 @@ function create() {
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
 
-function update() {
+// DELTA TIME PATCHED update
+function update(time, delta) {
   if (gameOver) return;
   let ANGULAR_BASE = 0.05;
   let ANGULAR_SCALE = 0.005;
@@ -392,10 +393,12 @@ function update() {
   circle1.setPosition(this.cameras.main.centerX + o1.x, this.cameras.main.centerY + o1.y);
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
 
+  // DELTA TIME PATCH
+  let norm = delta ? (delta / (1000 / 60)) : 1;
   if (gameStarted && !gamePaused) {
     obstacles.children.iterate((o) => {
       if (o) {
-        o.x -= speed;
+        o.x -= speed * norm;
         if (o.x < -100 || o.x > this.cameras.main.width + 100) {
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(o.y - LANES[i]) < 1e-2) {
@@ -409,7 +412,7 @@ function update() {
     });
     points.children.iterate((p) => {
       if (p) {
-        p.x -= speed;
+        p.x -= speed * norm;
         if (p.x < -100 || p.x > this.cameras.main.width + 100) {
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(p.y - LANES[i]) < 1e-2) {
