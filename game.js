@@ -2,7 +2,7 @@
 //   TRICKY TURNS GAME CONFIG
 // ==========================
 //
-// All gameplay, polish, FX, and visual background variables are here!
+// All gameplay, FX, starfield, and UI variables are here for easy tuning!
 
 const GAME_CONFIG = {
   // --- Core gameplay geometry ---
@@ -47,14 +47,15 @@ const GAME_CONFIG = {
     crash:   { duration: 300, intensity: 0.035 },
     collect: { duration: 0,   intensity: 0 }
   },
-  // --- Parallax Background Layers ---
-  // Each layer: { speed, color, alpha, size, yOffset }
-  PARALLAX_BG: [
-    { speed: 0.13, color: 0x14213d, alpha: 0.18, size: 180, yOffset: -120 }, // Farthest
-    { speed: 0.28, color: 0x3a506b, alpha: 0.28, size: 120, yOffset: 0 },
-    { speed: 0.52, color: 0x5bc0be, alpha: 0.18, size: 80, yOffset: 68 },   // Closest
-  ]
+  // --- Parallax Starfield Layers ---
+  // Each layer: { speed, count, color, alpha, size }
+  STARFIELD_LAYERS: [
+    { speed: 0.18, count: 32, color: 0xc8e0fa, alpha: 0.17, size: 2.2 }, // Farthest
+    { speed: 0.36, count: 18, color: 0x6ad0fc, alpha: 0.29, size: 3.5 },
+    { speed: 0.7,  count: 9,  color: 0xffffff, alpha: 0.39, size: 5 }    // Closest/brightest
+  ],
 };
+//
 // ==========================
 
 const muteBtnHome = document.getElementById('muteToggleHome');
@@ -67,7 +68,9 @@ let radius = GAME_CONFIG.RADIUS;
 let laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let lastSpawnTimestamp = 0;
-let bgLayers = []; // Parallax background layer groups
+
+// --- Starfield globals ---
+let starfieldLayers = [];
 
 let piInitPromise = null;
 function initPi() {
@@ -228,30 +231,29 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
-  // --- Parallax Background Setup ---
-  if (bgLayers && bgLayers.length) {
-    bgLayers.forEach(({ group }) => group.forEach(g => g.destroy()));
+  // --- Starfield Parallax Setup ---
+  // Destroy previous layers if they exist
+  if (starfieldLayers.length) {
+    starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
-  bgLayers = [];
-  GAME_CONFIG.PARALLAX_BG.forEach((layer, i) => {
-    let group = [];
-    for (let j = 0; j < 2; j++) {
+  starfieldLayers = [];
+
+  GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
+    let stars = [];
+    for (let n = 0; n < layer.count; n++) {
+      const x = Math.random() * cam.width;
+      const y = Math.random() * cam.height;
       const g = this.add.graphics();
       g.fillStyle(layer.color, layer.alpha);
-      g.fillRoundedRect(
-        0, 0,
-        cam.width + 10,  // +10 to avoid visible seams
-        layer.size, 24
-      );
-      g.x = j * cam.width;
-      g.y = cy + layer.yOffset - layer.size / 2;
-      g.setDepth(-100 + i); // Always behind game objects
-      group.push(g);
+      g.fillCircle(0, 0, layer.size);
+      g.x = x;
+      g.y = y;
+      g.setDepth(-100 + i); // Behind all game objects
+      stars.push({ g, x, y });
     }
-    bgLayers.push({ group, layer });
+    starfieldLayers.push({ stars, layer });
   });
-
-  // --- End Parallax BG ---
+  // --- End Starfield Parallax ---
 
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
@@ -469,14 +471,18 @@ function create() {
 
 // DELTA TIME PATCHED update
 function update(time, delta) {
-  // --- Parallax Background Update (always moves, even paused/gameOver) ---
-  if (bgLayers && bgLayers.length) {
-    bgLayers.forEach(({ group, layer }) => {
-      group.forEach(g => {
-        g.x -= layer.speed * (delta ? (delta / (1000 / 60)) : 1);
-        if (g.x <= -g.width) {
-          g.x += g.width * 2;
+  // --- Starfield Parallax Update (always moves, even paused/gameOver) ---
+  if (starfieldLayers.length) {
+    starfieldLayers.forEach(({ stars, layer }) => {
+      stars.forEach(s => {
+        s.x -= layer.speed * (delta ? (delta / (1000 / 60)) : 1);
+        if (s.x < -layer.size) {
+          s.x += this.cameras.main.width + layer.size;
+          // Optionally, randomize y for a little extra twinkle
+          s.y = Math.random() * this.cameras.main.height;
         }
+        s.g.x = s.x;
+        s.g.y = s.y;
       });
     });
   }
