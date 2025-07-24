@@ -1,14 +1,14 @@
-// Tricky Turns game.js — GAME OVER SCREEN INSTANT, ASYNC LEADERBOARD
+// Tricky Turns game.js — 2024-07-23 — FULL PATCH, RESTART FIX, ANGULAR SPEED
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 20;
+let maxSpeed = 16;
 let speed = 3;
 
 const NUM_LANES = 3;
 const SPAWN_BUFFER_X = 220;
-const FORCED_SPAWN_INTERVAL = 1700;
+const FORCED_SPAWN_INTERVAL = 1800;
 
 let laneLastObstacleXs = [null, null, null];
 let laneLastPointXs = [null, null, null];
@@ -211,7 +211,6 @@ function create() {
     color: '#fff', stroke: '#000', strokeThickness: 3
   }).setDepth(2).setVisible(false);
 
-  // Speed display for playtesting
   window.speedTestText = this.add.text(16, 100, 'Speed: 3.00', {
     fontFamily: 'Poppins', fontSize: '22px',
     color: '#eaeaea', stroke: '#222', strokeThickness: 2
@@ -262,9 +261,9 @@ function create() {
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.05, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.1, maxSpeed);
-        else                   speed = Math.min(speed + 0.15,  maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.025, maxSpeed);
+        else if (score < 50)   speed = Math.min(speed + 0.045, maxSpeed);
+        else                   speed = Math.min(speed + 0.07,  maxSpeed);
       }
       if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
@@ -367,11 +366,9 @@ function create() {
 
 function update() {
   if (gameOver) return;
-  // Proportional rotation: scales as speed increases
-  // At speed=3, dt=0.05; at speed=20, dt=~0.35 (can tweak multiplier)
+  // Angular speed scales with overall speed for more intense feel
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.005;  // Try 0.018 for "very noticeable" but controllable
-
+  let ANGULAR_SCALE = 0.018;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
     : 0;
@@ -415,7 +412,6 @@ function update() {
   }
 }
 
-
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -423,10 +419,9 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  // Adaptive point spawn frequency
-  let pointChance = 100;
-  if (score >= 20) pointChance = 75;
-  if (score >= 50) pointChance = 50;
+  let pointChance = 60;
+  if (score >= 20) pointChance = 40;
+  if (score >= 50) pointChance = 30;
 
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
@@ -499,7 +494,6 @@ function triggerGameOver() {
   });
   sfx.explode.play();
 
-  // After delay, show game over screen instantly, THEN do leaderboard stuff
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
@@ -516,11 +510,9 @@ function triggerGameOver() {
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
 
-    // 1. SHOW GAME OVER SCREEN *immediately*
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'flex';
 
-    // 2. Show loading for leaderboard (async)
     const list = document.getElementById('leaderboardEntries');
     if (list) {
       while (list.firstChild) list.removeChild(list.firstChild);
@@ -533,7 +525,6 @@ function triggerGameOver() {
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
-    // 3. Post score if needed, then fetch leaderboard and update in place
     (async () => {
       if (!useLocalHighScore) {
         try {
@@ -546,7 +537,6 @@ function triggerGameOver() {
       }
       try {
         const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
-        // Update leaderboard entries
         if (list) {
           while (list.firstChild) list.removeChild(list.firstChild);
           data.forEach((e, i) => {
@@ -556,7 +546,6 @@ function triggerGameOver() {
             list.appendChild(li);
           });
         }
-        // Show rank
         const rank = data.findIndex(e => e.username === piUsername);
         if (rankMessage) {
           if (rank >= 0) {
@@ -624,6 +613,9 @@ function handleGoHome() {
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
+    laneLastObstacleXs = [null, null, null];
+    laneLastPointXs = [null, null, null];
+    lastSpawnTimestamp = 0;
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
@@ -648,6 +640,9 @@ function handlePlayAgain() {
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
+    laneLastObstacleXs = [null, null, null];
+    laneLastPointXs = [null, null, null];
+    lastSpawnTimestamp = 0;
     [
       'game-over-screen', 'leaderboard-screen', 'pause-overlay',
       'start-screen', 'leaderboard'
