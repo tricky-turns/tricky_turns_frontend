@@ -3,12 +3,12 @@
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 16;
+let maxSpeed = 20;
 let speed = 3;
 
 const NUM_LANES = 3;
 const SPAWN_BUFFER_X = 220;
-const FORCED_SPAWN_INTERVAL = 1800;
+const FORCED_SPAWN_INTERVAL = 1500;
 
 let laneLastObstacleXs = [null, null, null];
 let laneLastPointXs = [null, null, null];
@@ -415,7 +415,7 @@ function spawnObjects() {
   const vx = (fromLeft ? speed : -speed) * 60;
 
   // Adaptive point spawn frequency
-  let pointChance = 60;
+  let pointChance = 100;
   if (score >= 20) pointChance = 40;
   if (score >= 50) pointChance = 30;
 
