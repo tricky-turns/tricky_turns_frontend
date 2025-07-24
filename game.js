@@ -1,9 +1,9 @@
-// Tricky Turns game.js — PREFER POINTS OVER OBSTACLES (2024-07-23)
+// Tricky Turns game.js — JITTER/LAG FIX: PHYSICS-ONLY MOVEMENT
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 20;
+let maxSpeed = 16;
 let speed = 3;
 
 const NUM_LANES = 3;
@@ -261,9 +261,9 @@ function create() {
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.05, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.75, maxSpeed);
-        else                   speed = Math.min(speed + 0.1,  maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.025, maxSpeed);
+        else if (score < 50)   speed = Math.min(speed + 0.045, maxSpeed);
+        else                   speed = Math.min(speed + 0.07,  maxSpeed);
       }
       if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
@@ -367,7 +367,7 @@ function create() {
 function update() {
   if (gameOver) return;
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.005;
+  let ANGULAR_SCALE = 0.018;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
     : 0;
@@ -382,7 +382,6 @@ function update() {
   if (gameStarted && !gamePaused) {
     obstacles.children.iterate((o) => {
       if (o) {
-        o.x -= speed;
         if (o.x < -100 || o.x > this.cameras.main.width + 100) {
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(o.y - LANES[i]) < 1e-2) {
@@ -396,7 +395,6 @@ function update() {
     });
     points.children.iterate((p) => {
       if (p) {
-        p.x -= speed;
         if (p.x < -100 || p.x > this.cameras.main.width + 100) {
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(p.y - LANES[i]) < 1e-2) {
@@ -411,6 +409,7 @@ function update() {
   }
 }
 
+// ... [rest of file unchanged — including spawnObjects, game over, handlePlayAgain, etc.]
 // -- KEY PATCH: Points spawn before obstacles --
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
@@ -419,7 +418,7 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  let pointChance = 70; // For maximum points under 20
+  let pointChance = 100; // For maximum points under 20
   if (score >= 20) pointChance = 50;
   if (score >= 50) pointChance = 35;
 
