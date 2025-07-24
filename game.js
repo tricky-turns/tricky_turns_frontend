@@ -371,10 +371,40 @@ function update() {
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
 
   if (gameStarted && !gamePaused) {
-    obstacles.children.iterate(o => { if (o) { o.x -= speed; if (o.x < -100 || o.x > this.cameras.main.width + 100) { o.destroy(); } } });
-    points.children.iterate(p => { if (p) { p.x -= speed; if (p.x < -100 || p.x > this.cameras.main.width + 100) { p.destroy(); } } });
+    // Clean up obstacles and reset lane tracking
+    obstacles.children.iterate((o) => {
+      if (o) {
+        o.x -= speed;
+        if (o.x < -100 || o.x > this.cameras.main.width + 100) {
+          // Find the lane index for this obstacle (by Y position)
+          for (let i = 0; i < NUM_LANES; i++) {
+            if (Math.abs(o.y - LANES[i]) < 1e-2) {
+              laneLastObstacleXs[i] = null;
+              break;
+            }
+          }
+          o.destroy();
+        }
+      }
+    });
+    // Clean up points and reset lane tracking
+    points.children.iterate((p) => {
+      if (p) {
+        p.x -= speed;
+        if (p.x < -100 || p.x > this.cameras.main.width + 100) {
+          for (let i = 0; i < NUM_LANES; i++) {
+            if (Math.abs(p.y - LANES[i]) < 1e-2) {
+              laneLastPointXs[i] = null;
+              break;
+            }
+          }
+          p.destroy();
+        }
+      }
+    });
   }
 }
+
 
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
