@@ -1,9 +1,9 @@
-// Tricky Turns game.js — PREFER POINTS OVER OBSTACLES (2024-07-23)
+// Tricky Turns game.js — FINAL: Working Spawn Logic, Physics-Only, Clean Restarts
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 20;
+let maxSpeed = 16;
 let speed = 3;
 
 const NUM_LANES = 3;
@@ -234,41 +234,20 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  this.startCountdown = function(callback) {
-    let count = 3;
-    this.countdownText.setText(count).setVisible(true);
-    this.countdownText.setDepth(1000);
-    const countdownEvent = this.time.addEvent({
-      delay: 1000,
-      repeat: 3,
-      callback: () => {
-        count--;
-        if (count > 0) {
-          this.countdownText.setText(count);
-        } else if (count === 0) {
-          this.countdownText.setText('Go!');
-        } else {
-          this.countdownText.setVisible(false);
-          countdownEvent.remove(false);
-          if (typeof callback === "function") callback.call(this);
-        }
-      }
-    });
-  };
-
   // Fast acceleration
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.05, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.75, maxSpeed);
-        else                   speed = Math.min(speed + 0.1,  maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.025, maxSpeed);
+        else if (score < 50)   speed = Math.min(speed + 0.045, maxSpeed);
+        else                   speed = Math.min(speed + 0.07,  maxSpeed);
       }
       if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
   });
 
+  // Set up event for spawning
   function getSpawnInterval() {
     const minDelay = 350, maxDelay = 1100, baseSpeed = 3;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
@@ -362,12 +341,18 @@ function create() {
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
+
+  // --- ONLY CALL COUNTDOWN ONCE PER CREATE ---
+  this.startCountdown(() => {
+    gameStarted = true;
+    this.physics.resume();
+  });
 }
 
 function update() {
   if (gameOver) return;
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.005;
+  let ANGULAR_SCALE = 0.018;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
     : 0;
@@ -382,7 +367,6 @@ function update() {
   if (gameStarted && !gamePaused) {
     obstacles.children.iterate((o) => {
       if (o) {
-        o.x -= speed;
         if (o.x < -100 || o.x > this.cameras.main.width + 100) {
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(o.y - LANES[i]) < 1e-2) {
@@ -396,7 +380,6 @@ function update() {
     });
     points.children.iterate((p) => {
       if (p) {
-        p.x -= speed;
         if (p.x < -100 || p.x > this.cameras.main.width + 100) {
           for (let i = 0; i < NUM_LANES; i++) {
             if (Math.abs(p.y - LANES[i]) < 1e-2) {
@@ -411,7 +394,6 @@ function update() {
   }
 }
 
-// -- KEY PATCH: Points spawn before obstacles --
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -419,15 +401,13 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  let pointChance = 65; // For maximum points under 20
+  let pointChance = 100;
   if (score >= 20) pointChance = 50;
   if (score >= 50) pointChance = 35;
 
-  // Figure out safe lanes for obstacles and points
   let safeObstacleLanes = [];
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
-    // Safe for obstacle: no obstacles (including adjacent) close by
     let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -440,7 +420,6 @@ function spawnObjects() {
     }
     if (obsSafe) safeObstacleLanes.push(lane);
 
-    // Safe for point: no obstacle (including adjacent) close by
     let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -454,7 +433,6 @@ function spawnObjects() {
     if (ptSafe) safePointLanes.push(lane);
   }
 
-  // -- Points first: Spawn one point if possible and allowed by chance
   let spawnedPointLane = null;
   if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
@@ -468,9 +446,7 @@ function spawnObjects() {
     spawnedPointLane = pointLaneIdx;
   }
 
-  // -- Obstacles: spawn only in lanes where we didn't just spawn a point
   if (safeObstacleLanes.length > 0) {
-    // Remove lane used for point from obstacle candidates
     let obstacleCandidates = spawnedPointLane !== null
       ? safeObstacleLanes.filter(lane => lane !== spawnedPointLane)
       : safeObstacleLanes;
@@ -602,17 +578,8 @@ function handleStartGame() {
   document.getElementById('start-screen').style.display = 'none';
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
-  fadeOut(() => {
-    const scene = window.game.scene.keys.default;
-    scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.pauseIcon.setVisible(true);
-    scene.muteIcon.setVisible(true);
-    scene.startCountdown(function() {
-      gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
-    });
-  }, 200);
+  // Scene will restart, and countdown will run in create()
+  window.game.scene.keys.default.scene.restart();
 }
 
 function handleGoHome() {
@@ -669,15 +636,7 @@ function handlePlayAgain() {
     if (viewLb) viewLb.style.display = 'none';
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
-    const scene = window.game.scene.keys.default;
-    scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.pauseIcon.setVisible(true);
-    scene.muteIcon.setVisible(true);
-    scene.startCountdown(function() {
-      gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
-    });
+    // Scene will restart, and countdown will run in create()
   }, 0);
 }
 
