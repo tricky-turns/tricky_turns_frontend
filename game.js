@@ -1,17 +1,56 @@
-// Tricky Turns game.js — PATCHED (2024-07-24, prevent point/obstacle overlap)
+// ==========================
+//   TRICKY TURNS GAME CONFIG
+// ==========================
+//
+// Edit ONLY the values in this object to tune gameplay and challenge
+// Each setting is documented—adjust as needed for balance!
+
+const GAME_CONFIG = {
+  // --- Core gameplay geometry ---
+  NUM_LANES: 3,                      // Number of available lanes (default: 3)
+  RADIUS: 100,                       // Orb rotation radius (pixels)
+  // --- Spawn mechanics ---
+  SPAWN_BUFFER_X: 220,                // Min X distance between spawns in same/adjacent lane. HIGHER = fewer spawns, safer play. LOWER = more spawns, more chaos
+  SPAWN_INTERVAL_MIN: 350,            // Minimum delay (ms) between spawn attempts. LOWER = more frequent spawns
+  SPAWN_INTERVAL_MAX: 1100,           // Maximum delay (ms) between spawn attempts. HIGHER = potentially longer gaps
+  SPAWN_INTERVAL_BASE_SPEED: 3,       // Used for spawn interval speed curve (should match SPEED_START)
+  FORCED_SPAWN_INTERVAL: 1800,        // Max time (ms) with no spawn before a "forced" spawn (with full safety checks)
+  // --- Orb movement ---
+  ANGULAR_BASE: 0.05,                 // Base angular increment per frame for player rotation. HIGHER = faster orbs, more difficulty
+  ANGULAR_SCALE: 0.005,               // Scale up angular speed as overall speed increases
+  // --- Obstacle/point speed ---
+  SPEED_START: 3,                     // Starting speed (pixels/frame at 60 FPS). LOWER = easier
+  SPEED_MAX: 20,                      // Maximum speed (pixels/frame at 60 FPS)
+  // How much to ramp up speed, depending on score reached
+  SPEED_RAMP: [
+    { until: 20,   perTick: 0.05 },   // Up to score 20: ramp by 0.05/sec
+    { until: 50,   perTick: 0.75 },   // Up to score 50: ramp by 0.75/sec
+    { until: 9999, perTick: 0.10 }    // Beyond score 50: ramp by 0.10/sec
+  ],
+  // --- Point spawn probability (how often a point is favored over an obstacle) ---
+  POINT_CHANCE: [
+    { until: 20,   percent: 65 },     // Up to score 20: 65% chance
+    { until: 50,   percent: 50 },     // Up to score 50: 50% chance
+    { until: 9999, percent: 35 }      // Beyond score 50: 35% chance
+  ]
+};
+
+// ==========================
+//     END OF GAME CONFIG
+// ==========================
+
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 20;
-let speed = 3;
 
-const NUM_LANES = 3;
-const SPAWN_BUFFER_X = 220;
-const FORCED_SPAWN_INTERVAL = 1800;
+// --- Gameplay variables initialized from config ---
+let speed = GAME_CONFIG.SPEED_START;
+let maxSpeed = GAME_CONFIG.SPEED_MAX;
+let radius = GAME_CONFIG.RADIUS;
 
-let laneLastObstacleXs = [null, null, null];
-let laneLastPointXs = [null, null, null];
+let laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+let laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let lastSpawnTimestamp = 0;
 
 let piInitPromise = null;
@@ -121,12 +160,10 @@ async function showHomeLeaderboard() {
 
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0, radius = 100;
+let direction = 1, angle = 0;
 let circle1, circle2, obstacles, points, score = 0;
 let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
 let sfx = {}, isMuted = false;
-
-// ====== Pause Lock Flag (used ONLY for pause icon) ======
 let pauseIconLocked = false;
 
 const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
@@ -151,6 +188,13 @@ const config = {
 };
 window.game = new Phaser.Game(config);
 
+function getConfigRamp(arr, val) {
+  for (let i = 0; i < arr.length; i++) {
+    if (val < arr[i].until) return arr[i];
+  }
+  return arr[arr.length - 1];
+}
+
 function preload() {
   this.load.audio('explode', 'assets/explode.wav');
   this.load.audio('move', 'assets/move.wav');
@@ -167,7 +211,9 @@ function preload() {
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
-  LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
+  for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
+    LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
+  }
 
   if (this.textures.exists('orb')) this.textures.remove('orb');
   this.make.graphics({ add: false })
@@ -259,21 +305,21 @@ function create() {
     });
   };
 
-  // Fast acceleration
+  // Speed ramp-up based on score and config
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.05, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.75, maxSpeed);
-        else                   speed = Math.min(speed + 0.1,  maxSpeed);
+        let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
+        speed = Math.min(speed + ramp, maxSpeed);
       }
       if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
   });
 
   function getSpawnInterval() {
-    const minDelay = 350, maxDelay = 1100, baseSpeed = 3;
+    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
+    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
     let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
     return interval + Phaser.Math.Between(-50, 50);
@@ -297,7 +343,7 @@ function create() {
     loop: true,
     callback: () => {
       if (!gameStarted || gameOver || gamePaused) return;
-      if (this.time.now - lastSpawnTimestamp > FORCED_SPAWN_INTERVAL) {
+      if (this.time.now - lastSpawnTimestamp > GAME_CONFIG.FORCED_SPAWN_INTERVAL) {
         spawnObjects.call(this);
         lastSpawnTimestamp = this.time.now;
       }
@@ -311,9 +357,8 @@ function create() {
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
 
-  // ===== PATCHED: Pause icon anti-spam logic, ONLY for pause icon =====
   pauseIcon.on('pointerdown', (_, x, y, e) => {
-    if (pauseIconLocked) return; // Only blocks pause icon
+    if (pauseIconLocked) return;
     pauseIconLocked = true;
     e.stopPropagation();
     if (!gameStarted || gameOver) {
@@ -350,7 +395,6 @@ function create() {
     }
   });
 
-  // ===== Mute icon always responds (independent of pause lock) =====
   muteIcon.on('pointerdown', () => {
     isMuted = !isMuted;
     this.sound.mute = isMuted;
@@ -359,9 +403,7 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-  // ===== Do NOT flip direction on mute/pause icon clicks =====
   this.input.on('pointerdown', (pointer, currentlyOver) => {
-    // If pointer is over the pause or mute icon, ignore
     if (currentlyOver && currentlyOver.some(obj =>
       obj === this.pauseIcon || obj === this.muteIcon
     )) return;
@@ -386,10 +428,10 @@ function create() {
 // DELTA TIME PATCHED update
 function update(time, delta) {
   if (gameOver) return;
-  let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.005;
+  let ANGULAR_BASE = GAME_CONFIG.ANGULAR_BASE;
+  let ANGULAR_SCALE = GAME_CONFIG.ANGULAR_SCALE;
   let dt = (gameStarted && !gamePaused)
-    ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
+    ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - GAME_CONFIG.SPEED_START)) * direction
     : 0;
 
   angle += dt;
@@ -399,14 +441,13 @@ function update(time, delta) {
   circle1.setPosition(this.cameras.main.centerX + o1.x, this.cameras.main.centerY + o1.y);
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
 
-  // DELTA TIME PATCH
   let norm = delta ? (delta / (1000 / 60)) : 1;
   if (gameStarted && !gamePaused) {
     obstacles.children.iterate((o) => {
       if (o) {
         o.x -= speed * norm;
         if (o.x < -100 || o.x > this.cameras.main.width + 100) {
-          for (let i = 0; i < NUM_LANES; i++) {
+          for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
             if (Math.abs(o.y - LANES[i]) < 1e-2) {
               laneLastObstacleXs[i] = null;
               break;
@@ -420,7 +461,7 @@ function update(time, delta) {
       if (p) {
         p.x -= speed * norm;
         if (p.x < -100 || p.x > this.cameras.main.width + 100) {
-          for (let i = 0; i < NUM_LANES; i++) {
+          for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
             if (Math.abs(p.y - LANES[i]) < 1e-2) {
               laneLastPointXs[i] = null;
               break;
@@ -433,54 +474,52 @@ function update(time, delta) {
   }
 }
 
-// -- PATCHED: Points and obstacles never overlap in the same lane --
+function getPointChance(score) {
+  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
+}
+
+// --- Patch: Points and obstacles never overlap in the same lane ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
   const fromLeft = Phaser.Math.Between(0, 1) === 0;
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
+  let pointChance = getPointChance(score);
 
-  let pointChance = 65; // For maximum points under 20
-  if (score >= 20) pointChance = 50;
-  if (score >= 50) pointChance = 35;
-
-  // Build safe lanes for obstacles and points
   let safeObstacleLanes = [];
   let safePointLanes = [];
-  for (let lane = 0; lane < NUM_LANES; lane++) {
-    // --- PATCH: safeObstacleLanes also requires no recent point in lane ---
+  for (let lane = 0; lane < GAME_CONFIG.NUM_LANES; lane++) {
+    // Obstacles: check for nearby obstacles AND points
     let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
-      if (checkLane < 0 || checkLane >= NUM_LANES) continue;
+      if (checkLane < 0 || checkLane >= GAME_CONFIG.NUM_LANES) continue;
       let lastObsX = laneLastObstacleXs[checkLane];
-      if (lastObsX !== null && Math.abs(lastObsX - x) < SPAWN_BUFFER_X) {
+      if (lastObsX !== null && Math.abs(lastObsX - x) < GAME_CONFIG.SPAWN_BUFFER_X) {
         obsSafe = false;
         break;
       }
     }
     let lastPtX = laneLastPointXs[lane];
-    if (obsSafe && (lastPtX === null || Math.abs(lastPtX - x) >= SPAWN_BUFFER_X)) {
+    if (obsSafe && (lastPtX === null || Math.abs(lastPtX - x) >= GAME_CONFIG.SPAWN_BUFFER_X)) {
       safeObstacleLanes.push(lane);
     }
 
-    // Safe for point: no obstacle (including adjacent) close by AND no recent point in this lane
+    // Points: check for nearby obstacles AND points
     let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
-      if (checkLane < 0 || checkLane >= NUM_LANES) continue;
+      if (checkLane < 0 || checkLane >= GAME_CONFIG.NUM_LANES) continue;
       let lastObsX = laneLastObstacleXs[checkLane];
-      if (lastObsX !== null && Math.abs(lastObsX - x) < SPAWN_BUFFER_X) {
+      if (lastObsX !== null && Math.abs(lastObsX - x) < GAME_CONFIG.SPAWN_BUFFER_X) {
         ptSafe = false;
         break;
       }
     }
-    if (ptSafe) {
-      let lastPtX2 = laneLastPointXs[lane];
-      if (lastPtX2 === null || Math.abs(lastPtX2 - x) >= SPAWN_BUFFER_X) {
-        safePointLanes.push(lane);
-      }
+    let lastPtX2 = laneLastPointXs[lane];
+    if (ptSafe && (lastPtX2 === null || Math.abs(lastPtX2 - x) >= GAME_CONFIG.SPAWN_BUFFER_X)) {
+      safePointLanes.push(lane);
     }
   }
 
@@ -649,13 +688,13 @@ function handleGoHome() {
     const scene = window.game.scene.keys.default;
     scene.scene.restart();
     score = 0;
-    speed = 3;
+    speed = GAME_CONFIG.SPEED_START;
     direction = 1;
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
-    laneLastObstacleXs = [null, null, null];
-    laneLastPointXs = [null, null, null];
+    laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+    laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
@@ -676,13 +715,13 @@ function handlePlayAgain() {
   scene.scene.restart();
   setTimeout(() => {
     score = 0;
-    speed = 3;
+    speed = GAME_CONFIG.SPEED_START;
     direction = 1;
     gameStarted = false;
     gameOver = false;
     gamePaused = false;
-    laneLastObstacleXs = [null, null, null];
-    laneLastPointXs = [null, null, null];
+    laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+    laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
     [
       'game-over-screen', 'leaderboard-screen', 'pause-overlay',
