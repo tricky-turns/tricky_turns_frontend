@@ -1,25 +1,21 @@
-// Tricky Turns game.js — PATCHED 2024-07-23
+// Tricky Turns game.js — 2024-07-23 (FINAL PATCHED)
 
+// --- CONFIG & SPAWN SAFETY BUFFERS ---
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
 let maxSpeed = 16; // Sensible cap for speed
-let lastObstacleLane = null;
-// Track last X for each lane for both obstacles and points
-let laneLastObstacleX = [null, null, null];
-let laneLastPointX = [null, null, null];
-const SPAWN_BUFFER = 200; // minimum distance between any two spawns in the same lane
-const SPAWN_BUFFER_X = 220; // horizontal (X) spacing between obstacles in adjacent lanes
-const NUM_LANES = 3; // if you ever expand lanes, update this
-let laneLastObstacleXs = [null, null, null]; // track X of last obstacle per lane
-let laneLastPointXs = [null, null, null];
 
+const NUM_LANES = 3;         // Number of vertical lanes
+const SPAWN_BUFFER_X = 220;  // Minimum horizontal px between obstacles/points in same or adjacent lanes
+const FORCED_SPAWN_INTERVAL = 1800; // Max ms allowed between any spawns
 
+// Lane tracking for obstacle/point safety
+let laneLastObstacleXs = [null, null, null]; // per-lane last obstacle X
+let laneLastPointXs = [null, null, null];    // per-lane last point X
+let lastSpawnTimestamp = 0;
 
-
-// ------------------------
-// Pi Network SDK and Auth
-// ------------------------
+// Pi Network SDK/auth variables...
 let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
@@ -27,16 +23,12 @@ function initPi() {
   }
   return piInitPromise;
 }
-
 const scopes = ['username'];
 let piUsername = 'Guest';
 let highScore = 0;
 let useLocalHighScore = true;
 
-function onIncompletePaymentFound(payment) {
-  console.log('Incomplete payment found:', payment);
-}
-
+function onIncompletePaymentFound(payment) { console.log('Incomplete payment found:', payment); }
 async function initAuth() {
   await initPi();
   try {
@@ -58,49 +50,16 @@ async function initAuth() {
     console.log('Not signed in:', e);
   }
 }
-
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-// ------------------------
-// Simple Fade Helpers
-// ------------------------
-function fadeInElement(el, duration = 500, displayType = 'flex') {
-  el.style.opacity = 0;
-  el.style.display = displayType;
-  requestAnimationFrame(() => {
-    el.style.transition = `opacity ${duration}ms ease`;
-    el.style.opacity = 1;
-  });
-}
+// --- Simple Fade Helpers (unchanged) ---
+function fadeInElement(el, duration = 500, displayType = 'flex') { el.style.opacity = 0; el.style.display = displayType; requestAnimationFrame(() => { el.style.transition = `opacity ${duration}ms ease`; el.style.opacity = 1; }); }
+function fadeOutElement(el, duration = 500) { el.style.transition = `opacity ${duration}ms ease`; el.style.opacity = 0; setTimeout(() => { el.style.display = 'none'; }, duration); }
+function fadeIn(callback, duration = 600) { const fade = document.getElementById('fade-screen'); fade.classList.add('fade-in'); setTimeout(() => { callback?.(); }, duration); }
+function fadeOut(callback, duration = 600) { const fade = document.getElementById('fade-screen'); fade.classList.remove('fade-in'); setTimeout(() => { callback?.(); }, duration); }
 
-function fadeOutElement(el, duration = 500) {
-  el.style.transition = `opacity ${duration}ms ease`;
-  el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, duration);
-}
-
-function fadeIn(callback, duration = 600) {
-  const fade = document.getElementById('fade-screen');
-  fade.classList.add('fade-in');
-  setTimeout(() => {
-    callback?.();
-  }, duration);
-}
-
-function fadeOut(callback, duration = 600) {
-  const fade = document.getElementById('fade-screen');
-  fade.classList.remove('fade-in');
-  setTimeout(() => {
-    callback?.();
-  }, duration);
-}
-
-// ------------------------
-// Leaderboard Display
-// ------------------------
+// --- Leaderboard Display (unchanged) ---
 async function showHomeLeaderboard() {
   if (isLeaderboardLoading) return;
   isLeaderboardLoading = true;
@@ -113,7 +72,6 @@ async function showHomeLeaderboard() {
   loadingLi.style.fontStyle = 'italic';
   loadingLi.style.textAlign = 'center';
   list.appendChild(loadingLi);
-
   try {
     const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -138,9 +96,7 @@ async function showHomeLeaderboard() {
   }
 }
 
-// ------------------------
-// GAME STATE VARIABLES
-// ------------------------
+// --- GAME STATE ---
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
 let direction = 1, angle = 0, radius = 100, speed = 3;
@@ -148,7 +104,6 @@ let circle1, circle2, obstacles, points, score = 0;
 let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
 let sfx = {}, isMuted = false;
 
-// Mute Icon Helper
 const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
 if (muteBtnHome) {
   muteBtnHome.src = currentMuteIcon();
@@ -162,9 +117,7 @@ if (muteBtnHome) {
   });
 }
 
-// ------------------------
-// PHASER CONFIGURATION
-// ------------------------
+// --- PHASER GAME ---
 const config = {
   type: Phaser.AUTO,
   transparent: true,
@@ -174,9 +127,6 @@ const config = {
 };
 window.game = new Phaser.Game(config);
 
-// ------------------------
-// PRELOAD: ASSETS & AUDIO
-// ------------------------
 function preload() {
   this.load.audio('explode', 'assets/explode.wav');
   this.load.audio('move', 'assets/move.wav');
@@ -190,15 +140,11 @@ function preload() {
   this.load.image('iconUnmute', 'assets/icon-unmute.svg');
 }
 
-// ------------------------
-// CREATE: MAIN GAME LOGIC
-// ------------------------
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
   LANES[0] = cy - radius; LANES[1] = cy; LANES[2] = cy + radius;
 
-  // --- Orb and Obstacle Sprites ---
   if (this.textures.exists('orb')) this.textures.remove('orb');
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
@@ -223,7 +169,6 @@ function create() {
   this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
-  // Trail
   if (this.trail) { this.trail.destroy(); this.trail = null; }
   this.trail = this.add.particles('orb');
   [circle1, circle2].forEach(c => this.trail.createEmitter({
@@ -231,14 +176,11 @@ function create() {
     scale: { start: 0.3, end: 0 }, alpha: { start: 0.4, end: 0 },
     frequency: 50, blendMode: 'ADD'
   }));
-  this.events.on('shutdown', () => {
-    if (this.trail) { this.trail.destroy(); this.trail = null; }
-  });
+  this.events.on('shutdown', () => { if (this.trail) { this.trail.destroy(); this.trail = null; } });
 
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  // HUD
   scoreText = this.add.text(16, 16, 'Score: 0', {
     fontFamily: 'Poppins', fontSize: '36px',
     color: '#fff', stroke: '#000', strokeThickness: 4
@@ -248,10 +190,8 @@ function create() {
     color: '#fff', stroke: '#000', strokeThickness: 3
   }).setDepth(2).setVisible(false);
 
-  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause')
-    .setInteractive().setDepth(3).setVisible(false);
-  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute')
-    .setInteractive().setDepth(3).setVisible(false);
+  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
+  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(3).setVisible(false);
   window.muteIcon = muteIcon;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
@@ -291,23 +231,35 @@ function create() {
     });
   };
 
-  // --- SPAWN SCHEDULER PATCH ---
-  if (spawnEvent) spawnEvent.remove(false);
-// Helper
+  // --- SPAWN SCHEDULER + ANTI-DEADZONE ---
+  function getSpawnInterval() {
+    const minDelay = 650, maxDelay = 1300, baseSpeed = 3;
+    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+    return Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+  }
 
-function getSpawnInterval() {
-  const minDelay = 650; // increased from 350
-  const maxDelay = 1300;
-  const baseSpeed = 3;
-  let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
-  return Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-}
+  if (spawnEvent) spawnEvent.remove(false);
   spawnEvent = this.time.addEvent({
     delay: getSpawnInterval(),
     loop: true,
     callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) spawnObjects.call(this);
+      if (gameStarted && !gameOver && !gamePaused) {
+        spawnObjects.call(this);
+        lastSpawnTimestamp = this.time.now;
+      }
       spawnEvent.delay = getSpawnInterval();
+    }
+  });
+  // Force spawner to prevent deadzones
+  this.time.addEvent({
+    delay: 250,
+    loop: true,
+    callback: () => {
+      if (!gameStarted || gameOver || gamePaused) return;
+      if (this.time.now - lastSpawnTimestamp > FORCED_SPAWN_INTERVAL) {
+        spawnObjects.call(this);
+        lastSpawnTimestamp = this.time.now;
+      }
     }
   });
 
@@ -374,7 +326,6 @@ function getSpawnInterval() {
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 
-  // --- SPEED RAMP PATCH ---
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
@@ -386,9 +337,7 @@ function getSpawnInterval() {
   });
 }
 
-// ------------------------
-// UPDATE: PHYSICS & CLEANUP
-// ------------------------
+// --- UPDATE ---
 function update() {
   if (gameOver) return;
   let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
@@ -400,29 +349,12 @@ function update() {
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
 
   if (gameStarted && !gamePaused) {
-    // --- CLEANUP PATCHED ---
-    obstacles.children.iterate(o => {
-      if (o) {
-        o.x -= speed;
-        if (o.x < -100 || o.x > this.cameras.main.width + 100) {
-          o.destroy();
-        }
-      }
-    });
-    points.children.iterate(p => {
-      if (p) {
-        p.x -= speed;
-        if (p.x < -100 || p.x > this.cameras.main.width + 100) {
-          p.destroy();
-        }
-      }
-    });
+    obstacles.children.iterate(o => { if (o) { o.x -= speed; if (o.x < -100 || o.x > this.cameras.main.width + 100) { o.destroy(); } } });
+    points.children.iterate(p => { if (p) { p.x -= speed; if (p.x < -100 || p.x > this.cameras.main.width + 100) { p.destroy(); } } });
   }
 }
 
-// ------------------------
-// SPAWN OBJECTS
-// ------------------------
+// --- SPAWN OBJECTS (adjacent lane safety + anti-overlap) ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -430,10 +362,9 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  // Determine which lanes are safe for obstacle spawn
+  // -- Obstacles: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
-    // Check if THIS lane and its adjacent lanes have no obstacle at similar X
     let isSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -450,17 +381,15 @@ function spawnObjects() {
   if (safeObstacleLanes.length > 0) {
     const chosenLaneIdx = Phaser.Utils.Array.GetRandom(safeObstacleLanes);
     const laneY = LANES[chosenLaneIdx];
-    // Place obstacle
     const o = scene.physics.add.image(x, laneY, 'obstacle').setDepth(1);
     o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
     obstacles.add(o);
     laneLastObstacleXs[chosenLaneIdx] = x;
   }
 
-  // Points: try to never put them at the same X as an obstacle, or adjacent to one at a similar X
+  // -- Points: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
-    // If obstacle is at same X or adjacent, skip
     let isSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -484,11 +413,12 @@ function spawnObjects() {
     points.add(p);
     laneLastPointXs[pointLaneIdx] = x;
   }
+
+  // Always update lastSpawnTimestamp for anti-deadzone logic
+  lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
-// ------------------------
-// GAME OVER & COLLISIONS
-// ------------------------
+// --- GAME OVER & COLLISIONS (unchanged) ---
 function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;
@@ -568,9 +498,7 @@ function collectPoint(_, pt) {
   });
 }
 
-// ------------------------
-// BUTTON HANDLERS
-// ------------------------
+// --- BUTTON HANDLERS / EVENT BINDINGS (unchanged) ---
 function handleStartGame() {
   sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
@@ -586,7 +514,7 @@ function handleStartGame() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null; // fallback for legacy
+      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
     });
   }, 200);
 }
@@ -649,9 +577,6 @@ function handlePlayAgain() {
   }, 0);
 }
 
-// ------------------------
-// EVENT BINDINGS
-// ------------------------
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
