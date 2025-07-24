@@ -2,49 +2,68 @@
 //   TRICKY TURNS GAME CONFIG
 // ==========================
 //
-// Edit ONLY the values in this object to tune gameplay and challenge
-// Each setting is documented—adjust as needed for balance!
+// All gameplay, polish, and FX variables are here! Edit for balance or "juice".
 
 const GAME_CONFIG = {
   // --- Core gameplay geometry ---
-  NUM_LANES: 3,                      // Number of available lanes (default: 3)
-  RADIUS: 100,                       // Orb rotation radius (pixels)
+  NUM_LANES: 3,
+  RADIUS: 100,
   // --- Spawn mechanics ---
-  SPAWN_BUFFER_X: 220,                // Min X distance between spawns in same/adjacent lane. HIGHER = fewer spawns, safer play. LOWER = more spawns, more chaos
-  SPAWN_INTERVAL_MIN: 350,            // Minimum delay (ms) between spawn attempts. LOWER = more frequent spawns
-  SPAWN_INTERVAL_MAX: 1100,           // Maximum delay (ms) between spawn attempts. HIGHER = potentially longer gaps
-  SPAWN_INTERVAL_BASE_SPEED: 3,       // Used for spawn interval speed curve (should match SPEED_START)
-  FORCED_SPAWN_INTERVAL: 1500,        // Max time (ms) with no spawn before a "forced" spawn (with full safety checks)
+  SPAWN_BUFFER_X: 220,
+  SPAWN_INTERVAL_MIN: 350,
+  SPAWN_INTERVAL_MAX: 1100,
+  SPAWN_INTERVAL_BASE_SPEED: 3,
+  FORCED_SPAWN_INTERVAL: 1800,
   // --- Orb movement ---
-  ANGULAR_BASE: 0.05,                 // Base angular increment per frame for player rotation. HIGHER = faster orbs, more difficulty
-  ANGULAR_SCALE: 0.005,               // Scale up angular speed as overall speed increases
+  ANGULAR_BASE: 0.05,
+  ANGULAR_SCALE: 0.005,
   // --- Obstacle/point speed ---
-  SPEED_START: 3,                     // Starting speed (pixels/frame at 60 FPS). LOWER = easier
-  SPEED_MAX: 15,                      // Maximum speed (pixels/frame at 60 FPS)
-  // How much to ramp up speed, depending on score reached
+  SPEED_START: 3,
+  SPEED_MAX: 20,
   SPEED_RAMP: [
-    { until: 20,   perTick: 0.05 },   // Up to score 20: ramp by 0.05/sec
-    { until: 50,   perTick: 0.75 },   // Up to score 50: ramp by 0.75/sec
-    { until: 9999, perTick: 0.10 }    // Beyond score 50: ramp by 0.10/sec
+    { until: 20,   perTick: 0.05 },
+    { until: 50,   perTick: 0.75 },
+    { until: 9999, perTick: 0.10 }
   ],
-  // --- Point spawn probability (how often a point is favored over an obstacle) ---
+  // --- Point spawn probability ---
   POINT_CHANCE: [
-    { until: 20,   percent: 60 },     // Up to score 20: 65% chance
-    { until: 50,   percent: 45 },     // Up to score 50: 50% chance
-    { until: 9999, percent: 30 }      // Beyond score 50: 35% chance
-  ]
+    { until: 20,   percent: 65 },
+    { until: 50,   percent: 50 },
+    { until: 9999, percent: 35 }
+  ],
+  // --- FX: Particle & Camera Shake ---
+  PARTICLES: {
+    // On crash
+    crash: {
+      color: 0xffffff,         // Not used for "orb" texture, but can be used for future expansion
+      quantity: 18,
+      speedMin: 250,
+      speedMax: 480,
+      scaleStart: 0.85,
+      scaleEnd: 0,
+      lifespan: 750
+    },
+    // On point collect
+    collect: {
+      color: 0xfff799,         // For future (if using tint)
+      quantity: 8,
+      speedMin: 80,
+      speedMax: 160,
+      scaleStart: 0.6,
+      scaleEnd: 0,
+      lifespan: 340
+    }
+  },
+  CAMERA_SHAKE: {
+    crash:   { duration: 300, intensity: 0.035 }, // ms, 0–0.1
+    collect: { duration: 70,  intensity: 0.005 }
+  }
 };
-
 // ==========================
-//     END OF GAME CONFIG
-// ==========================
-
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-
-// --- Gameplay variables initialized from config ---
 let speed = GAME_CONFIG.SPEED_START;
 let maxSpeed = GAME_CONFIG.SPEED_MAX;
 let radius = GAME_CONFIG.RADIUS;
@@ -561,14 +580,22 @@ function triggerGameOver() {
   if (gameOver) return;
   gameOver = true;
 
+  // --- Camera shake & particle burst on crash ---
+  let fx = GAME_CONFIG.PARTICLES.crash;
+  let camShake = GAME_CONFIG.CAMERA_SHAKE.crash;
+  let cam = window.game.scene.keys.default.cameras.main;
+  if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
+
   [circle1, circle2].forEach(c => {
     const px = c.x, py = c.y; c.destroy();
+    // Big "explosion" burst on crash
     const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
       x: px, y: py,
-      speed: { min: 150, max: 350 },
+      speed: { min: fx.speedMin, max: fx.speedMax },
       angle: { min: 0, max: 360 },
-      scale: { start: 0.8, end: 0 },
-      lifespan: 500, blendMode: 'ADD', quantity: 8
+      scale: { start: fx.scaleStart, end: fx.scaleEnd },
+      lifespan: fx.lifespan, blendMode: 'ADD',
+      quantity: fx.quantity
     });
     window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
   });
@@ -652,6 +679,24 @@ function triggerGameOver() {
 
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
+
+  // --- Camera shake & particle burst on collect ---
+  let fx = GAME_CONFIG.PARTICLES.collect;
+  let camShake = GAME_CONFIG.CAMERA_SHAKE.collect;
+  let cam = window.game.scene.keys.default.cameras.main;
+  if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
+
+  // Particle burst at point location
+  const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
+    x: pt.x, y: pt.y,
+    speed: { min: fx.speedMin, max: fx.speedMax },
+    angle: { min: 0, max: 360 },
+    scale: { start: fx.scaleStart, end: fx.scaleEnd },
+    lifespan: fx.lifespan, blendMode: 'ADD',
+    quantity: fx.quantity
+  });
+  window.game.scene.keys.default.time.delayedCall(fx.lifespan, () => emitter.manager.destroy());
+
   pt.destroy();
   score++;
   sfx.point.play();
