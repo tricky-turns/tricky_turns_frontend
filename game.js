@@ -56,7 +56,7 @@ const GAME_CONFIG = {
   },
   CAMERA_SHAKE: {
     crash:   { duration: 300, intensity: 0.035 }, // ms, 0–0.1
-    collect: { duration: 70,  intensity: 0.005 }
+    collect: { duration: 0,  intensity: 0.0 }
   }
 };
 // ==========================
