@@ -262,7 +262,7 @@ function create() {
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.012, maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.01, maxSpeed);
         else if (score < 50)   speed = Math.min(speed + 0.025, maxSpeed);
         else                   speed = Math.min(speed + 0.035, maxSpeed);
       }
