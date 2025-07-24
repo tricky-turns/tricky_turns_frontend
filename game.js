@@ -1,4 +1,4 @@
-// Tricky Turns game.js — Final Release: Physics-Only, Points-First, All Bugs Fixed
+// Tricky Turns game.js — FINAL: Working Spawn Logic, Physics-Only, Clean Restarts
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -234,28 +234,6 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  this.startCountdown = function(callback) {
-    let count = 3;
-    this.countdownText.setText(count).setVisible(true);
-    this.countdownText.setDepth(1000);
-    const countdownEvent = this.time.addEvent({
-      delay: 1000,
-      repeat: 3,
-      callback: () => {
-        count--;
-        if (count > 0) {
-          this.countdownText.setText(count);
-        } else if (count === 0) {
-          this.countdownText.setText('Go!');
-        } else {
-          this.countdownText.setVisible(false);
-          countdownEvent.remove(false);
-          if (typeof callback === "function") callback.call(this);
-        }
-      }
-    });
-  };
-
   // Fast acceleration
   this.time.addEvent({
     delay: 1000, loop: true,
@@ -269,6 +247,7 @@ function create() {
     }
   });
 
+  // Set up event for spawning
   function getSpawnInterval() {
     const minDelay = 350, maxDelay = 1100, baseSpeed = 3;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
@@ -362,6 +341,12 @@ function create() {
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
+
+  // --- ONLY CALL COUNTDOWN ONCE PER CREATE ---
+  this.startCountdown(() => {
+    gameStarted = true;
+    this.physics.resume();
+  });
 }
 
 function update() {
@@ -409,7 +394,6 @@ function update() {
   }
 }
 
-// Points-first spawn logic (no double movement)
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -594,18 +578,8 @@ function handleStartGame() {
   document.getElementById('start-screen').style.display = 'none';
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
-  fadeOut(() => {
-    const scene = window.game.scene.keys.default;
-    scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.pauseIcon.setVisible(true);
-    scene.muteIcon.setVisible(true);
-    scene.startCountdown(function() {
-      gameStarted = true;
-      this.physics.resume(); // <---- CRITICAL for working movement after restart!
-      if (this.scheduleSpawn) this.scheduleSpawn();
-    });
-  }, 200);
+  // Scene will restart, and countdown will run in create()
+  window.game.scene.keys.default.scene.restart();
 }
 
 function handleGoHome() {
@@ -662,16 +636,7 @@ function handlePlayAgain() {
     if (viewLb) viewLb.style.display = 'none';
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
-    const scene = window.game.scene.keys.default;
-    scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.pauseIcon.setVisible(true);
-    scene.muteIcon.setVisible(true);
-    scene.startCountdown(function() {
-      gameStarted = true;
-      this.physics.resume(); // <---- CRITICAL for working movement after restart!
-      if (this.scheduleSpawn) this.scheduleSpawn();
-    });
+    // Scene will restart, and countdown will run in create()
   }, 0);
 }
 
