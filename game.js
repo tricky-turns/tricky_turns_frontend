@@ -2,7 +2,7 @@
 //   TRICKY TURNS GAME CONFIG
 // ==========================
 //
-// All gameplay, polish, and FX variables are here! Edit for balance or "juice".
+// All gameplay, polish, FX, and visual background variables are here!
 
 const GAME_CONFIG = {
   // --- Core gameplay geometry ---
@@ -33,7 +33,6 @@ const GAME_CONFIG = {
   ],
   // --- FX: Particle & Camera Shake ---
   PARTICLES: {
-    // On crash
     crash: {
       color: 0xffffff,
       quantity: 18,
@@ -46,8 +45,15 @@ const GAME_CONFIG = {
   },
   CAMERA_SHAKE: {
     crash:   { duration: 300, intensity: 0.035 },
-    collect: { duration: 0,   intensity: 0 } // DISABLED for collect!
-  }
+    collect: { duration: 0,   intensity: 0 }
+  },
+  // --- Parallax Background Layers ---
+  // Each layer: { speed, color, alpha, size, yOffset }
+  PARALLAX_BG: [
+    { speed: 0.13, color: 0x14213d, alpha: 0.18, size: 180, yOffset: -120 }, // Farthest
+    { speed: 0.28, color: 0x3a506b, alpha: 0.28, size: 120, yOffset: 0 },
+    { speed: 0.52, color: 0x5bc0be, alpha: 0.18, size: 80, yOffset: 68 },   // Closest
+  ]
 };
 // ==========================
 
@@ -61,6 +67,7 @@ let radius = GAME_CONFIG.RADIUS;
 let laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let lastSpawnTimestamp = 0;
+let bgLayers = []; // Parallax background layer groups
 
 let piInitPromise = null;
 function initPi() {
@@ -220,6 +227,32 @@ function preload() {
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
+
+  // --- Parallax Background Setup ---
+  if (bgLayers && bgLayers.length) {
+    bgLayers.forEach(({ group }) => group.forEach(g => g.destroy()));
+  }
+  bgLayers = [];
+  GAME_CONFIG.PARALLAX_BG.forEach((layer, i) => {
+    let group = [];
+    for (let j = 0; j < 2; j++) {
+      const g = this.add.graphics();
+      g.fillStyle(layer.color, layer.alpha);
+      g.fillRoundedRect(
+        0, 0,
+        cam.width + 10,  // +10 to avoid visible seams
+        layer.size, 24
+      );
+      g.x = j * cam.width;
+      g.y = cy + layer.yOffset - layer.size / 2;
+      g.setDepth(-100 + i); // Always behind game objects
+      group.push(g);
+    }
+    bgLayers.push({ group, layer });
+  });
+
+  // --- End Parallax BG ---
+
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
   }
@@ -436,6 +469,18 @@ function create() {
 
 // DELTA TIME PATCHED update
 function update(time, delta) {
+  // --- Parallax Background Update (always moves, even paused/gameOver) ---
+  if (bgLayers && bgLayers.length) {
+    bgLayers.forEach(({ group, layer }) => {
+      group.forEach(g => {
+        g.x -= layer.speed * (delta ? (delta / (1000 / 60)) : 1);
+        if (g.x <= -g.width) {
+          g.x += g.width * 2;
+        }
+      });
+    });
+  }
+
   if (gameOver) return;
   let ANGULAR_BASE = GAME_CONFIG.ANGULAR_BASE;
   let ANGULAR_SCALE = GAME_CONFIG.ANGULAR_SCALE;
@@ -578,7 +623,6 @@ function triggerGameOver() {
 
   [circle1, circle2].forEach(c => {
     const px = c.x, py = c.y; c.destroy();
-    // Big "explosion" burst on crash
     const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
       x: px, y: py,
       speed: { min: fx.speedMin, max: fx.speedMax },
