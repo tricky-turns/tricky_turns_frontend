@@ -1,8 +1,6 @@
 // ==========================
 //   TRICKY TURNS GAME CONFIG
 // ==========================
-//
-// All gameplay, FX, starfield, and UI variables are here for easy tuning!
 
 const GAME_CONFIG = {
   // --- Core gameplay geometry ---
@@ -47,18 +45,25 @@ const GAME_CONFIG = {
     crash:   { duration: 300, intensity: 0.035 },
     collect: { duration: 0,   intensity: 0 }
   },
+  // --- Animated Sky Gradient (list of [R,G,B]) ---
+  SKY_COLORS: [
+    [28, 35, 54],   // midnight blue
+    [61, 43, 104],  // deep purple
+    [27, 49, 101],  // blue
+    [19, 28, 51],   // navy
+    [38, 72, 128],  // dawn blue
+    [104, 65, 104], // purple-pink
+    [38, 72, 128]   // wrap to blue
+  ],
+  SKY_CYCLE_DURATION: 22, // seconds per full loop
   // --- Parallax Twinkling Starfield ---
   // Each layer: { speed, count, color, alpha, sizeMin, sizeMax, twinkle }
   STARFIELD_LAYERS: [
-    // Farthest, most numerous, faintest, tiny
     { speed: 0.09, count: 120, color: 0xffffff, alpha: 0.13, sizeMin: 0.7, sizeMax: 1.4, twinkle: 0.10 },
-    // Mid layer, fewer, bigger, more twinkle
     { speed: 0.24, count: 36,  color: 0xcbe8fd, alpha: 0.22, sizeMin: 1.3, sizeMax: 2.6, twinkle: 0.17 },
-    // Closest, rare, brightest, big twinkle
     { speed: 0.53, count: 8,   color: 0xffffff, alpha: 0.40, sizeMin: 2.2, sizeMax: 4.5, twinkle: 0.33 }
   ]
 };
-//
 // ==========================
 
 const muteBtnHome = document.getElementById('muteToggleHome');
@@ -72,8 +77,11 @@ let laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let lastSpawnTimestamp = 0;
 
-// --- Starfield globals ---
+// --- Starfield & Sky globals ---
 let starfieldLayers = [];
+let skyBG = null;
+let skyColors = GAME_CONFIG.SKY_COLORS;
+let skyCycleT = 0;
 
 let piInitPromise = null;
 function initPi() {
@@ -234,12 +242,17 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
+  // --- Animated Sky Background Gradient ---
+  if (skyBG) skyBG.destroy();
+  skyBG = this.add.graphics();
+  skyBG.setDepth(-200); // Always behind everything
+  skyCycleT = 0;
+
   // --- Twinkling Starfield Parallax Setup ---
   if (starfieldLayers.length) {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
-  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -476,7 +489,24 @@ function create() {
 
 // DELTA TIME PATCHED update
 function update(time, delta) {
-  // --- Twinkling Starfield Update (always moves, even paused/gameOver) ---
+  // --- Animate Sky Gradient ---
+  if (skyBG) {
+    skyCycleT += (delta || 16.6) / 1000;
+    let dur = GAME_CONFIG.SKY_CYCLE_DURATION;
+    let t = (skyCycleT % dur) / dur * (skyColors.length - 1);
+    let idx = Math.floor(t);
+    let next = (idx + 1) % skyColors.length;
+    let frac = t - idx;
+    let c0 = skyColors[idx], c1 = skyColors[next];
+    let r = Math.round(c0[0] * (1 - frac) + c1[0] * frac);
+    let g = Math.round(c0[1] * (1 - frac) + c1[1] * frac);
+    let b = Math.round(c0[2] * (1 - frac) + c1[2] * frac);
+    skyBG.clear();
+    skyBG.fillStyle((r << 16) | (g << 8) | b, 1);
+    skyBG.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+  }
+
+  // --- Twinkling Starfield Update ---
   if (starfieldLayers.length) {
     const t = performance.now() / 1000;
     const camWidth = this.cameras.main.width;
@@ -488,7 +518,7 @@ function update(time, delta) {
         if (s.x < -s.size) {
           s.x += camWidth + s.size * 2;
           s.y = Math.random() * camHeight;
-          s.tw = Math.random() * Math.PI * 2; // new twinkle phase
+          s.tw = Math.random() * Math.PI * 2;
         }
         s.g.x = s.x;
         s.g.y = s.y;
@@ -550,7 +580,6 @@ function getPointChance(score) {
   return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
 }
 
-// --- Patch: Points and obstacles never overlap in the same lane ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -562,7 +591,6 @@ function spawnObjects() {
   let safeObstacleLanes = [];
   let safePointLanes = [];
   for (let lane = 0; lane < GAME_CONFIG.NUM_LANES; lane++) {
-    // Obstacles: check for nearby obstacles AND points
     let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -577,8 +605,6 @@ function spawnObjects() {
     if (obsSafe && (lastPtX === null || Math.abs(lastPtX - x) >= GAME_CONFIG.SPAWN_BUFFER_X)) {
       safeObstacleLanes.push(lane);
     }
-
-    // Points: check for nearby obstacles AND points
     let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -594,8 +620,6 @@ function spawnObjects() {
       safePointLanes.push(lane);
     }
   }
-
-  // Points first: Spawn one point if possible and allowed by chance
   let spawnedPointLane = null;
   if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
@@ -608,13 +632,10 @@ function spawnObjects() {
     laneLastPointXs[pointLaneIdx] = x;
     spawnedPointLane = pointLaneIdx;
   }
-
-  // Obstacles: spawn only in lanes where we didn't just spawn a point
   if (safeObstacleLanes.length > 0) {
     let obstacleCandidates = spawnedPointLane !== null
       ? safeObstacleLanes.filter(lane => lane !== spawnedPointLane)
       : safeObstacleLanes;
-
     if (obstacleCandidates.length > 0) {
       const chosenLaneIdx = Phaser.Utils.Array.GetRandom(obstacleCandidates);
       const laneY = LANES[chosenLaneIdx];
@@ -624,7 +645,6 @@ function spawnObjects() {
       laneLastObstacleXs[chosenLaneIdx] = x;
     }
   }
-
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
@@ -632,13 +652,10 @@ function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;
   gameOver = true;
-
-  // --- Camera shake & particle burst on crash ---
   let fx = GAME_CONFIG.PARTICLES.crash;
   let camShake = GAME_CONFIG.CAMERA_SHAKE.crash;
   let cam = window.game.scene.keys.default.cameras.main;
   if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
-
   [circle1, circle2].forEach(c => {
     const px = c.x, py = c.y; c.destroy();
     const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
@@ -652,7 +669,6 @@ function triggerGameOver() {
     window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
   });
   sfx.explode.play();
-
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
@@ -668,10 +684,8 @@ function triggerGameOver() {
       localStorage.setItem('tricky_high_score', highScore);
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
-
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'flex';
-
     const list = document.getElementById('leaderboardEntries');
     if (list) {
       while (list.firstChild) list.removeChild(list.firstChild);
@@ -683,7 +697,6 @@ function triggerGameOver() {
     }
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
-
     (async () => {
       if (!useLocalHighScore) {
         try {
@@ -731,8 +744,6 @@ function triggerGameOver() {
 
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
-
-  // --- Floating "+1" feedback at point location ---
   let scene = window.game.scene.keys.default;
   const plusOne = scene.add.text(pt.x, pt.y, '+1', {
     fontFamily: 'Poppins',
@@ -742,7 +753,6 @@ function collectPoint(_, pt) {
     strokeThickness: 4,
     fontStyle: 'bold'
   }).setOrigin(0.5).setDepth(10);
-
   scene.tweens.add({
     targets: plusOne,
     y: pt.y - 40,
@@ -752,7 +762,6 @@ function collectPoint(_, pt) {
     ease: 'Cubic.easeOut',
     onComplete: () => plusOne.destroy()
   });
-
   pt.destroy();
   score++;
   sfx.point.play();
