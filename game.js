@@ -1,4 +1,4 @@
-// Tricky Turns game.js — JITTER/LAG FIX: PHYSICS-ONLY MOVEMENT
+// Tricky Turns game.js — Final Release: Physics-Only, Points-First, All Bugs Fixed
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -409,8 +409,7 @@ function update() {
   }
 }
 
-// ... [rest of file unchanged — including spawnObjects, game over, handlePlayAgain, etc.]
-// -- KEY PATCH: Points spawn before obstacles --
+// Points-first spawn logic (no double movement)
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -418,15 +417,13 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  let pointChance = 100; // For maximum points under 20
+  let pointChance = 100;
   if (score >= 20) pointChance = 50;
   if (score >= 50) pointChance = 35;
 
-  // Figure out safe lanes for obstacles and points
   let safeObstacleLanes = [];
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
-    // Safe for obstacle: no obstacles (including adjacent) close by
     let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -439,7 +436,6 @@ function spawnObjects() {
     }
     if (obsSafe) safeObstacleLanes.push(lane);
 
-    // Safe for point: no obstacle (including adjacent) close by
     let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -453,7 +449,6 @@ function spawnObjects() {
     if (ptSafe) safePointLanes.push(lane);
   }
 
-  // -- Points first: Spawn one point if possible and allowed by chance
   let spawnedPointLane = null;
   if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
@@ -467,9 +462,7 @@ function spawnObjects() {
     spawnedPointLane = pointLaneIdx;
   }
 
-  // -- Obstacles: spawn only in lanes where we didn't just spawn a point
   if (safeObstacleLanes.length > 0) {
-    // Remove lane used for point from obstacle candidates
     let obstacleCandidates = spawnedPointLane !== null
       ? safeObstacleLanes.filter(lane => lane !== spawnedPointLane)
       : safeObstacleLanes;
@@ -609,7 +602,8 @@ function handleStartGame() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
+      this.physics.resume(); // <---- CRITICAL for working movement after restart!
+      if (this.scheduleSpawn) this.scheduleSpawn();
     });
   }, 200);
 }
@@ -675,7 +669,8 @@ function handlePlayAgain() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
+      this.physics.resume(); // <---- CRITICAL for working movement after restart!
+      if (this.scheduleSpawn) this.scheduleSpawn();
     });
   }, 0);
 }
