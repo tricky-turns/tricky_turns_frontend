@@ -4,6 +4,7 @@ const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
 let maxSpeed = 16; // Sensible cap for speed
+let lastObstacleLane = null;
 
 // ------------------------
 // Pi Network SDK and Auth
@@ -281,11 +282,15 @@ function create() {
 
   // --- SPAWN SCHEDULER PATCH ---
   if (spawnEvent) spawnEvent.remove(false);
-  function getSpawnInterval() {
-    const minDelay = 350, maxDelay = 1200, baseSpeed = 3;
-    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
-    return Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-  }
+// Helper
+
+function getSpawnInterval() {
+  const minDelay = 650; // increased from 350
+  const maxDelay = 1300;
+  const baseSpeed = 3;
+  let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+  return Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+}
   spawnEvent = this.time.addEvent({
     delay: getSpawnInterval(),
     loop: true,
@@ -408,23 +413,37 @@ function update() {
 // SPAWN OBJECTS
 // ------------------------
 function spawnObjects() {
-  const y = Phaser.Math.RND.pick(LANES);
+  const scene = window.game.scene.keys.default;
+
+  // Pick a random lane for obstacle
+  let obstacleLaneChoices = [...LANES];
+  if (lastObstacleLane !== null) {
+    // Remove last lane so two don't stack
+    obstacleLaneChoices = obstacleLaneChoices.filter(lane => lane !== lastObstacleLane);
+  }
+  const obstacleLane = Phaser.Utils.Array.GetRandom(obstacleLaneChoices);
+  lastObstacleLane = obstacleLane;
+
   const fromLeft = Phaser.Math.Between(0, 1) === 0;
-  const x = fromLeft ? -50 : this.cameras.main.width + 50;
+  const x = fromLeft ? -50 : scene.cameras.main.width + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
-  if (Phaser.Math.Between(1, 100) <= 35) {
-    const glow = window.game.scene.keys.default.add.image(x, y, 'pointGlow').setDepth(1).setBlendMode('ADD');
-    const p = window.game.scene.keys.default.physics.add.image(x, y, 'point').setDepth(2);
+
+  // Always spawn an obstacle
+  const o = scene.physics.add.image(x, obstacleLane, 'obstacle').setDepth(1);
+  o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
+  obstacles.add(o);
+
+  // 40% chance to spawn a point, but NOT in the obstacle lane
+  if (Phaser.Math.Between(1, 100) <= 40) {
+    let pointLanes = LANES.filter(lane => lane !== obstacleLane);
+    const pointLane = Phaser.Utils.Array.GetRandom(pointLanes);
+    const glow = scene.add.image(x, pointLane, 'pointGlow').setDepth(1).setBlendMode('ADD');
+    const p = scene.physics.add.image(x, pointLane, 'point').setDepth(2);
     p.glow = glow;
     p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
     points.add(p);
-  } else {
-    const o = window.game.scene.keys.default.physics.add.image(x, y, 'obstacle').setDepth(1);
-    o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
-    obstacles.add(o);
   }
 }
-
 // ------------------------
 // GAME OVER & COLLISIONS
 // ------------------------
