@@ -5,6 +5,11 @@ let isLeaderboardLoading = false;
 let spawnEvent = null;
 let maxSpeed = 16; // Sensible cap for speed
 let lastObstacleLane = null;
+// Track last X for each lane for both obstacles and points
+let laneLastObstacleX = [null, null, null];
+let laneLastPointX = [null, null, null];
+const SPAWN_BUFFER = 180; // minimum distance between any two spawns in the same lane
+
 
 // ------------------------
 // Pi Network SDK and Auth
@@ -414,36 +419,56 @@ function update() {
 // ------------------------
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
-
-  // Pick a random lane for obstacle
-  let obstacleLaneChoices = [...LANES];
-  if (lastObstacleLane !== null) {
-    // Remove last lane so two don't stack
-    obstacleLaneChoices = obstacleLaneChoices.filter(lane => lane !== lastObstacleLane);
-  }
-  const obstacleLane = Phaser.Utils.Array.GetRandom(obstacleLaneChoices);
-  lastObstacleLane = obstacleLane;
-
+  const camWidth = scene.cameras.main.width;
   const fromLeft = Phaser.Math.Between(0, 1) === 0;
-  const x = fromLeft ? -50 : scene.cameras.main.width + 50;
+  const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  // Always spawn an obstacle
-  const o = scene.physics.add.image(x, obstacleLane, 'obstacle').setDepth(1);
-  o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
-  obstacles.add(o);
+  // Helper to find lanes with enough space for obstacles
+  let openObstacleLanes = [];
+  for (let i = 0; i < LANES.length; i++) {
+    let lastX = laneLastObstacleX[i];
+    if (lastX === null || Math.abs(lastX - x) > SPAWN_BUFFER) {
+      openObstacleLanes.push(i);
+    }
+  }
+  if (openObstacleLanes.length > 0) {
+    // Pick random open lane for obstacle
+    const obstacleLaneIdx = Phaser.Utils.Array.GetRandom(openObstacleLanes);
+    const obstacleLane = LANES[obstacleLaneIdx];
 
-  // 40% chance to spawn a point, but NOT in the obstacle lane
-  if (Phaser.Math.Between(1, 100) <= 40) {
-    let pointLanes = LANES.filter(lane => lane !== obstacleLane);
-    const pointLane = Phaser.Utils.Array.GetRandom(pointLanes);
+    // Spawn obstacle
+    const o = scene.physics.add.image(x, obstacleLane, 'obstacle').setDepth(1);
+    o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
+    obstacles.add(o);
+    laneLastObstacleX[obstacleLaneIdx] = x;
+  }
+
+  // Helper to find lanes with enough space for points
+  let openPointLanes = [];
+  for (let i = 0; i < LANES.length; i++) {
+    let lastX = laneLastPointX[i];
+    if (lastX === null || Math.abs(lastX - x) > SPAWN_BUFFER) {
+      // Do NOT spawn a point in same lane as obstacle at this spawn!
+      if (laneLastObstacleX[i] === x) continue;
+      openPointLanes.push(i);
+    }
+  }
+
+  if (openPointLanes.length > 0 && Phaser.Math.Between(1, 100) <= 40) {
+    // Pick random open lane for point
+    const pointLaneIdx = Phaser.Utils.Array.GetRandom(openPointLanes);
+    const pointLane = LANES[pointLaneIdx];
+
     const glow = scene.add.image(x, pointLane, 'pointGlow').setDepth(1).setBlendMode('ADD');
     const p = scene.physics.add.image(x, pointLane, 'point').setDepth(2);
     p.glow = glow;
     p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
     points.add(p);
+    laneLastPointX[pointLaneIdx] = x;
   }
 }
+
 // ------------------------
 // GAME OVER & COLLISIONS
 // ------------------------
