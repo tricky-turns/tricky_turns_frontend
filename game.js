@@ -8,7 +8,13 @@ let lastObstacleLane = null;
 // Track last X for each lane for both obstacles and points
 let laneLastObstacleX = [null, null, null];
 let laneLastPointX = [null, null, null];
-const SPAWN_BUFFER = 180; // minimum distance between any two spawns in the same lane
+const SPAWN_BUFFER = 200; // minimum distance between any two spawns in the same lane
+const SPAWN_BUFFER_X = 220; // horizontal (X) spacing between obstacles in adjacent lanes
+const NUM_LANES = 3; // if you ever expand lanes, update this
+let laneLastObstacleXs = [null, null, null]; // track X of last obstacle per lane
+let laneLastPointXs = [null, null, null];
+
+
 
 
 // ------------------------
@@ -424,48 +430,59 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  // Helper to find lanes with enough space for obstacles
-  let openObstacleLanes = [];
-  for (let i = 0; i < LANES.length; i++) {
-    let lastX = laneLastObstacleX[i];
-    if (lastX === null || Math.abs(lastX - x) > SPAWN_BUFFER) {
-      openObstacleLanes.push(i);
+  // Determine which lanes are safe for obstacle spawn
+  let safeObstacleLanes = [];
+  for (let lane = 0; lane < NUM_LANES; lane++) {
+    // Check if THIS lane and its adjacent lanes have no obstacle at similar X
+    let isSafe = true;
+    for (let adj = -1; adj <= 1; adj++) {
+      let checkLane = lane + adj;
+      if (checkLane < 0 || checkLane >= NUM_LANES) continue;
+      let lastX = laneLastObstacleXs[checkLane];
+      if (lastX !== null && Math.abs(lastX - x) < SPAWN_BUFFER_X) {
+        isSafe = false;
+        break;
+      }
     }
+    if (isSafe) safeObstacleLanes.push(lane);
   }
-  if (openObstacleLanes.length > 0) {
-    // Pick random open lane for obstacle
-    const obstacleLaneIdx = Phaser.Utils.Array.GetRandom(openObstacleLanes);
-    const obstacleLane = LANES[obstacleLaneIdx];
 
-    // Spawn obstacle
-    const o = scene.physics.add.image(x, obstacleLane, 'obstacle').setDepth(1);
+  if (safeObstacleLanes.length > 0) {
+    const chosenLaneIdx = Phaser.Utils.Array.GetRandom(safeObstacleLanes);
+    const laneY = LANES[chosenLaneIdx];
+    // Place obstacle
+    const o = scene.physics.add.image(x, laneY, 'obstacle').setDepth(1);
     o.body.setSize(50, 50).setOffset(-25, -25).setImmovable(true).setVelocityX(vx);
     obstacles.add(o);
-    laneLastObstacleX[obstacleLaneIdx] = x;
+    laneLastObstacleXs[chosenLaneIdx] = x;
   }
 
-  // Helper to find lanes with enough space for points
-  let openPointLanes = [];
-  for (let i = 0; i < LANES.length; i++) {
-    let lastX = laneLastPointX[i];
-    if (lastX === null || Math.abs(lastX - x) > SPAWN_BUFFER) {
-      // Do NOT spawn a point in same lane as obstacle at this spawn!
-      if (laneLastObstacleX[i] === x) continue;
-      openPointLanes.push(i);
+  // Points: try to never put them at the same X as an obstacle, or adjacent to one at a similar X
+  let safePointLanes = [];
+  for (let lane = 0; lane < NUM_LANES; lane++) {
+    // If obstacle is at same X or adjacent, skip
+    let isSafe = true;
+    for (let adj = -1; adj <= 1; adj++) {
+      let checkLane = lane + adj;
+      if (checkLane < 0 || checkLane >= NUM_LANES) continue;
+      let lastObsX = laneLastObstacleXs[checkLane];
+      if (lastObsX !== null && Math.abs(lastObsX - x) < SPAWN_BUFFER_X) {
+        isSafe = false;
+        break;
+      }
     }
+    if (isSafe) safePointLanes.push(lane);
   }
 
-  if (openPointLanes.length > 0 && Phaser.Math.Between(1, 100) <= 40) {
-    // Pick random open lane for point
-    const pointLaneIdx = Phaser.Utils.Array.GetRandom(openPointLanes);
+  if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= 40) {
+    const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
     const pointLane = LANES[pointLaneIdx];
-
     const glow = scene.add.image(x, pointLane, 'pointGlow').setDepth(1).setBlendMode('ADD');
     const p = scene.physics.add.image(x, pointLane, 'point').setDepth(2);
     p.glow = glow;
     p.body.setSize(50, 50).setOffset(-25, -25).setVelocityX(vx);
     points.add(p);
-    laneLastPointX[pointLaneIdx] = x;
+    laneLastPointXs[pointLaneIdx] = x;
   }
 }
 
