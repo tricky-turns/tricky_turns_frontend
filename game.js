@@ -35,28 +35,18 @@ const GAME_CONFIG = {
   PARTICLES: {
     // On crash
     crash: {
-      color: 0xffffff,         // Not used for "orb" texture, but can be used for future expansion
+      color: 0xffffff,
       quantity: 18,
       speedMin: 250,
       speedMax: 480,
       scaleStart: 0.85,
       scaleEnd: 0,
       lifespan: 750
-    },
-    // On point collect
-    collect: {
-      color: 0xfff799,         // For future (if using tint)
-      quantity: 8,
-      speedMin: 80,
-      speedMax: 160,
-      scaleStart: 0.6,
-      scaleEnd: 0,
-      lifespan: 340
     }
   },
   CAMERA_SHAKE: {
-    crash:   { duration: 300, intensity: 0.035 }, // ms, 0–0.1
-    collect: { duration: 0,  intensity: 0.0 }
+    crash:   { duration: 300, intensity: 0.035 },
+    collect: { duration: 0,   intensity: 0 } // DISABLED for collect!
   }
 };
 // ==========================
@@ -680,22 +670,26 @@ function triggerGameOver() {
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
 
-  // --- Camera shake & particle burst on collect ---
-  let fx = GAME_CONFIG.PARTICLES.collect;
-  let camShake = GAME_CONFIG.CAMERA_SHAKE.collect;
-  let cam = window.game.scene.keys.default.cameras.main;
-  if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
+  // --- Floating "+1" feedback at point location ---
+  let scene = window.game.scene.keys.default;
+  const plusOne = scene.add.text(pt.x, pt.y, '+1', {
+    fontFamily: 'Poppins',
+    fontSize: '32px',
+    color: '#fff',
+    stroke: '#2ed573',
+    strokeThickness: 4,
+    fontStyle: 'bold'
+  }).setOrigin(0.5).setDepth(10);
 
-  // Particle burst at point location
-  const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
-    x: pt.x, y: pt.y,
-    speed: { min: fx.speedMin, max: fx.speedMax },
-    angle: { min: 0, max: 360 },
-    scale: { start: fx.scaleStart, end: fx.scaleEnd },
-    lifespan: fx.lifespan, blendMode: 'ADD',
-    quantity: fx.quantity
+  scene.tweens.add({
+    targets: plusOne,
+    y: pt.y - 40,
+    alpha: 0,
+    scale: 1.2,
+    duration: 500,
+    ease: 'Cubic.easeOut',
+    onComplete: () => plusOne.destroy()
   });
-  window.game.scene.keys.default.time.delayedCall(fx.lifespan, () => emitter.manager.destroy());
 
   pt.destroy();
   score++;
