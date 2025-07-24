@@ -370,7 +370,7 @@ function update() {
   // Proportional rotation: scales as speed increases
   // At speed=3, dt=0.05; at speed=20, dt=~0.35 (can tweak multiplier)
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.01;  // Try 0.018 for "very noticeable" but controllable
+  let ANGULAR_SCALE = 0.005;  // Try 0.018 for "very noticeable" but controllable
 
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
