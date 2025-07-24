@@ -3,7 +3,7 @@
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 16;
+let maxSpeed = 20;
 let speed = 3;
 
 const NUM_LANES = 3;
@@ -367,7 +367,7 @@ function create() {
 function update() {
   if (gameOver) return;
   let ANGULAR_BASE = 0.05;
-  let ANGULAR_SCALE = 0.018;
+  let ANGULAR_SCALE = 0.005;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - 3)) * direction
     : 0;
