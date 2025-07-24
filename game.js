@@ -3,7 +3,7 @@
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 16; // Sensible cap for speed
+let maxSpeed = 25; // Sensible cap for speed
 
 const NUM_LANES = 3;
 const SPAWN_BUFFER_X = 220;
