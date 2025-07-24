@@ -1,4 +1,4 @@
-// Tricky Turns game.js — PREFER POINTS OVER OBSTACLES (2024-07-23)
+// Tricky Turns game.js — PATCHED (2024-07-24)
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -424,7 +424,7 @@ function update() {
   }
 }
 
-// -- KEY PATCH: Points spawn before obstacles --
+// -- PATCHED: Points never overlap in the same lane --
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -436,7 +436,7 @@ function spawnObjects() {
   if (score >= 20) pointChance = 50;
   if (score >= 50) pointChance = 35;
 
-  // Figure out safe lanes for obstacles and points
+  // Build safe lanes for obstacles and points
   let safeObstacleLanes = [];
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
@@ -453,7 +453,7 @@ function spawnObjects() {
     }
     if (obsSafe) safeObstacleLanes.push(lane);
 
-    // Safe for point: no obstacle (including adjacent) close by
+    // Safe for point: no obstacle (including adjacent) close by AND no recent point in this lane
     let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -464,10 +464,15 @@ function spawnObjects() {
         break;
       }
     }
-    if (ptSafe) safePointLanes.push(lane);
+    if (ptSafe) {
+      let lastPtX = laneLastPointXs[lane];
+      if (lastPtX === null || Math.abs(lastPtX - x) >= SPAWN_BUFFER_X) {
+        safePointLanes.push(lane);
+      }
+    }
   }
 
-  // -- Points first: Spawn one point if possible and allowed by chance
+  // Points first: Spawn one point if possible and allowed by chance
   let spawnedPointLane = null;
   if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
@@ -481,9 +486,8 @@ function spawnObjects() {
     spawnedPointLane = pointLaneIdx;
   }
 
-  // -- Obstacles: spawn only in lanes where we didn't just spawn a point
+  // Obstacles: spawn only in lanes where we didn't just spawn a point
   if (safeObstacleLanes.length > 0) {
-    // Remove lane used for point from obstacle candidates
     let obstacleCandidates = spawnedPointLane !== null
       ? safeObstacleLanes.filter(lane => lane !== spawnedPointLane)
       : safeObstacleLanes;
