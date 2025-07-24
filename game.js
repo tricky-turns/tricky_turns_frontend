@@ -1,4 +1,4 @@
-// Tricky Turns game.js — PATCHED (2024-07-24, ignore UI clicks for turn)
+// Tricky Turns game.js — PATCHED (2024-07-24, prevent point/obstacle overlap)
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -433,7 +433,7 @@ function update(time, delta) {
   }
 }
 
-// -- PATCHED: Points never overlap in the same lane --
+// -- PATCHED: Points and obstacles never overlap in the same lane --
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -449,18 +449,21 @@ function spawnObjects() {
   let safeObstacleLanes = [];
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
-    // Safe for obstacle: no obstacles (including adjacent) close by
+    // --- PATCH: safeObstacleLanes also requires no recent point in lane ---
     let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
       if (checkLane < 0 || checkLane >= NUM_LANES) continue;
-      let lastX = laneLastObstacleXs[checkLane];
-      if (lastX !== null && Math.abs(lastX - x) < SPAWN_BUFFER_X) {
+      let lastObsX = laneLastObstacleXs[checkLane];
+      if (lastObsX !== null && Math.abs(lastObsX - x) < SPAWN_BUFFER_X) {
         obsSafe = false;
         break;
       }
     }
-    if (obsSafe) safeObstacleLanes.push(lane);
+    let lastPtX = laneLastPointXs[lane];
+    if (obsSafe && (lastPtX === null || Math.abs(lastPtX - x) >= SPAWN_BUFFER_X)) {
+      safeObstacleLanes.push(lane);
+    }
 
     // Safe for point: no obstacle (including adjacent) close by AND no recent point in this lane
     let ptSafe = true;
@@ -474,8 +477,8 @@ function spawnObjects() {
       }
     }
     if (ptSafe) {
-      let lastPtX = laneLastPointXs[lane];
-      if (lastPtX === null || Math.abs(lastPtX - x) >= SPAWN_BUFFER_X) {
+      let lastPtX2 = laneLastPointXs[lane];
+      if (lastPtX2 === null || Math.abs(lastPtX2 - x) >= SPAWN_BUFFER_X) {
         safePointLanes.push(lane);
       }
     }
