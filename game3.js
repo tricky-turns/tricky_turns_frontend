@@ -1,9 +1,9 @@
-// Tricky Turns game.js — FAST ACCELERATION TEST VERSION
+// Tricky Turns game.js — 2024-07-23 — ENHANCED DYNAMICS PATCH
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 30;
+let maxSpeed = 16;
 let speed = 3;    // start speed
 
 const NUM_LANES = 3;
@@ -14,6 +14,7 @@ let laneLastObstacleXs = [null, null, null];
 let laneLastPointXs = [null, null, null];
 let lastSpawnTimestamp = 0;
 
+// ----------- Pi Network SDK and Auth (unchanged) -----------
 let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
@@ -53,6 +54,7 @@ async function initAuth() {
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
+// ---------- Fade helpers (unchanged) ----------
 function fadeInElement(el, duration = 500, displayType = 'flex') {
   el.style.opacity = 0;
   el.style.display = displayType;
@@ -83,6 +85,7 @@ function fadeOut(callback, duration = 600) {
   }, duration);
 }
 
+// ---------- Leaderboard Display (unchanged) ----------
 async function showHomeLeaderboard() {
   if (isLeaderboardLoading) return;
   isLeaderboardLoading = true;
@@ -119,6 +122,7 @@ async function showHomeLeaderboard() {
   }
 }
 
+// ---------- GAME STATE ----------
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
 let direction = 1, angle = 0, radius = 100;
@@ -211,12 +215,6 @@ function create() {
     color: '#fff', stroke: '#000', strokeThickness: 3
   }).setDepth(2).setVisible(false);
 
-  // Speed display for playtesting
-  window.speedTestText = this.add.text(16, 100, 'Speed: 3.00', {
-    fontFamily: 'Poppins', fontSize: '22px',
-    color: '#eaeaea', stroke: '#222', strokeThickness: 2
-  }).setDepth(2).setVisible(true);
-
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(3).setVisible(false);
   window.muteIcon = muteIcon;
@@ -257,25 +255,24 @@ function create() {
     });
   };
 
-  // --- FAST acceleration for testing ---
+  // --- Curved acceleration by score and speed ---
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.1, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.025, maxSpeed);
-        else                   speed = Math.min(speed + 0.035, maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.003, maxSpeed);
+        else if (score < 50)   speed = Math.min(speed + 0.006, maxSpeed);
+        else                   speed = Math.min(speed + 0.01,  maxSpeed);
       }
-      // Show speed for testing
-      if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
   });
 
+  // --- Dynamic spawn event + anti-deadzone ---
   function getSpawnInterval() {
     const minDelay = 650, maxDelay = 1200, baseSpeed = 3;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
     let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-    return interval + Phaser.Math.Between(-80, 80);
+    return interval + Phaser.Math.Between(-80, 80); // random jitter
   }
 
   if (spawnEvent) spawnEvent.remove(false);
@@ -303,6 +300,7 @@ function create() {
     }
   });
 
+  // --- SFX/Controls/Bindings/Overlaps (unchanged) ---
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
@@ -366,6 +364,7 @@ function create() {
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
 
+// --- UPDATE ---
 function update() {
   if (gameOver) return;
   let dt = (gameStarted && !gamePaused) ? 0.05 * direction : 0;
@@ -408,6 +407,7 @@ function update() {
   }
 }
 
+// --- SPAWN OBJECTS ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -416,10 +416,11 @@ function spawnObjects() {
   const vx = (fromLeft ? speed : -speed) * 60;
 
   // Adaptive point spawn frequency
-  let pointChance = 60;
-  if (score >= 20) pointChance = 40;
-  if (score >= 50) pointChance = 30;
+  let pointChance = 40;
+  if (speed > 10) pointChance = 32;
+  if (score > 50) pointChance = 25;
 
+  // Obstacles: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
     let isSafe = true;
@@ -444,6 +445,7 @@ function spawnObjects() {
     laneLastObstacleXs[chosenLaneIdx] = x;
   }
 
+  // Points: only in lanes where neither the lane nor adjacent lanes have a recent obstacle at similar X
   let safePointLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
     let isSafe = true;
@@ -473,6 +475,7 @@ function spawnObjects() {
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
+// --- GAME OVER & COLLISIONS (unchanged) ---
 function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;

@@ -1,10 +1,10 @@
-// Tricky Turns game.js — FAST ACCELERATION TEST VERSION
+// Tricky Turns game.js — GAME OVER SCREEN INSTANT, ASYNC LEADERBOARD
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 30;
-let speed = 3;    // start speed
+let maxSpeed = 16;
+let speed = 3;
 
 const NUM_LANES = 3;
 const SPAWN_BUFFER_X = 220;
@@ -257,25 +257,24 @@ function create() {
     });
   };
 
-  // --- FAST acceleration for testing ---
+  // Fast acceleration
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        if (score < 20)        speed = Math.min(speed + 0.1, maxSpeed);
-        else if (score < 50)   speed = Math.min(speed + 0.025, maxSpeed);
-        else                   speed = Math.min(speed + 0.035, maxSpeed);
+        if (score < 20)        speed = Math.min(speed + 0.025, maxSpeed);
+        else if (score < 50)   speed = Math.min(speed + 0.045, maxSpeed);
+        else                   speed = Math.min(speed + 0.07,  maxSpeed);
       }
-      // Show speed for testing
       if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
   });
 
   function getSpawnInterval() {
-    const minDelay = 650, maxDelay = 1200, baseSpeed = 3;
+    const minDelay = 350, maxDelay = 1100, baseSpeed = 3;
     let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
     let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-    return interval + Phaser.Math.Between(-80, 80);
+    return interval + Phaser.Math.Between(-50, 50);
   }
 
   if (spawnEvent) spawnEvent.remove(false);
@@ -477,6 +476,7 @@ function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;
   gameOver = true;
+
   [circle1, circle2].forEach(c => {
     const px = c.x, py = c.y; c.destroy();
     const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
@@ -489,6 +489,8 @@ function triggerGameOver() {
     window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
   });
   sfx.explode.play();
+
+  // After delay, show game over screen instantly, THEN do leaderboard stuff
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
@@ -504,16 +506,38 @@ function triggerGameOver() {
       localStorage.setItem('tricky_high_score', highScore);
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
-    if (!useLocalHighScore) {
-      fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: piUsername, score: highScore })
-      }).catch(console.error);
+
+    // 1. SHOW GAME OVER SCREEN *immediately*
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    document.getElementById('game-over-screen').style.display = 'flex';
+
+    // 2. Show loading for leaderboard (async)
+    const list = document.getElementById('leaderboardEntries');
+    if (list) {
+      while (list.firstChild) list.removeChild(list.firstChild);
+      const loadingLi = document.createElement('li');
+      loadingLi.textContent = 'Loading leaderboard...';
+      loadingLi.style.fontStyle = 'italic';
+      loadingLi.style.textAlign = 'center';
+      list.appendChild(loadingLi);
     }
-    fetch('/api/leaderboard?top=100')
-      .then(r => r.json()).then(data => {
-        const list = document.getElementById('leaderboardEntries');
+    const rankMessage = document.getElementById('rankMessage');
+    if (rankMessage) rankMessage.innerText = "";
+
+    // 3. Post score if needed, then fetch leaderboard and update in place
+    (async () => {
+      if (!useLocalHighScore) {
+        try {
+          await fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: piUsername, score: highScore })
+          });
+        } catch (e) { /* ignore */ }
+      }
+      try {
+        const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+        // Update leaderboard entries
         if (list) {
           while (list.firstChild) list.removeChild(list.firstChild);
           data.forEach((e, i) => {
@@ -522,10 +546,9 @@ function triggerGameOver() {
             li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
             list.appendChild(li);
           });
-          document.getElementById('leaderboard').style.display = 'block';
         }
+        // Show rank
         const rank = data.findIndex(e => e.username === piUsername);
-        const rankMessage = document.getElementById('rankMessage');
         if (rankMessage) {
           if (rank >= 0) {
             rankMessage.innerText = `🏅 Your Global Rank: #${rank + 1}`;
@@ -533,9 +556,19 @@ function triggerGameOver() {
             rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
           }
         }
-        if (muteBtnHome) muteBtnHome.style.display = 'none';
-        document.getElementById('game-over-screen').style.display = 'flex';
-      }).catch(console.error);
+      } catch (e) {
+        if (list) {
+          while (list.firstChild) list.removeChild(list.firstChild);
+          const errorLi = document.createElement('li');
+          errorLi.textContent = 'Failed to load leaderboard.';
+          errorLi.style.color = '#F66';
+          errorLi.style.fontStyle = 'italic';
+          errorLi.style.textAlign = 'center';
+          list.appendChild(errorLi);
+        }
+        if (rankMessage) rankMessage.innerText = '';
+      }
+    })();
   });
 }
 
