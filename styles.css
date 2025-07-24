@@ -274,26 +274,3 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   pointer-events: auto;
 }
 
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  overflow: hidden !important;
-  /* background will be dynamically set by JS */
-}
-body {
-  /* This ensures no border or default background */
-  border: none !important;
-}
-canvas {
-  display: block;
-  position: absolute;
-  top: 0; left: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  border: none !important;
-  outline: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
