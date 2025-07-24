@@ -3,7 +3,7 @@
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
-let maxSpeed = 16;
+let maxSpeed = 20;
 let speed = 3;
 
 const NUM_LANES = 3;
@@ -419,9 +419,9 @@ function spawnObjects() {
   const x = fromLeft ? -50 : camWidth + 50;
   const vx = (fromLeft ? speed : -speed) * 60;
 
-  let pointChance = 60;
-  if (score >= 20) pointChance = 40;
-  if (score >= 50) pointChance = 30;
+  let pointChance = 100;
+  if (score >= 20) pointChance = 70;
+  if (score >= 50) pointChance = 50;
 
   let safeObstacleLanes = [];
   for (let lane = 0; lane < NUM_LANES; lane++) {
