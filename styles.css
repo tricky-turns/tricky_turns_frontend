@@ -283,3 +283,14 @@ html, body {
   height: 100vh !important;
   overflow: hidden !important;
 }
+
+.bg-cloud {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  background: transparent !important;
+  /* remove or override any previous background-color/gradient */
+  z-index: 0;
+}
