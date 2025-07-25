@@ -2,7 +2,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; overflow: hidden; }
 
-/* Body background (starfield will be under canvas) */
+/* Body background (unchanged) */
 body {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(to bottom, #3199E4 0%, #58C0F2 100%);
@@ -15,12 +15,13 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 /* Pi Auth & User Display */
 #user-info {
   display: flex; align-items: center; gap: 0.5rem;
-  color: #caffff; font-size: 1rem; text-shadow: 0 0 4px #000;
+  color: #fff; font-size: 1rem; text-shadow: 0 0 4px #000;
 }
 #user-info button {
-  background: rgba(255, 255, 255, 0.8);
-  border: none; border-radius: 0.3rem;
-  padding: 0.2rem 0.6rem; cursor: pointer;
+  background: rgba(255, 255, 255, 0.88);
+  border: none; border-radius: 0.35rem;
+  padding: 0.22rem 0.7rem; cursor: pointer;
+  font-weight: 600;
 }
 
 /* Animated cloud layers (visual only, no user input) */
@@ -29,8 +30,8 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><path d='M20,35 C20,25 35,20 45,25 C50,15 65,15 70,25 C85,25 90,35 80,45 C90,45 95,55 85,60 C75,65 55,60 50,50 C40,60 25,60 20,50 C10,50 5,40 20,35 Z' fill='%23FFFFFF'/></svg>");
   background-size: contain;
   background-repeat: no-repeat;
-  filter: blur(6px);
-  opacity: .8;
+  filter: blur(3.5px); /* Sharper clouds */
+  opacity: .92;
   animation: drift linear infinite;
   pointer-events: none;
 }
@@ -40,84 +41,54 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 .bg-cloud.four,  .start-cloud.four  { width: 280px; height: 95px;  bottom: 18%; right: 22%; animation-duration: 55s; }
 @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-150vw); } }
 
-/* —— Main Screens and Overlay Panels —— */
-#start-screen,
-#game-over-screen,
-#pause-overlay,
-#leaderboard-screen {
-  background: rgba(20, 30, 48, 0.88);
-  border-radius: 22px;
-  box-shadow: 0 4px 40px #14b4cb25, 0 1.5px 8px #1e7e9b66;
-  border: 1.5px solid #20c1c9;
-  padding: 2.2rem 1.5rem 2.5rem 1.5rem;
-}
-
-#pause-overlay {
-  backdrop-filter: blur(2px);
-}
-
-/* ---- BUTTONS: Subtle Futuristic Flat Theme ---- */
+/* Crisp modern BUTTONS, keeping your original color scheme */
 .btn-primary, .btn, button, input[type="button"] {
-  background: rgba(26,34,52,0.85);
-  color: #caffff;
-  border: 1.5px solid #20c1c9;
-  border-radius: 15px;
+  background: linear-gradient(90deg, #3199E4 0%, #58C0F2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 1.6em;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.12rem;
-  padding: 0.67em 2em;
-  margin: 0.55em;
-  cursor: pointer;
-  box-shadow: 0 2px 16px #129ab950;
-  transition: background 0.14s, transform 0.12s, box-shadow 0.13s;
+  font-size: 1.18rem;
+  font-weight: 600;
+  padding: 0.75em 2.3em;
+  margin: 0.5em;
+  box-shadow: 0 3px 16px #3199E422, 0 1px 4px #0003;
+  transition: 
+    background 0.19s,
+    transform 0.09s cubic-bezier(.61,1.49,.7,1.02),
+    box-shadow 0.12s;
   outline: none;
-  font-weight: 500;
-  backdrop-filter: blur(2px);
   position: relative;
+  letter-spacing: 0.03em;
 }
 .btn-primary:active, .btn:active, button:active {
-  background: rgba(36,49,72,0.96);
-  color: #fff;
-  box-shadow: 0 1px 8px #13d2e066;
+  filter: brightness(0.96);
   transform: scale(0.98);
+  box-shadow: 0 2px 8px #3199E41a;
 }
 .btn-primary:hover, .btn:hover, button:hover {
-  background: rgba(38,70,120,0.91);
-  color: #fff;
+  filter: brightness(1.09);
+  box-shadow: 0 5px 26px #3199E444, 0 1px 4px #0002;
 }
 .btn-primary:focus, .btn:focus, button:focus {
-  box-shadow: 0 0 0 3px #17e5f770;
+  box-shadow: 0 0 0 2.5px #3199E488;
 }
-.btn-primary.ripple::after {
-  content: "";
-  display: block;
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 180%;
-  height: 180%;
-  background: radial-gradient(circle, #fff6 0%, transparent 80%);
-  opacity: 0.33;
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(1.13);
-  transition: opacity 0.4s, transform 0.35s cubic-bezier(.51,2.1,.45,.98);
-}
-/* ----------- END BUTTONS ----------- */
 
-/* Headings, Labels, and Titles */
+/* Heading crispness (modern + bold, subtle shadow) */
+h1, h2, h3,
 #start-screen h1,
 #game-over-screen h1,
-#game-over-screen h2,
 #leaderboard-screen h2 {
-  color: #caffff;
-  font-size: 2.7rem;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 8px #2384ca55;
   margin-bottom: 1.2rem;
-  text-shadow: 0 2px 8px #11405560;
-  -webkit-text-stroke: 0.5px #20c1c9;
-  text-align: center;
+  -webkit-text-stroke: 0.2px #1a6ad3;
 }
 
-/* Score, Best, and HUD Text */
+/* Results/HUD/score - crisp, slightly modernized */
 #game-over-screen .results,
 #scoreText,
 #bestScoreText,
@@ -125,84 +96,88 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 #bestScore,
 #rankMessage,
 .results {
-  color: #caffff;
+  color: #fff;
   font-family: 'Poppins', sans-serif;
   font-size: 1.5rem;
   letter-spacing: 0.08em;
   text-shadow: 0 1px 8px #0a303680;
   text-align: center;
+  font-weight: 600;
 }
-
 #scoreText,
 #bestScoreText {
-  background: rgba(26,34,52,0.70);
-  border: 1.5px solid #20c1c9;
-  border-radius: 12px;
-  padding: 0.3em 0.85em;
+  background: rgba(49, 153, 228, 0.11);
+  border-radius: 1.1em;
+  padding: 0.35em 1em;
   margin-bottom: 0.6em;
   display: inline-block;
-  min-width: 105px;
-  box-shadow: 0 0.5px 8px #13d2e033;
+  min-width: 110px;
+  box-shadow: 0 0.5px 8px #3199E411;
 }
 
-/* Leaderboard */
+.result-wrapper,
+.orbit {
+  border-radius: 50%;
+  background: rgba(88,192,242,0.10);
+  box-shadow: 0 0 38px #14b4cb28;
+}
+
+#pause-overlay,
+#start-screen,
+#game-over-screen,
+#leaderboard-screen {
+  background: linear-gradient(120deg, #3ea9e6cc 0%, #25395dcc 100%);
+  border-radius: 18px;
+  box-shadow: 0 4px 32px #3199E422;
+  border: none;
+  padding: 2.2rem 1.5rem 2.5rem 1.5rem;
+}
+
+#pause-overlay {
+  backdrop-filter: blur(2px);
+}
+#pause-overlay .paused-text {
+  font-family: 'Poppins', sans-serif; font-size: 3rem; color: #fff;
+  text-transform: uppercase; letter-spacing: .1rem;
+  -webkit-text-stroke: 1px #3199E4;
+  text-align: center;
+}
+
+/* Leaderboard block styling - subtle gradient, less opaque */
 #leaderboard,
 #leaderboard-screen,
 #leaderboardEntriesHome,
 #leaderboardEntries {
-  background: rgba(18, 28, 44, 0.98);
-  border: 1.5px solid #20c1c9;
-  border-radius: 20px;
-  box-shadow: 0 3px 28px #1bd1e650;
-  color: #caffff;
+  background: linear-gradient(115deg, #3199E422 0%, #58C0F222 100%);
+  border-radius: 1.5em;
+  box-shadow: 0 3px 22px #3199E422;
+  color: #fff;
 }
 
 #leaderboard li,
 #leaderboardEntriesHome li {
-  background: rgba(32, 193, 201, 0.11);
-  border-radius: 14px;
-  margin-bottom: 0.33rem;
-  border: 1px solid #20c1c933;
-  color: #caffff;
+  background: rgba(49, 153, 228, 0.13);
+  border-radius: 1.1em;
+  margin-bottom: 0.35rem;
+  color: #fff;
+  font-weight: 500;
 }
 
 #leaderboard li::before,
 #leaderboardEntriesHome li::before {
-  background: #20c1c9;
-  color: #001e29;
+  background: #58C0F2;
+  color: #174a6b;
   font-weight: 700;
 }
 
-/* “+1” Point Animation & Any Popups */
 .plusOne, .floating-point, .bonus {
-  color: #caffff;
-  background: rgba(26,34,52,0.80);
-  border: 1.2px solid #20c1c9;
-  border-radius: 9px;
+  color: #fff;
+  background: rgba(49,153,228,0.19);
+  border-radius: 0.5em;
   font-size: 1.2rem;
   font-family: 'Poppins', sans-serif;
-  box-shadow: 0 2px 16px #129ab930;
-  padding: 0.15em 0.65em;
-}
-
-/* Miscellaneous tweaks */
-.result-wrapper,
-.orbit {
-  border: 1.5px solid #20c1c9;
-  border-radius: 50%;
-  background: rgba(26,34,52,0.25);
-  box-shadow: 0 0 38px #14b4cb28;
-}
-#fade-screen.fade-in {
-  background: #142030e0;
-}
-
-/* Overlay specifics */
-#pause-overlay .paused-text {
-  font-family: 'Poppins', sans-serif; font-size: 3rem; color: #caffff;
-  text-transform: uppercase; letter-spacing: .1rem;
-  -webkit-text-stroke: 1px #20c1c9;
-  text-align: center;
+  box-shadow: 0 2px 16px #3199E410;
+  padding: 0.13em 0.5em;
 }
 
 /* Orbit and HUD */
@@ -233,7 +208,7 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 /* Leaderboard specifics */
 #leaderboard {
   margin-top: 1rem;
-  padding: 1rem; border-radius: 0.5rem;
+  padding: 1rem; border-radius: 1em;
   max-height: 300px; overflow-y: auto;
   width: 80%; max-width: 400px;
 }
@@ -245,13 +220,14 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   padding: 2rem; z-index: 5;
 }
 #leaderboard-screen h2 {
-  color: #caffff; margin-bottom: 1rem;
+  color: #fff; margin-bottom: 1rem;
 }
 #leaderboard-screen button {
   position: absolute; top: 1rem; right: 1rem;
-  background: #20c1c9; color: #001e29;
-  border: none; border-radius: 0.3rem;
+  background: #3199E4; color: #fff;
+  border: none; border-radius: 0.35em;
   padding: 0.5rem 1rem; cursor: pointer;
+  font-weight: 600;
 }
 
 /* Responsive adjustments */
