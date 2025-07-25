@@ -372,3 +372,32 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   background: #222b4f;
   color: #fff;
 }
+.btn-primary, .btn, button, input[type="button"] {
+  background: #151e34;
+  color: #fff;
+  border: 2px solid #31e8f5;
+  border-radius: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.13rem;
+  letter-spacing: 0.07em;
+  padding: 0.65em 2em;
+  margin: 0.55em;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px #0b192b, 0 2px 14px #2ed5e4;
+  transition: background 0.13s, transform 0.11s, box-shadow 0.16s;
+  outline: none;
+  font-weight: 600;
+  position: relative;
+}
+
+.btn-primary:active {
+  background: #203059;
+  transform: scale(0.97);
+  box-shadow: 0 1px 8px #22e2ff66;
+}
+.btn-primary:hover, .btn:hover, button:hover {
+  background: #1d2842;
+}
+.btn-primary:focus, .btn:focus, button:focus {
+  box-shadow: 0 0 0 3px #2be1f770;
+}
