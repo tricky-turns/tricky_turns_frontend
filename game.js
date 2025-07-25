@@ -1,16 +1,23 @@
 // ==========================
 //   TRICKY TURNS GAME CONFIG
 // ==========================
+//
+// All gameplay, FX, starfield, and UI variables are here for easy tuning!
+
 const GAME_CONFIG = {
+  // --- Core gameplay geometry ---
   NUM_LANES: 3,
   RADIUS: 100,
+  // --- Spawn mechanics ---
   SPAWN_BUFFER_X: 220,
   SPAWN_INTERVAL_MIN: 350,
   SPAWN_INTERVAL_MAX: 1100,
   SPAWN_INTERVAL_BASE_SPEED: 3,
   FORCED_SPAWN_INTERVAL: 1800,
+  // --- Orb movement ---
   ANGULAR_BASE: 0.05,
   ANGULAR_SCALE: 0.005,
+  // --- Obstacle/point speed ---
   SPEED_START: 3,
   SPEED_MAX: 20,
   SPEED_RAMP: [
@@ -18,11 +25,13 @@ const GAME_CONFIG = {
     { until: 50,   perTick: 0.75 },
     { until: 9999, perTick: 0.10 }
   ],
+  // --- Point spawn probability ---
   POINT_CHANCE: [
     { until: 20,   percent: 65 },
     { until: 50,   percent: 50 },
     { until: 9999, percent: 35 }
   ],
+  // --- FX: Particle & Camera Shake ---
   PARTICLES: {
     crash: {
       color: 0xffffff,
@@ -38,74 +47,46 @@ const GAME_CONFIG = {
     crash:   { duration: 300, intensity: 0.035 },
     collect: { duration: 0,   intensity: 0 }
   },
-  SKY_STAGES: [
-    { score: 0,    color: [38, 72, 128] },   // rich blue
-    { score: 20,   color: [84, 129, 200] },  // lighter blue
-    { score: 40,   color: [130, 177, 250] }, // sky blue
-    { score: 80,   color: [181, 134, 255] }, // purple-blue
-    { score: 140,  color: [252, 181, 255] }, // soft pink
-    { score: 220,  color: [255, 238, 188] }  // pale gold (dawn)
-  ],
+  // --- Parallax Twinkling Starfield ---
+  // Each layer: { speed, count, color, alpha, sizeMin, sizeMax, twinkle }
   STARFIELD_LAYERS: [
+    // Farthest, most numerous, faintest, tiny
     { speed: 0.09, count: 120, color: 0xffffff, alpha: 0.13, sizeMin: 0.7, sizeMax: 1.4, twinkle: 0.10 },
+    // Mid layer, fewer, bigger, more twinkle
     { speed: 0.24, count: 36,  color: 0xcbe8fd, alpha: 0.22, sizeMin: 1.3, sizeMax: 2.6, twinkle: 0.17 },
+    // Closest, rare, brightest, big twinkle
     { speed: 0.53, count: 8,   color: 0xffffff, alpha: 0.40, sizeMin: 2.2, sizeMax: 4.5, twinkle: 0.33 }
   ]
 };
+//
+// ==========================
 
-// ------------------
-//   Utility Helpers
-// ------------------
-function getCurrentSkyColor(score) {
-  const stages = GAME_CONFIG.SKY_STAGES;
-  for (let i = stages.length - 1; i >= 0; i--) {
-    if (score >= stages[i].score) return stages[i].color;
-  }
-  return stages[0].color;
-}
-function getConfigRamp(arr, val) {
-  for (let i = 0; i < arr.length; i++) {
-    if (val < arr[i].until) return arr[i];
-  }
-  return arr[arr.length - 1];
-}
-function getPointChance(score) {
-  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
-}
-
-// ---------------------------
-//   Pi Integration & Globals
-// ---------------------------
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
 let speed = GAME_CONFIG.SPEED_START;
 let maxSpeed = GAME_CONFIG.SPEED_MAX;
 let radius = GAME_CONFIG.RADIUS;
+
 let laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 let lastSpawnTimestamp = 0;
-let starfieldLayers = [];
-let skyBG = null;
-let piInitPromise = null;
-const scopes = ['username'];
-let piUsername = 'Guest';
-let highScore = 0;
-let useLocalHighScore = true;
-let LANES = [];
-let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0;
-let circle1, circle2, obstacles, points, score = 0;
-let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
-let sfx = {}, isMuted = false;
-let pauseIconLocked = false;
 
+// --- Starfield globals ---
+let starfieldLayers = [];
+
+let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
     piInitPromise = Pi.init({ version: "2.0", sandbox: true });
   }
   return piInitPromise;
 }
+const scopes = ['username'];
+let piUsername = 'Guest';
+let highScore = 0;
+let useLocalHighScore = true;
+
 function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
 }
@@ -133,74 +114,19 @@ async function initAuth() {
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
-if (muteBtnHome) {
-  muteBtnHome.src = currentMuteIcon();
-  muteBtnHome.addEventListener('click', () => {
-    isMuted = !isMuted;
-    if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-    muteBtnHome.src = currentMuteIcon();
-    if (window.game && window.game.sound) {
-      window.game.sound.mute = isMuted;
-    }
-  });
-}
-
-// ---------------------
-//   Phaser Game Config
-// ---------------------
-const config = {
-  type: Phaser.AUTO,
-  transparent: true,
-  width: 540,
-  height: 960,
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-  },
-  physics: { default: 'arcade', arcade: { debug: false } },
-  scene: { key: 'default', preload, create, update }
-};
-window.game = new Phaser.Game(config);
-
-// -----------------------------------
-//   Button Tactile Feedback (Ripple)
-// -----------------------------------
-function buttonTactileRipple(e) {
-  if (!e.target.classList.contains('btn-primary')) return;
-  const btn = e.target;
-  btn.classList.add('ripple');
-  setTimeout(() => btn.classList.remove('ripple'), 400);
-}
-function attachBtnTactile() {
-  document.querySelectorAll('.btn-primary').forEach(btn => {
-    btn.removeEventListener('pointerdown', buttonTactileRipple); // avoid duplicate
-    btn.addEventListener('pointerdown', buttonTactileRipple);
-  });
-}
-if (document.readyState !== "loading") attachBtnTactile();
-else window.addEventListener("DOMContentLoaded", attachBtnTactile);
-
-// --------------------------
-//   Overlay Animations (Pop)
-// --------------------------
 function fadeInElement(el, duration = 500, displayType = 'flex') {
   el.style.opacity = 0;
   el.style.display = displayType;
-  el.style.transform = "scale(0.96)";
-  el.style.transition = `opacity ${duration}ms ease, transform 0.26s cubic-bezier(.46,2.2,.55,1.1)`;
   requestAnimationFrame(() => {
+    el.style.transition = `opacity ${duration}ms ease`;
     el.style.opacity = 1;
-    el.style.transform = "scale(1.00)";
   });
 }
 function fadeOutElement(el, duration = 500) {
-  el.style.transition = `opacity ${duration}ms ease, transform 0.28s cubic-bezier(.46,2.2,.55,1.1)`;
+  el.style.transition = `opacity ${duration}ms ease`;
   el.style.opacity = 0;
-  el.style.transform = "scale(0.96)";
   setTimeout(() => {
     el.style.display = 'none';
-    el.style.transform = "scale(1)";
   }, duration);
 }
 function fadeIn(callback, duration = 600) {
@@ -218,9 +144,78 @@ function fadeOut(callback, duration = 600) {
   }, duration);
 }
 
-// ------------------
-//   Game Functions
-// ------------------
+async function showHomeLeaderboard() {
+  if (isLeaderboardLoading) return;
+  isLeaderboardLoading = true;
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
+  const list = document.getElementById('leaderboardEntriesHome');
+  while (list.firstChild) list.removeChild(list.firstChild);
+  const loadingLi = document.createElement('li');
+  loadingLi.textContent = 'Loading...';
+  loadingLi.style.fontStyle = 'italic';
+  loadingLi.style.textAlign = 'center';
+  list.appendChild(loadingLi);
+  try {
+    const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+    while (list.firstChild) list.removeChild(list.firstChild);
+    data.forEach((e, i) => {
+      const li = document.createElement('li');
+      li.setAttribute('data-rank', `#${i + 1}`);
+      li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+      list.appendChild(li);
+    });
+    document.getElementById('leaderboard-screen').style.display = 'flex';
+  } catch (e) {
+    while (list.firstChild) list.removeChild(list.firstChild);
+    const errorLi = document.createElement('li');
+    errorLi.textContent = 'Failed to load leaderboard.';
+    errorLi.style.color = '#F66';
+    errorLi.style.fontStyle = 'italic';
+    errorLi.style.textAlign = 'center';
+    list.appendChild(errorLi);
+  } finally {
+    isLeaderboardLoading = false;
+    if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = false;
+  }
+}
+
+const LANES = [];
+let gameStarted = false, gameOver = false, gamePaused = false;
+let direction = 1, angle = 0;
+let circle1, circle2, obstacles, points, score = 0;
+let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
+let sfx = {}, isMuted = false;
+let pauseIconLocked = false;
+
+const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
+if (muteBtnHome) {
+  muteBtnHome.src = currentMuteIcon();
+  muteBtnHome.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    muteBtnHome.src = currentMuteIcon();
+    if (window.game && window.game.sound) {
+      window.game.sound.mute = isMuted;
+    }
+  });
+}
+
+const config = {
+  type: Phaser.AUTO,
+  transparent: true,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default: 'arcade', arcade: { debug: false } },
+  scene: { key: 'default', preload, create, update }
+};
+window.game = new Phaser.Game(config);
+
+function getConfigRamp(arr, val) {
+  for (let i = 0; i < arr.length; i++) {
+    if (val < arr[i].until) return arr[i];
+  }
+  return arr[arr.length - 1];
+}
 
 function preload() {
   this.load.audio('explode', 'assets/explode.wav');
@@ -239,16 +234,12 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
-  // --- Milestone Sky Background ---
-  if (skyBG) skyBG.destroy();
-  skyBG = this.add.graphics();
-  skyBG.setDepth(-200);
-
   // --- Twinkling Starfield Parallax Setup ---
   if (starfieldLayers.length) {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
+  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -267,8 +258,8 @@ function create() {
     }
     starfieldLayers.push({ stars, layer });
   });
+  // --- End Starfield Parallax ---
 
-  LANES = [];
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
   }
@@ -309,11 +300,11 @@ function create() {
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  scoreText = this.add.text(this.cameras.main.width * 0.04, this.cameras.main.height * 0.02, 'Score: 0', {
+  scoreText = this.add.text(16, 16, 'Score: 0', {
     fontFamily: 'Poppins', fontSize: '36px',
     color: '#fff', stroke: '#000', strokeThickness: 4
   }).setDepth(2).setVisible(false);
-  bestScoreText = this.add.text(this.cameras.main.width * 0.04, this.cameras.main.height * 0.08, 'Best: ' + highScore, {
+  bestScoreText = this.add.text(16, 64, 'Best: ' + highScore, {
     fontFamily: 'Poppins', fontSize: '28px',
     color: '#fff', stroke: '#000', strokeThickness: 3
   }).setDepth(2).setVisible(false);
@@ -323,8 +314,8 @@ function create() {
     color: '#eaeaea', stroke: '#222', strokeThickness: 2
   }).setDepth(2).setVisible(true);
 
-  pauseIcon = this.add.image(this.cameras.main.width * 0.93, this.cameras.main.height * 0.045, 'iconPause').setInteractive().setDepth(3).setVisible(false);
-  muteIcon = this.add.image(this.cameras.main.width * 0.83, this.cameras.main.height * 0.045, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
+  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
+  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
@@ -483,34 +474,25 @@ function create() {
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
 
+// DELTA TIME PATCHED update
 function update(time, delta) {
-  // --- Milestone Sky Color ---
-  if (skyBG) {
-    let [r, g, b] = getCurrentSkyColor(score);
-    skyBG.clear();
-    skyBG.fillStyle((r << 16) | (g << 8) | b, 1);
-    skyBG.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
-
-    // ---- ABSOLUTE SYNC: Update browser background every frame ----
-    document.body.style.backgroundColor = `rgb(${r},${g},${b})`;
-    document.documentElement.style.backgroundColor = `rgb(${r},${g},${b})`;
-  }
-
-  // --- Twinkling Starfield Update ---
+  // --- Twinkling Starfield Update (always moves, even paused/gameOver) ---
   if (starfieldLayers.length) {
     const t = performance.now() / 1000;
     const camWidth = this.cameras.main.width;
     const camHeight = this.cameras.main.height;
     starfieldLayers.forEach(({ stars, layer }) => {
       stars.forEach(s => {
+        // Move star
         s.x -= layer.speed * (delta ? (delta / (1000 / 60)) : 1);
         if (s.x < -s.size) {
           s.x += camWidth + s.size * 2;
           s.y = Math.random() * camHeight;
-          s.tw = Math.random() * Math.PI * 2;
+          s.tw = Math.random() * Math.PI * 2; // new twinkle phase
         }
         s.g.x = s.x;
         s.g.y = s.y;
+        // Twinkle: oscillate alpha using unique phase
         const tw = Math.sin(t * (0.7 + 0.6 * layer.twinkle) + s.tw);
         s.g.alpha = Math.max(0, Math.min(1, s.baseAlpha + layer.twinkle * tw));
       });
@@ -564,6 +546,11 @@ function update(time, delta) {
   }
 }
 
+function getPointChance(score) {
+  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
+}
+
+// --- Patch: Points and obstacles never overlap in the same lane ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -575,6 +562,7 @@ function spawnObjects() {
   let safeObstacleLanes = [];
   let safePointLanes = [];
   for (let lane = 0; lane < GAME_CONFIG.NUM_LANES; lane++) {
+    // Obstacles: check for nearby obstacles AND points
     let obsSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -589,6 +577,8 @@ function spawnObjects() {
     if (obsSafe && (lastPtX === null || Math.abs(lastPtX - x) >= GAME_CONFIG.SPAWN_BUFFER_X)) {
       safeObstacleLanes.push(lane);
     }
+
+    // Points: check for nearby obstacles AND points
     let ptSafe = true;
     for (let adj = -1; adj <= 1; adj++) {
       let checkLane = lane + adj;
@@ -604,6 +594,8 @@ function spawnObjects() {
       safePointLanes.push(lane);
     }
   }
+
+  // Points first: Spawn one point if possible and allowed by chance
   let spawnedPointLane = null;
   if (safePointLanes.length > 0 && Phaser.Math.Between(1, 100) <= pointChance) {
     const pointLaneIdx = Phaser.Utils.Array.GetRandom(safePointLanes);
@@ -616,10 +608,13 @@ function spawnObjects() {
     laneLastPointXs[pointLaneIdx] = x;
     spawnedPointLane = pointLaneIdx;
   }
+
+  // Obstacles: spawn only in lanes where we didn't just spawn a point
   if (safeObstacleLanes.length > 0) {
     let obstacleCandidates = spawnedPointLane !== null
       ? safeObstacleLanes.filter(lane => lane !== spawnedPointLane)
       : safeObstacleLanes;
+
     if (obstacleCandidates.length > 0) {
       const chosenLaneIdx = Phaser.Utils.Array.GetRandom(obstacleCandidates);
       const laneY = LANES[chosenLaneIdx];
@@ -629,6 +624,7 @@ function spawnObjects() {
       laneLastObstacleXs[chosenLaneIdx] = x;
     }
   }
+
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
@@ -636,10 +632,13 @@ function triggerGameOver() {
   if (spawnEvent) spawnEvent.remove(false);
   if (gameOver) return;
   gameOver = true;
+
+  // --- Camera shake & particle burst on crash ---
   let fx = GAME_CONFIG.PARTICLES.crash;
   let camShake = GAME_CONFIG.CAMERA_SHAKE.crash;
   let cam = window.game.scene.keys.default.cameras.main;
   if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
+
   [circle1, circle2].forEach(c => {
     const px = c.x, py = c.y; c.destroy();
     const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
@@ -653,6 +652,7 @@ function triggerGameOver() {
     window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
   });
   sfx.explode.play();
+
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
@@ -668,8 +668,10 @@ function triggerGameOver() {
       localStorage.setItem('tricky_high_score', highScore);
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
+
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'flex';
+
     const list = document.getElementById('leaderboardEntries');
     if (list) {
       while (list.firstChild) list.removeChild(list.firstChild);
@@ -681,6 +683,7 @@ function triggerGameOver() {
     }
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
+
     (async () => {
       if (!useLocalHighScore) {
         try {
@@ -728,6 +731,8 @@ function triggerGameOver() {
 
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
+
+  // --- Floating "+1" feedback at point location ---
   let scene = window.game.scene.keys.default;
   const plusOne = scene.add.text(pt.x, pt.y, '+1', {
     fontFamily: 'Poppins',
@@ -737,6 +742,7 @@ function collectPoint(_, pt) {
     strokeThickness: 4,
     fontStyle: 'bold'
   }).setOrigin(0.5).setDepth(10);
+
   scene.tweens.add({
     targets: plusOne,
     y: pt.y - 40,
@@ -746,15 +752,15 @@ function collectPoint(_, pt) {
     ease: 'Cubic.easeOut',
     onComplete: () => plusOne.destroy()
   });
+
   pt.destroy();
   score++;
   sfx.point.play();
   scoreText.setText('Score: ' + score);
-  // Juicier pop!
   window.game.scene.keys.default.tweens.add({
     targets: scoreText,
-    scaleX: 1.16, scaleY: 1.16,
-    yoyo: true, duration: 110, ease: 'Back.easeOut'
+    scaleX: 1.1, scaleY: 1.1,
+    yoyo: true, duration: 80, ease: 'Sine.easeOut'
   });
 }
 
@@ -842,42 +848,6 @@ function handlePlayAgain() {
       scene.scheduleSpawn ? scene.scheduleSpawn() : null;
     });
   }, 0);
-}
-
-async function showHomeLeaderboard() {
-  if (isLeaderboardLoading) return;
-  isLeaderboardLoading = true;
-  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
-  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
-  const list = document.getElementById('leaderboardEntriesHome');
-  while (list.firstChild) list.removeChild(list.firstChild);
-  const loadingLi = document.createElement('li');
-  loadingLi.textContent = 'Loading...';
-  loadingLi.style.fontStyle = 'italic';
-  loadingLi.style.textAlign = 'center';
-  list.appendChild(loadingLi);
-  try {
-    const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
-    while (list.firstChild) list.removeChild(list.firstChild);
-    data.forEach((e, i) => {
-      const li = document.createElement('li');
-      li.setAttribute('data-rank', `#${i + 1}`);
-      li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-      list.appendChild(li);
-    });
-    document.getElementById('leaderboard-screen').style.display = 'flex';
-  } catch (e) {
-    while (list.firstChild) list.removeChild(list.firstChild);
-    const errorLi = document.createElement('li');
-    errorLi.textContent = 'Failed to load leaderboard.';
-    errorLi.style.color = '#F66';
-    errorLi.style.fontStyle = 'italic';
-    errorLi.style.textAlign = 'center';
-    list.appendChild(errorLi);
-  } finally {
-    isLeaderboardLoading = false;
-    if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = false;
-  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
