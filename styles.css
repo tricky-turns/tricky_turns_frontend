@@ -323,3 +323,7 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 #game-over-screen .btn-primary {
   pointer-events: auto;
 }
+
+#leaderboard-screen {
+  display: none;
+}
