@@ -427,3 +427,30 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   background: #fff1;
   color: #0ef;
 }
+.btn-primary, .btn, button, input[type="button"] {
+  background: rgba(26,34,52,0.85);
+  color: #caffff;
+  border: 1.5px solid #20c1c9;
+  border-radius: 15px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.12rem;
+  padding: 0.67em 2em;
+  margin: 0.55em;
+  cursor: pointer;
+  box-shadow: 0 2px 16px #129ab950;
+  transition: background 0.14s, transform 0.12s, box-shadow 0.13s;
+  outline: none;
+  font-weight: 500;
+  backdrop-filter: blur(2px);
+}
+
+.btn-primary:active {
+  background: rgba(36,49,72,0.96);
+  color: #fff;
+  box-shadow: 0 1px 8px #13d2e066;
+  transform: scale(0.98);
+}
+.btn-primary:hover, .btn:hover, button:hover {
+  background: rgba(38,70,120,0.91);
+  color: #fff;
+}
