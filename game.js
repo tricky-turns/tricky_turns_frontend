@@ -11,9 +11,9 @@ const GAME_CONFIG = {
   // --- Spawn mechanics ---
   SPAWN_BUFFER_X: 220,
   SPAWN_INTERVAL_MIN: 350,
-  SPAWN_INTERVAL_MAX: 900,
+  SPAWN_INTERVAL_MAX: 1100,
   SPAWN_INTERVAL_BASE_SPEED: 3,
-  FORCED_SPAWN_INTERVAL: 1500,
+  FORCED_SPAWN_INTERVAL: 1800,
   // --- Orb movement ---
   ANGULAR_BASE: 0.05,
   ANGULAR_SCALE: 0.005,
@@ -47,13 +47,16 @@ const GAME_CONFIG = {
     crash:   { duration: 300, intensity: 0.035 },
     collect: { duration: 0,   intensity: 0 }
   },
-  // --- Parallax Starfield Layers ---
-  // Each layer: { speed, count, color, alpha, size }
+  // --- Parallax Twinkling Starfield ---
+  // Each layer: { speed, count, color, alpha, sizeMin, sizeMax, twinkle }
   STARFIELD_LAYERS: [
-    { speed: 0.18, count: 32, color: 0xc8e0fa, alpha: 0.17, size: 2.2 }, // Farthest
-    { speed: 0.36, count: 18, color: 0x6ad0fc, alpha: 0.29, size: 3.5 },
-    { speed: 0.7,  count: 9,  color: 0xffffff, alpha: 0.39, size: 5 }    // Closest/brightest
-  ],
+    // Farthest, most numerous, faintest, tiny
+    { speed: 0.09, count: 120, color: 0xffffff, alpha: 0.13, sizeMin: 0.7, sizeMax: 1.4, twinkle: 0.10 },
+    // Mid layer, fewer, bigger, more twinkle
+    { speed: 0.24, count: 36,  color: 0xcbe8fd, alpha: 0.22, sizeMin: 1.3, sizeMax: 2.6, twinkle: 0.17 },
+    // Closest, rare, brightest, big twinkle
+    { speed: 0.53, count: 8,   color: 0xffffff, alpha: 0.40, sizeMin: 2.2, sizeMax: 4.5, twinkle: 0.33 }
+  ]
 };
 //
 // ==========================
@@ -231,25 +234,27 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
-  // --- Starfield Parallax Setup ---
-  // Destroy previous layers if they exist
+  // --- Twinkling Starfield Parallax Setup ---
   if (starfieldLayers.length) {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
-
+  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
       const x = Math.random() * cam.width;
       const y = Math.random() * cam.height;
+      const size = layer.sizeMin + Math.random() * (layer.sizeMax - layer.sizeMin);
+      const baseAlpha = layer.alpha * (0.85 + 0.3 * Math.random());
+      const tw = Math.random() * Math.PI * 2;
       const g = this.add.graphics();
-      g.fillStyle(layer.color, layer.alpha);
-      g.fillCircle(0, 0, layer.size);
+      g.fillStyle(layer.color, 1);
+      g.fillCircle(0, 0, size);
       g.x = x;
       g.y = y;
-      g.setDepth(-100 + i); // Behind all game objects
-      stars.push({ g, x, y });
+      g.setDepth(-100 + i);
+      stars.push({ g, x, y, size, baseAlpha, tw });
     }
     starfieldLayers.push({ stars, layer });
   });
@@ -471,18 +476,25 @@ function create() {
 
 // DELTA TIME PATCHED update
 function update(time, delta) {
-  // --- Starfield Parallax Update (always moves, even paused/gameOver) ---
+  // --- Twinkling Starfield Update (always moves, even paused/gameOver) ---
   if (starfieldLayers.length) {
+    const t = performance.now() / 1000;
+    const camWidth = this.cameras.main.width;
+    const camHeight = this.cameras.main.height;
     starfieldLayers.forEach(({ stars, layer }) => {
       stars.forEach(s => {
+        // Move star
         s.x -= layer.speed * (delta ? (delta / (1000 / 60)) : 1);
-        if (s.x < -layer.size) {
-          s.x += this.cameras.main.width + layer.size;
-          // Optionally, randomize y for a little extra twinkle
-          s.y = Math.random() * this.cameras.main.height;
+        if (s.x < -s.size) {
+          s.x += camWidth + s.size * 2;
+          s.y = Math.random() * camHeight;
+          s.tw = Math.random() * Math.PI * 2; // new twinkle phase
         }
         s.g.x = s.x;
         s.g.y = s.y;
+        // Twinkle: oscillate alpha using unique phase
+        const tw = Math.sin(t * (0.7 + 0.6 * layer.twinkle) + s.tw);
+        s.g.alpha = Math.max(0, Math.min(1, s.baseAlpha + layer.twinkle * tw));
       });
     });
   }
