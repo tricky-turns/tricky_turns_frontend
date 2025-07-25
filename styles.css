@@ -274,3 +274,71 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   pointer-events: auto;
 }
 
+.btn-primary, .btn, button, input[type="button"] {
+  background: linear-gradient(90deg, #4c6ef5 0%, #22b8cf 100%);
+  border: none;
+  border-radius: 28px;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.18rem;
+  padding: 0.72em 2.25em;
+  margin: 0.52em;
+  cursor: pointer;
+  box-shadow: 0 3px 14px #22b8cf44, 0 1px 4px #0002;
+  transition: 
+    background 0.19s, 
+    transform 0.11s cubic-bezier(.61,1.49,.7,1.02),
+    box-shadow 0.15s;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 180%;
+  height: 180%;
+  background: radial-gradient(circle, #fff6 0%, transparent 80%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.6);
+  transition: opacity 0.18s, transform 0.18s;
+}
+
+.btn-primary:active, .btn:active, button:active {
+  background: linear-gradient(90deg, #22b8cf 0%, #4c6ef5 100%);
+  transform: scale(0.97);
+  box-shadow: 0 2px 7px #22b8cf22;
+}
+
+.btn-primary:active::after {
+  opacity: 0.28;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.btn-primary:hover, .btn:hover, button:hover {
+  filter: brightness(1.13);
+  box-shadow: 0 8px 24px #4c6ef550, 0 1px 4px #0003;
+}
+
+.btn-primary:focus, .btn:focus, button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px #51e1ef66;
+}
+
+.btn-primary.ripple::after {
+  opacity: 0.37;
+  transform: translate(-50%, -50%) scale(1.13);
+  transition: opacity 0.4s, transform 0.35s cubic-bezier(.51,2.1,.45,.98);
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 3px 16px #30e2e9bb, 0 1px 4px #0002; }
+  45% { box-shadow: 0 8px 34px #30e2e977, 0 1px 4px #0003; }
+}
+.btn-primary.glow {
+  animation: glowPulse 2.1s infinite cubic-bezier(.56,1.31,.6,1);
+}
