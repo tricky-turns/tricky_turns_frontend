@@ -401,3 +401,29 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
 .btn-primary:focus, .btn:focus, button:focus {
   box-shadow: 0 0 0 3px #2be1f770;
 }
+.btn-primary, .btn, button, input[type="button"] {
+  background: transparent;
+  color: #fff;
+  border: 2.5px solid #fff;
+  border-radius: 7px;
+  font-family: 'Poppins', monospace, sans-serif;
+  font-size: 1.12rem;
+  padding: 0.62em 1.7em;
+  margin: 0.55em;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #0ef, 0 0 0 2px #000;
+  transition: background 0.14s, color 0.14s, box-shadow 0.15s;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.btn-primary:active {
+  color: #31e8f5;
+  background: #fff1;
+  box-shadow: 2px 2px 0 #31e8f5, 0 0 0 2px #000;
+  transform: translateY(2px) scale(0.98);
+}
+.btn-primary:hover, .btn:hover, button:hover {
+  background: #fff1;
+  color: #0ef;
+}
