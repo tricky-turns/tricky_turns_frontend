@@ -122,19 +122,23 @@ canvas {
 
 /* Leaderboard Fullscreen Modal */
 #leaderboard-screen {
-  display: none;
+  display: flex;
   position: absolute;
   inset: 0;
   background: #13253c;
   z-index: 5;
-  overflow-y: auto;
-  padding: 0 0 1rem;
-}
-.leaderboard-wrapper {
-  display: flex;
   flex-direction: column;
-  width: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden; /* Stop outer scroll */
 }
+
+.leaderboard-wrapper {
+  width: 100%;
+  overflow-y: auto;
+  height: 100%;
+}
+
 
 /* Sticky Header Block */
 .leaderboard-sticky {
@@ -146,6 +150,7 @@ canvas {
   padding-bottom: 0.4rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
+
 
 /* Close Button (✕) */
 #closeLeaderboardBtn {
