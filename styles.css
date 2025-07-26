@@ -612,3 +612,68 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
     top: 0.7rem;
   }
 }
+#leaderboard li,
+#leaderboardEntriesHome li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.08);
+  border-radius: 1rem;
+  margin-bottom: 0.44rem;
+  padding: 0.65rem 1.7rem 0.65rem 1.7rem;
+  color: #fff;
+  font-size: 1.14rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  box-shadow: 0 1px 6px #3EAFF61f;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  gap: 0;
+}
+
+/* Rank badge */
+.rank-badge {
+  min-width: 2.7em;
+  text-align: left;
+  background: #3EAFF6;
+  color: #001A42;
+  font-size: 1.03em;
+  font-weight: 700;
+  padding: 0.22em 0.85em;
+  border-radius: 1.15em;
+  margin-right: 1.2em;
+  box-shadow: 0 1px 5px #3EAFF622;
+}
+
+/* Username center */
+.entry-username {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+/* Score right */
+.entry-score {
+  min-width: 3.1em;
+  text-align: right;
+  font-weight: 700;
+  color: #3EAFF6;
+  letter-spacing: 0.01em;
+  margin-left: 1.1em;
+}
+
+/* Responsive tweaks */
+@media (max-width: 700px) {
+  #leaderboard li,
+  #leaderboardEntriesHome li {
+    padding-left: 0.8em;
+    padding-right: 0.8em;
+    font-size: 0.98rem;
+  }
+  .rank-badge { font-size: 0.92em; margin-right: 0.5em; }
+  .entry-score { min-width: 2.1em; margin-left: 0.3em; }
+}
