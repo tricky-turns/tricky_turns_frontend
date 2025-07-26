@@ -183,12 +183,12 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 2rem;
+  padding-top: 3rem;
   width: 100vw;
   height: 100vh;
 }
 
-/* Title pinned near top */
+/* Header */
 #leaderboard-screen h2 {
   margin: 0;
   padding: 0.5rem 1rem;
@@ -199,91 +199,91 @@ canvas {
   letter-spacing: 0.06em;
   text-shadow: 0 2px 12px #1b314f88;
   position: relative;
-  top: 0.3rem;
+  top: 0;
 }
 
-/* Leaderboard container */
+/* Container */
 #leaderboard {
-  margin-top: 1rem;
-  width: 92vw;
-  max-width: 480px;
+  margin-top: 1.5rem;
+  width: 96vw;
+  max-width: 620px;
   background: rgba(19, 37, 60, 0.97);
   border: 2px solid #3EAFF6;
-  border-radius: 18px;
-  box-shadow: 0 3px 24px #3EAFF644;
-  padding: 1.4rem 1.2rem;
-  max-height: 65vh;
+  border-radius: 20px;
+  box-shadow: 0 4px 28px #3EAFF655;
+  padding: 1.6rem 2rem;
+  max-height: 64vh;
   overflow-y: auto;
 }
 
-/* Entry List */
+/* List */
 #leaderboard ol,
 #leaderboardEntriesHome {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
 #leaderboard li,
 #leaderboardEntriesHome li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   background: rgba(255, 255, 255, 0.07);
-  border-radius: 0.9rem;
-  padding: 0.55rem 1rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.02rem;
-  font-weight: 600;
+  border-radius: 1rem;
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.6rem;
   font-family: 'Poppins', sans-serif;
+  font-size: 1.03rem;
+  font-weight: 600;
   color: #fff;
-  box-shadow: 0 1px 3px #3EAFF622;
+  box-shadow: 0 1px 4px #3EAFF633;
 }
 
-/* Rank Badge */
+/* Badge close to username */
 .rank-badge {
   background: #3EAFF6;
   color: #001A42;
+  font-size: 0.94rem;
   font-weight: 700;
-  font-size: 0.95rem;
-  padding: 0.3rem 0.75rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 1.2rem;
-  margin-right: 0.8rem;
+  margin-right: 0.6rem;
   flex-shrink: 0;
-  min-width: 2.2rem;
+  min-width: 2.1rem;
   text-align: center;
 }
 
-/* Username */
+/* Username tighter after badge */
 .entry-username {
   flex: 1;
-  text-align: center;
-  white-space: nowrap;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Score */
+/* Score aligned right */
 .entry-score {
-  font-weight: 700;
   color: #3EAFF6;
+  font-weight: 700;
+  font-size: 0.98rem;
+  min-width: 3.2rem;
   text-align: right;
   margin-left: 0.8rem;
-  min-width: 2.8rem;
   flex-shrink: 0;
-  font-size: 0.98rem;
 }
 
-/* Close Button */
+/* Close button */
 #closeLeaderboardBtn {
   position: absolute;
-  top: 1.2rem;
-  right: 2.2rem;
+  top: 1.5rem;
+  right: 2rem;
   background: #3EAFF6;
   color: white;
   font-weight: 700;
-  padding: 0.5rem 1.3rem;
-  font-size: 0.98rem;
+  padding: 0.5rem 1.4rem;
+  font-size: 0.95rem;
   border: none;
   border-radius: 1.5rem;
   cursor: pointer;
@@ -292,8 +292,9 @@ canvas {
   transition: background 0.15s;
 }
 #closeLeaderboardBtn:hover {
-  background: #2d96e2;
+  background: #2595e8;
 }
+
 
 
 @media (max-width: 700px) {
