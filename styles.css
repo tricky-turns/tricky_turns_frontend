@@ -216,7 +216,7 @@ canvas {
   margin: 1.5rem auto 0;
   scroll-behavior: smooth;
   max-height: 66vh;
-  overflow-y: auto;
+overflow-y: auto;
 
 }
 #leaderboard::-webkit-scrollbar {
@@ -378,83 +378,4 @@ canvas {
 }
 #closeLeaderboardBtn:hover {
   background: #2595e8;
-}
-
-
-#leaderboard::-webkit-scrollbar {
-  width: 8px;
-}
-#leaderboard::-webkit-scrollbar-thumb {
-  background-color: #3EAFF6;
-  border-radius: 4px;
-}
-#leaderboard::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-
-#leaderboard {
-  background: rgba(19, 37, 60, 0.97);
-  border: 2px solid #3EAFF6;
-  border-radius: 20px;
-  box-shadow: 0 4px 28px #3EAFF655;
-  padding: 1.6rem 2rem;
-  width: 92vw;
-  max-width: 520px;
-  height: 66vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
-  backdrop-filter: blur(1.2px);
-  margin-top: 0;
-}
-
-
-#leaderboardHeader {
-  position: sticky;
-  top: 0;
-  z-index: 101;
-  width: 100%;
-  max-width: 520px;
-  padding: 1.4rem 1.5rem 1rem;
-  background: rgba(19, 37, 60, 0.98); /* match container background */
-  text-align: center;
-  font-size: 2rem;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 2px 12px #1b314f88;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-#closeLeaderboardBtn {
-  position: absolute;
-  top: 1.2rem;
-  right: 2rem;
-  background: #3EAFF6;
-  color: white;
-  font-weight: 700;
-  padding: 0.5rem 1.4rem;
-  font-size: 0.95rem;
-  border: none;
-  border-radius: 1.5rem;
-  cursor: pointer;
-  z-index: 102;
-  box-shadow: 0 2px 8px #3EAFF6aa;
-  transition: background 0.15s;
-}
-#closeLeaderboardBtn:hover {
-  background: #2595e8;
-}
-
-#leaderboard-screen {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.92); /* darker + fixed */
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 0;
-  overflow: hidden; /* disable outer scroll */
 }
