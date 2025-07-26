@@ -122,7 +122,7 @@ canvas {
 
 /* Leaderboard Fullscreen Modal */
 #leaderboard-screen {
-  display: flex;
+  display: none;
   position: absolute;
   inset: 0;
   background: #13253c;
