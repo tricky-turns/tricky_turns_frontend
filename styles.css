@@ -122,7 +122,7 @@ canvas {
 
 /* Leaderboard Fullscreen Modal */
 #leaderboard-screen {
-  display: none; /* hide by default */
+  display: flex;
   position: absolute;
   inset: 0;
   background: #13253c;
@@ -130,15 +130,15 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  overflow: hidden;
+  overflow: hidden; /* not scrollable */
 }
-
 
 .leaderboard-wrapper {
   width: 100%;
-  overflow-y: auto;
   height: 100%;
+  overflow-y: auto; /* scrolls this container */
 }
+
 
 
 /* Sticky Header Block */
@@ -150,7 +150,10 @@ canvas {
   padding-top: 3rem;
   padding-bottom: 0.4rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(3px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+
 
 
 /* Close Button (✕) */
@@ -165,12 +168,20 @@ canvas {
   border: none;
   cursor: pointer;
   z-index: 10;
-  padding: 0;
+  padding: 0.25rem;
   line-height: 1;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 #closeLeaderboardBtn:hover {
   color: #66CCFF;
+  transform: scale(1.15);
+}
+@media (max-width: 480px) {
+  #closeLeaderboardBtn {
+    font-size: 1.5rem;
+    right: 1rem;
+    top: 0.8rem;
+  }
 }
 
 /* Header Text */
@@ -186,6 +197,7 @@ canvas {
 .leaderboard-columns {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-weight: 600;
   font-size: 0.95rem;
   color: #8fcaf5;
@@ -195,7 +207,9 @@ canvas {
   margin: 0 auto;
   box-sizing: border-box;
   text-shadow: 0 1px 3px #0005;
+  line-height: 1.4;
 }
+
 
 /* Leaderboard Entries */
 #leaderboardEntriesHome {
