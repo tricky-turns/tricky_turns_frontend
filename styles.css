@@ -180,10 +180,10 @@ canvas {
   inset: 0;
   background: rgba(0, 0, 0, 0.88);
   z-index: 5;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   flex-direction: column;
-  padding-top: 2rem;
+  padding-top: 4.2rem;
   width: 100vw;
   height: 100vh;
 }
@@ -194,10 +194,10 @@ canvas {
   border: 2px solid #3EAFF6;
   border-radius: 20px;
   box-shadow: 0 4px 28px #3EAFF655;
-  padding: 2rem;
+  padding: 1.8rem 1.8rem 2.2rem;
   width: 92vw;
   max-width: 520px;
-  max-height: 70vh;
+  max-height: 66vh;
   overflow-y: auto;
   margin: 0 auto;
 }
@@ -206,9 +206,10 @@ canvas {
 #leaderboard-screen h2 {
   text-align: center;
   color: #fff;
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  margin-bottom: 1.4rem;
+  margin: 0 auto 1.4rem auto;
+  padding-top: 0;
 }
 
 /* Entry list */
@@ -227,7 +228,7 @@ canvas {
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
-  padding: 0.7rem 1.4rem;
+  padding: 0.65rem 1.2rem;
   margin-bottom: 0.5rem;
   font-family: 'Poppins', sans-serif;
   font-size: 1.05rem;
@@ -240,13 +241,14 @@ canvas {
 .rank-badge {
   background: #3EAFF6;
   color: #001A42;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
-  padding: 0.35rem 1rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 1.3rem;
-  min-width: 2.5em;
+  min-width: 2.2em;
   text-align: center;
-  margin-right: 1.2rem;
+  margin-right: 0.8rem;
+  flex-shrink: 0;
 }
 
 /* Username */
@@ -256,26 +258,29 @@ canvas {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
 }
 
 /* Score */
 .entry-score {
   color: #3EAFF6;
   font-weight: 700;
-  min-width: 3.2em;
+  font-size: 1rem;
+  min-width: 2.8em;
   text-align: right;
-  margin-left: 1rem;
+  margin-left: 0.8rem;
+  flex-shrink: 0;
 }
 
 /* Close button */
 #closeLeaderboardBtn {
   position: absolute;
-  top: 1.5rem;
+  top: 1.4rem;
   right: 2.2rem;
   background: #3EAFF6;
   color: white;
   font-weight: 700;
-  padding: 0.5rem 1.4rem;
+  padding: 0.55rem 1.4rem;
   border: none;
   border-radius: 1.5rem;
   cursor: pointer;
@@ -285,6 +290,24 @@ canvas {
 }
 #closeLeaderboardBtn:hover {
   background: #2595e8;
+}
+
+@media (max-width: 700px) {
+  #leaderboard {
+    padding: 1.2rem 1rem;
+  }
+  #leaderboard-screen h2 {
+    font-size: 1.4rem;
+  }
+  .rank-badge {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.6rem;
+    margin-right: 0.5rem;
+  }
+  .entry-score {
+    font-size: 0.95rem;
+    margin-left: 0.5rem;
+  }
 }
 
 
