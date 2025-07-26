@@ -426,6 +426,20 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   position: relative;
 }
 
+#leaderboard li::before,
+#leaderboardEntriesHome li::before {
+  content: attr(data-rank);
+  background: #3EAFF6;
+  color: #001A42;
+  font-size: 1.09rem;
+  font-weight: 700;
+  padding: 0.23rem 0.9rem;
+  border-radius: 1.3rem;
+  position: absolute;
+  left: -2.5rem;
+  min-width: 2.1rem;
+  text-align: center;
+}
 
 @media (max-width: 700px) {
   #leaderboard {
@@ -726,3 +740,38 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   .rank-badge { font-size: 0.92em; margin-right: 0.5em; }
   .entry-score { min-width: 2em; margin-left: 0.3em; }
 }
+#leaderboard ol,
+#leaderboardEntriesHome {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#leaderboard ol, #leaderboard ul,
+#leaderboardEntriesHome, #leaderboardEntriesHome ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+#leaderboard {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  /* ...other styles... */
+}
+
+#leaderboard li,
+#leaderboardEntriesHome li {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  /* ...other styles... */
+}
+.entry-username {
+  flex: 1 1 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rank-badge, .entry-score { flex-shrink: 0; }
