@@ -363,7 +363,7 @@ canvas {
 }
 #pause-overlay .paused-text {
   font-size: 4rem;
-  color: #fff;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: .1rem;
   -webkit-text-stroke: 2px #25b7e6;
@@ -396,4 +396,35 @@ canvas {
 }
 #fade-screen.fade-in {
   opacity: 1;
+}
+
+.results {
+  color: #ffffff;
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+  -webkit-text-stroke: 0.6px #1a7ef2;
+  letter-spacing: 0.05em;
+}
+
+
+#rankMessage {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #e0f2ff;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#muteToggleHome {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 100px;
+  transition: background 0.2s ease;
+}
+#muteToggleHome:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
