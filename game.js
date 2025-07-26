@@ -1,3 +1,18 @@
+
+let cachedLeaderboard = null;
+let leaderboardFetched = false;
+
+async function preloadLeaderboard() {
+  try {
+    const res = await fetch('/api/leaderboard?top=100');
+    cachedLeaderboard = await res.json();
+    leaderboardFetched = true;
+  } catch (err) {
+    console.warn('Failed to preload leaderboard:', err);
+  }
+}
+
+
 // ==========================
 //   TRICKY TURNS GAME CONFIG
 // ==========================
@@ -145,52 +160,27 @@ function fadeOut(callback, duration = 600) {
 }
 
 async function showHomeLeaderboard() {
-  if (isLeaderboardLoading) return;
-  isLeaderboardLoading = true;
+  const lb = document.getElementById('leaderboard-screen');
+  lb.style.display = 'flex';
+  requestAnimationFrame(() => lb.classList.add('visible'));
 
-  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
-  const spinner = document.getElementById('spinner');
   const list = document.getElementById('leaderboardEntriesHome');
+  list.innerHTML = '';
 
-  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
-  if (spinner) spinner.style.display = 'block';
+  const data = leaderboardFetched
+    ? cachedLeaderboard
+    : await fetch('/api/leaderboard?top=100').then(r => r.json());
 
-  // Clear previous entries
-  while (list.firstChild) list.removeChild(list.firstChild);
-
-  try {
-    const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
-
-    while (list.firstChild) list.removeChild(list.firstChild);
-    data.forEach((e, i) => {
-      const li = document.createElement('li');
-      // Three column style
-      li.innerHTML = `
-        <span class="rank-badge">#${i + 1}</span>
-        <span class="entry-username">${e.username}</span>
-        <span class="entry-score">${e.score}</span>`;
-      list.appendChild(li);
-    });
-
-const lb = document.getElementById('leaderboard-screen');
-lb.style.display = 'flex';
-requestAnimationFrame(() => lb.classList.add('visible'));
-
-
-
-  } catch (e) {
-    while (list.firstChild) list.removeChild(list.firstChild);
-    const errorLi = document.createElement('li');
-    errorLi.textContent = 'Failed to load leaderboard.';
-    errorLi.style.color = '#F66';
-    errorLi.style.fontStyle = 'italic';
-    errorLi.style.textAlign = 'center';
-    list.appendChild(errorLi);
-  } finally {
-    isLeaderboardLoading = false;
-    if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = false;
-    if (spinner) spinner.style.display = 'none';
-  }
+  data.forEach((e, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="rank-badge">#${i + 1}</span>
+      <span class="entry-username">${e.username}</span>
+      <span class="entry-score">${e.score}</span>`;
+    li.style.setProperty('--i', i);
+    li.classList.add('animated-entry');
+    list.appendChild(li);
+  });
 }
 
 
@@ -712,19 +702,12 @@ function triggerGameOver() {
         const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
         if (list) {
           while (list.firstChild) list.removeChild(list.firstChild);
-            data.forEach((e, i) => {
-              const li = document.createElement('li');
-              li.innerHTML = `
-                <span class="rank-badge">#${i + 1}</span>
-                <span class="entry-username">${e.username}</span>
-                <span class="entry-score">${e.score}</span>`;
-
-              // 🔥 Animation hook
-              li.style.setProperty('--i', i);
-              li.classList.add('animated-entry'); // triggers CSS animation
-
-              list.appendChild(li);
-            });
+          data.forEach((e, i) => {
+            const li = document.createElement('li');
+            li.setAttribute('data-rank', `#${i + 1}`);
+            li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+            list.appendChild(li);
+          });
         }
         const rank = data.findIndex(e => e.username === piUsername);
         if (rankMessage) {
@@ -874,9 +857,9 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
-  document.getElementById('viewLeaderboardBtn').addEventListener('mouseenter', () => {
-  fetch('/api/leaderboard?top=100'); // Triggers background load, result discarded
-});
+  const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  leaderboardBtn.addEventListener('mouseenter', preloadLeaderboard);
+  leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
 
 document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
   showHomeLeaderboard();
