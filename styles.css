@@ -175,18 +175,17 @@ canvas {
 }
 
 #leaderboard-screen {
-  display: none;
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.88);
+  background: #13253c; /* match #leaderboard background */
   z-index: 5;
+  overflow-y: auto;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: 3rem;
-  width: 100vw;
-  height: 100vh;
+  padding: 2rem 1rem;
 }
+
 
 /* Header */
 #leaderboard-screen h2 {
@@ -212,7 +211,7 @@ canvas {
   width: 92vw;
   max-width: 520px;
   max-height: 64vh; /* <--- adjust this if needed */
-  overflow-y: auto;  /* <--- enables scrolling */
+  /* <--- enables scrolling */
   margin: 1.5rem auto 0;
   scroll-behavior: smooth;
   max-height: 66vh;
