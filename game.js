@@ -96,7 +96,6 @@ async function initAuth() {
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
     piUsername = auth.user.username;
     window.piAccessToken = auth.accessToken;
-    console.log("✅ Pi Access Token:", window.piAccessToken);
     document.getElementById('username').innerText = piUsername;
     document.getElementById('loginBtn').style.display = 'none';
     useLocalHighScore = false;
@@ -890,7 +889,6 @@ document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
 
 async function syncBestScore(username, score) {
   try {
-    console.log("⬆️ Syncing best score with token:", window.piAccessToken);
     await fetch('/api/leaderboard', {
       method: 'POST',
       headers: {
@@ -906,7 +904,6 @@ async function syncBestScore(username, score) {
 
 async function fetchAndShowRank() {
   try {
-    console.log("🔍 Fetching rank with token:", window.piAccessToken)
     const res = await fetch('/api/leaderboard/rank', {
       headers: {
         'Authorization': `Bearer ${window.piAccessToken || ''}`
