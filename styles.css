@@ -460,3 +460,20 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   }
 }
 
+.spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border: 5px solid rgba(255,255,255,0.3);
+  border-top-color: #3EAFF6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  z-index: 20;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -147,17 +147,20 @@ function fadeOut(callback, duration = 600) {
 async function showHomeLeaderboard() {
   if (isLeaderboardLoading) return;
   isLeaderboardLoading = true;
+
   const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
-  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
+  const spinner = document.getElementById('spinner');
   const list = document.getElementById('leaderboardEntriesHome');
+
+  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
+  if (spinner) spinner.style.display = 'block';
+
+  // Clear previous entries
   while (list.firstChild) list.removeChild(list.firstChild);
-  const loadingLi = document.createElement('li');
-  loadingLi.textContent = 'Loading...';
-  loadingLi.style.fontStyle = 'italic';
-  loadingLi.style.textAlign = 'center';
-  list.appendChild(loadingLi);
+
   try {
     const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+
     while (list.firstChild) list.removeChild(list.firstChild);
     data.forEach((e, i) => {
       const li = document.createElement('li');
@@ -165,7 +168,9 @@ async function showHomeLeaderboard() {
       li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
       list.appendChild(li);
     });
+
     document.getElementById('leaderboard-screen').style.display = 'flex';
+
   } catch (e) {
     while (list.firstChild) list.removeChild(list.firstChild);
     const errorLi = document.createElement('li');
@@ -177,8 +182,10 @@ async function showHomeLeaderboard() {
   } finally {
     isLeaderboardLoading = false;
     if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = false;
+    if (spinner) spinner.style.display = 'none';
   }
 }
+
 
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
@@ -853,6 +860,10 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
+  document.getElementById('viewLeaderboardBtn').addEventListener('mouseenter', () => {
+  fetch('/api/leaderboard?top=100'); // Triggers background load, result discarded
+});
+
   document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
   document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
     document.getElementById('leaderboard-screen').style.display = 'none';
