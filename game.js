@@ -712,12 +712,19 @@ function triggerGameOver() {
         const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
         if (list) {
           while (list.firstChild) list.removeChild(list.firstChild);
-          data.forEach((e, i) => {
-            const li = document.createElement('li');
-            li.setAttribute('data-rank', `#${i + 1}`);
-            li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-            list.appendChild(li);
-          });
+            data.forEach((e, i) => {
+              const li = document.createElement('li');
+              li.innerHTML = `
+                <span class="rank-badge">#${i + 1}</span>
+                <span class="entry-username">${e.username}</span>
+                <span class="entry-score">${e.score}</span>`;
+
+              // 🔥 Animation hook
+              li.style.setProperty('--i', i);
+              li.classList.add('animated-entry'); // triggers CSS animation
+
+              list.appendChild(li);
+            });
         }
         const rank = data.findIndex(e => e.username === piUsername);
         if (rankMessage) {
