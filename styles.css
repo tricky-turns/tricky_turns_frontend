@@ -152,6 +152,8 @@ canvas {
   overflow-y: auto;
   height: calc(100% - 3rem);
   box-shadow: 0 12px 44px rgba(0,0,0,0.4);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 12px 44px rgba(0,0,0,0.4);
+
 }
 
 
@@ -226,10 +228,17 @@ canvas {
   max-width: 720px;
   margin: 0 auto;
   box-sizing: border-box;
-  text-shadow: 0 1px 3px #0005;
   line-height: 1.4;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 
+}
+
+@media (hover: hover) {
+  #leaderboardEntriesHome li:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: all 0.15s ease;
+  }
 }
 
 
