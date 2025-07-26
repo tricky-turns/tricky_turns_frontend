@@ -229,18 +229,23 @@ canvas {
 #leaderboardEntriesHome li {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   background: rgba(255, 255, 255, 0.07);
   border-radius: 1rem;
-  padding: 0.7rem 1rem;
+  padding: 0.7rem 1.6rem;
   margin-bottom: 0.6rem;
   font-family: 'Poppins', sans-serif;
   font-size: 1.03rem;
   font-weight: 600;
   color: #fff;
   box-shadow: 0 1px 4px #3EAFF633;
+  gap: 1rem;
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* Badge close to username */
+/* Group: Badge + Username (left side) */
 .rank-badge {
   background: #3EAFF6;
   color: #001A42;
@@ -248,72 +253,31 @@ canvas {
   font-weight: 700;
   padding: 0.3rem 0.8rem;
   border-radius: 1.2rem;
-  margin-right: 0.6rem;
   flex-shrink: 0;
-  min-width: 2.1rem;
   text-align: center;
+  margin-right: 0.5rem;
 }
 
-/* Username tighter after badge */
 .entry-username {
   flex: 1;
   text-align: left;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
 }
 
-/* Score aligned right */
+/* Score: moderately right-aligned, not extreme edge */
 .entry-score {
   color: #3EAFF6;
   font-weight: 700;
   font-size: 0.98rem;
-  min-width: 3.2rem;
   text-align: right;
-  margin-left: 0.8rem;
   flex-shrink: 0;
+  padding-left: 1rem;
+  min-width: 3.5rem;
 }
 
-/* Close button */
-#closeLeaderboardBtn {
-  position: absolute;
-  top: 1.5rem;
-  right: 2rem;
-  background: #3EAFF6;
-  color: white;
-  font-weight: 700;
-  padding: 0.5rem 1.4rem;
-  font-size: 0.95rem;
-  border: none;
-  border-radius: 1.5rem;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow: 0 2px 8px #3EAFF6aa;
-  transition: background 0.15s;
-}
-#closeLeaderboardBtn:hover {
-  background: #2595e8;
-}
-
-
-
-@media (max-width: 700px) {
-  #leaderboard {
-    padding: 1.2rem 1rem;
-  }
-  #leaderboard-screen h2 {
-    font-size: 1.4rem;
-  }
-  .rank-badge {
-    font-size: 0.9rem;
-    padding: 0.2rem 0.6rem;
-    margin-right: 0.5rem;
-  }
-  .entry-score {
-    font-size: 0.95rem;
-    margin-left: 0.5rem;
-  }
-}
 
 
 @media (max-width: 700px) {
