@@ -141,16 +141,19 @@ canvas {
 }
 
 .leaderboard-wrapper {
-  background: rgba(19, 37, 60, 0.92);
-  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08); /* lighter glass feel */
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
   margin: 1.5rem auto;
   padding-bottom: 2rem;
   width: 100%;
-  max-width: 620px;
+  max-width: 720px; /* wider on desktop */
   overflow-y: auto;
   height: calc(100% - 3rem);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 12px 44px rgba(0,0,0,0.25);
 }
+
 
 
 
@@ -200,11 +203,13 @@ canvas {
 
 /* Header Text */
 #leaderboardHeader {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   text-align: center;
   color: #fff;
-  font-weight: 800;
+  font-weight: 900;
   margin: 0.5rem 0 0.25rem;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
 }
 
 /* Column Titles Row */
@@ -217,7 +222,7 @@ canvas {
   color: #8fcaf5;
   padding: 0.65rem 1.5rem;
   width: 100%;
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
   box-sizing: border-box;
   text-shadow: 0 1px 3px #0005;
@@ -240,7 +245,7 @@ canvas {
   font-weight: 600;
   color: #fff;
   width: 100%;
-  max-width: 560px;
+  max-width: 720px;
   box-shadow: 0 1px 4px #1da5f933;
 }
 .rank-badge {
