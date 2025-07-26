@@ -320,7 +320,7 @@ function create() {
   }
 });
 
-  bestScoreText = this.bestScoreText = this.add.text(16, 16, 'Score: 0', {
+bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
   fontFamily: 'Poppins',
   fontSize: '28px',
   fontStyle: 'bold',
@@ -335,6 +335,7 @@ function create() {
     fill: true
   }
 });
+
 
 
 
