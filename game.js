@@ -172,7 +172,11 @@ async function showHomeLeaderboard() {
       list.appendChild(li);
     });
 
-    document.getElementById('leaderboard-screen').style.display = 'flex';
+const lb = document.getElementById('leaderboard-screen');
+lb.style.display = 'flex';
+requestAnimationFrame(() => lb.classList.add('visible'));
+
+
 
   } catch (e) {
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -867,10 +871,16 @@ window.addEventListener('DOMContentLoaded', () => {
   fetch('/api/leaderboard?top=100'); // Triggers background load, result discarded
 });
 
-  document.getElementById('viewLeaderboardBtn').addEventListener('click', showHomeLeaderboard);
-  document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
-    document.getElementById('leaderboard-screen').style.display = 'none';
-  });
+document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
+  showHomeLeaderboard();
+});
+
+document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+  const lb = document.getElementById('leaderboard-screen');
+  lb.classList.remove('visible');
+  lb.style.display = 'none';
+});
+
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 });
