@@ -312,10 +312,10 @@ function create() {
   stroke: '#1a7ef2',
   strokeThickness: 3,
   shadow: {
-    offsetX: 2,
-    offsetY: 2,
+    offsetX: 1,
+    offsetY: 1,
     color: '#000000',
-    blur: 4,
+    blur: 1,
     fill: true
   }
 });

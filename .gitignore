@@ -2,13 +2,6 @@
 node_modules
 .vercel
 .env
-index_commented.html
-index-restart.html
-working_restart.html
-better_fonts.html
-baseline.html
-latest.html
-game1.js
-game2.js
-game3.js
-game4.js
+index_save.html
+styles_save.css
+game_save.js
