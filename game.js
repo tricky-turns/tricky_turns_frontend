@@ -304,10 +304,22 @@ function create() {
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins', fontSize: '36px',
-    color: '#fff', stroke: '#000', strokeThickness: 4
-  }).setDepth(2).setVisible(false);
+  scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
+  fontFamily: 'Poppins',
+  fontSize: '28px',
+  fontStyle: 'bold',
+  color: '#ffffff',
+  stroke: '#1a7ef2',
+  strokeThickness: 3,
+  shadow: {
+    offsetX: 2,
+    offsetY: 2,
+    color: '#000000',
+    blur: 4,
+    fill: true
+  }
+});
+
   bestScoreText = this.add.text(16, 64, 'Best: ' + highScore, {
     fontFamily: 'Poppins', fontSize: '28px',
     color: '#fff', stroke: '#000', strokeThickness: 3
