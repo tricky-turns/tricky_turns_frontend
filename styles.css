@@ -426,20 +426,6 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   position: relative;
 }
 
-#leaderboard li::before,
-#leaderboardEntriesHome li::before {
-  content: attr(data-rank);
-  background: #3EAFF6;
-  color: #001A42;
-  font-size: 1.09rem;
-  font-weight: 700;
-  padding: 0.23rem 0.9rem;
-  border-radius: 1.3rem;
-  position: absolute;
-  left: -2.5rem;
-  min-width: 2.1rem;
-  text-align: center;
-}
 
 @media (max-width: 700px) {
   #leaderboard {
