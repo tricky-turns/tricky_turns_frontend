@@ -232,52 +232,63 @@ canvas {
   justify-content: flex-start;
   background: rgba(255, 255, 255, 0.07);
   border-radius: 1rem;
-  padding: 0.7rem 1.6rem;
-  margin-bottom: 0.6rem;
+  padding: 0.6rem 1.4rem;
+  margin-bottom: 0.5rem;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.03rem;
+  font-size: 1.02rem;
   font-weight: 600;
   color: #fff;
-  box-shadow: 0 1px 4px #3EAFF633;
-  gap: 1rem;
-  max-width: 90%;
+  box-shadow: 0 1px 3px #3EAFF633;
+  gap: 0.8rem;
+  max-width: 92%;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Group: Badge + Username (left side) */
+/* Badge */
 .rank-badge {
   background: #3EAFF6;
   color: #001A42;
-  font-size: 0.94rem;
+  font-size: 0.93rem;
   font-weight: 700;
-  padding: 0.3rem 0.8rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 1.2rem;
   flex-shrink: 0;
   text-align: center;
-  margin-right: 0.5rem;
 }
 
+/* Username */
 .entry-username {
   flex: 1;
   text-align: left;
-  overflow: hidden;
   white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 600;
 }
 
-/* Score: moderately right-aligned, not extreme edge */
+/* Score */
 .entry-score {
   color: #3EAFF6;
   font-weight: 700;
-  font-size: 0.98rem;
+  font-size: 0.97rem;
   text-align: right;
   flex-shrink: 0;
-  padding-left: 1rem;
-  min-width: 3.5rem;
+  padding-left: 0.6rem;
+  min-width: 3rem;
 }
 
+
+@media (max-width: 600px) {
+  #leaderboard li,
+  #leaderboardEntriesHome li {
+    padding: 0.6rem 1rem;
+    gap: 0.6rem;
+  }
+  .entry-score {
+    font-size: 0.9rem;
+    min-width: 2.5rem;
+  }
+}
 
 
 @media (max-width: 700px) {
