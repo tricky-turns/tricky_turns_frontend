@@ -1,18 +1,3 @@
-
-let cachedLeaderboard = null;
-let leaderboardFetched = false;
-
-async function preloadLeaderboard() {
-  try {
-    const res = await fetch('/api/leaderboard?top=100');
-    cachedLeaderboard = await res.json();
-    leaderboardFetched = true;
-  } catch (err) {
-    console.warn('Failed to preload leaderboard:', err);
-  }
-}
-
-
 // ==========================
 //   TRICKY TURNS GAME CONFIG
 // ==========================
@@ -160,27 +145,52 @@ function fadeOut(callback, duration = 600) {
 }
 
 async function showHomeLeaderboard() {
-  const lb = document.getElementById('leaderboard-screen');
-  lb.style.display = 'flex';
-  requestAnimationFrame(() => lb.classList.add('visible'));
+  if (isLeaderboardLoading) return;
+  isLeaderboardLoading = true;
 
+  const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+  const spinner = document.getElementById('spinner');
   const list = document.getElementById('leaderboardEntriesHome');
-  list.innerHTML = '';
 
-  const data = leaderboardFetched
-    ? cachedLeaderboard
-    : await fetch('/api/leaderboard?top=100').then(r => r.json());
+  if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = true;
+  if (spinner) spinner.style.display = 'block';
 
-  data.forEach((e, i) => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <span class="rank-badge">#${i + 1}</span>
-      <span class="entry-username">${e.username}</span>
-      <span class="entry-score">${e.score}</span>`;
-    li.style.setProperty('--i', i);
-    li.classList.add('animated-entry');
-    list.appendChild(li);
-  });
+  // Clear previous entries
+  while (list.firstChild) list.removeChild(list.firstChild);
+
+  try {
+    const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+
+    while (list.firstChild) list.removeChild(list.firstChild);
+    data.forEach((e, i) => {
+      const li = document.createElement('li');
+      // Three column style
+      li.innerHTML = `
+        <span class="rank-badge">#${i + 1}</span>
+        <span class="entry-username">${e.username}</span>
+        <span class="entry-score">${e.score}</span>`;
+      list.appendChild(li);
+    });
+
+const lb = document.getElementById('leaderboard-screen');
+lb.style.display = 'flex';
+requestAnimationFrame(() => lb.classList.add('visible'));
+
+
+
+  } catch (e) {
+    while (list.firstChild) list.removeChild(list.firstChild);
+    const errorLi = document.createElement('li');
+    errorLi.textContent = 'Failed to load leaderboard.';
+    errorLi.style.color = '#F66';
+    errorLi.style.fontStyle = 'italic';
+    errorLi.style.textAlign = 'center';
+    list.appendChild(errorLi);
+  } finally {
+    isLeaderboardLoading = false;
+    if (viewLeaderboardBtn) viewLeaderboardBtn.disabled = false;
+    if (spinner) spinner.style.display = 'none';
+  }
 }
 
 
@@ -304,41 +314,19 @@ function create() {
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-  fontFamily: 'Poppins',
-  fontSize: '28px',
-  fontStyle: 'bold',
-  color: '#ffffff',
-  stroke: '#1a7ef2',
-  strokeThickness: 3,
-  shadow: {
-    offsetX: 1,
-    offsetY: 1,
-    color: '#000000',
-    blur: 1,
-    fill: true
-  }
-});
+  scoreText = this.add.text(16, 16, 'Score: 0', {
+    fontFamily: 'Poppins', fontSize: '36px',
+    color: '#fff', stroke: '#000', strokeThickness: 4
+  }).setDepth(2).setVisible(false);
+  bestScoreText = this.add.text(16, 64, 'Best: ' + highScore, {
+    fontFamily: 'Poppins', fontSize: '28px',
+    color: '#fff', stroke: '#000', strokeThickness: 3
+  }).setDepth(2).setVisible(false);
 
-bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-  fontFamily: 'Poppins',
-  fontSize: '28px',
-  fontStyle: 'bold',
-  color: '#ffffff',
-  stroke: '#1a7ef2',
-  strokeThickness: 3,
-  shadow: {
-    offsetX: 1,
-    offsetY: 1,
-    color: '#000000',
-    blur: 1,
-    fill: true
-  }
-});
-
-
-
-
+  window.speedTestText = this.add.text(16, 100, 'Speed: 3.00', {
+    fontFamily: 'Poppins', fontSize: '22px',
+    color: '#eaeaea', stroke: '#222', strokeThickness: 2
+  }).setDepth(2).setVisible(true);
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
@@ -388,6 +376,7 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
         let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
         speed = Math.min(speed + ramp, maxSpeed);
       }
+      if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
   });
 
@@ -878,9 +867,9 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
-  const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
-  leaderboardBtn.addEventListener('mouseenter', preloadLeaderboard);
-  leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
+  document.getElementById('viewLeaderboardBtn').addEventListener('mouseenter', () => {
+  fetch('/api/leaderboard?top=100'); // Triggers background load, result discarded
+});
 
 document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
   showHomeLeaderboard();
@@ -895,3 +884,35 @@ document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 });
+
+
+async function syncBestScore(username, score) {
+  try {
+    await fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${window?.Pi?.authToken || ''}`
+      },
+      body: JSON.stringify({ score })
+    });
+  } catch (err) {
+    console.warn('Failed to sync score:', err);
+  }
+}
+
+async function fetchAndShowRank() {
+  try {
+    const res = await fetch('/api/leaderboard/rank', {
+      headers: {
+        'Authorization': `Bearer ${window?.Pi?.authToken || ''}`
+      }
+    });
+    const data = await res.json();
+    if (data?.rank) {
+      document.getElementById("rankMessage").textContent = `Global Rank: #${data.rank}`;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch rank:', err);
+  }
+}
