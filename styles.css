@@ -481,3 +481,54 @@ overflow-y: auto;
   flex-basis: 3.5rem;
   text-align: right;
 }
+
+.leaderboard-columns {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #8fcaf5;
+  padding: 0.65rem 1.5rem; /* Match li padding exactly */
+  margin: 0;
+  width: 100%;
+  max-width: 520px;
+  box-sizing: border-box;
+  text-shadow: 0 1px 3px #0005;
+}
+#leaderboardEntriesHome li {
+  padding: 0.65rem 1.5rem;
+  max-width: 520px;
+  margin: 0.4rem auto;
+}
+
+.leaderboard-sticky {
+  position: sticky;
+  top: 0;
+  background: #13253c;
+  z-index: 15;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  width: 100%;
+  max-width: 520px;
+  padding-bottom: 0.25rem;
+}
+
+/* Close now inside sticky block */
+#closeLeaderboardBtn {
+  margin-left: auto;
+  margin-top: 0.75rem;
+  margin-right: 1rem;
+  background: #3EAFF6;
+  z-index: 11;
+}
+
+#leaderboardHeader {
+  font-size: 1.6rem;
+  text-align: center;
+  color: #fff;
+  font-weight: 800;
+  margin: 0.5rem 0 0.25rem;
+}
+
+#leaderboardEntriesHome {
+  margin-top: 0.25rem; /* ensures no overlap behind sticky header */
+}
