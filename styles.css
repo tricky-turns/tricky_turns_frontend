@@ -180,45 +180,48 @@ canvas {
   inset: 0;
   background: rgba(0, 0, 0, 0.88);
   z-index: 5;
-  align-items: flex-start;
-  justify-content: center;
   flex-direction: column;
-  padding-top: 4.2rem;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 2rem;
   width: 100vw;
   height: 100vh;
 }
 
+/* Title pinned near top */
+#leaderboard-screen h2 {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 12px #1b314f88;
+  position: relative;
+  top: 0.3rem;
+}
+
 /* Leaderboard container */
 #leaderboard {
+  margin-top: 1rem;
+  width: 92vw;
+  max-width: 480px;
   background: rgba(19, 37, 60, 0.97);
   border: 2px solid #3EAFF6;
-  border-radius: 20px;
-  box-shadow: 0 4px 28px #3EAFF655;
-  padding: 1.8rem 1.8rem 2.2rem;
-  width: 92vw;
-  max-width: 520px;
-  max-height: 66vh;
+  border-radius: 18px;
+  box-shadow: 0 3px 24px #3EAFF644;
+  padding: 1.4rem 1.2rem;
+  max-height: 65vh;
   overflow-y: auto;
-  margin: 0 auto;
 }
 
-/* Title */
-#leaderboard-screen h2 {
-  text-align: center;
-  color: #fff;
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0 auto 1.4rem auto;
-  padding-top: 0;
-}
-
-/* Entry list */
+/* Entry List */
 #leaderboard ol,
 #leaderboardEntriesHome {
   list-style: none;
-  margin: 0;
   padding: 0;
-  width: 100%;
+  margin: 0;
 }
 
 #leaderboard li,
@@ -226,29 +229,29 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  padding: 0.65rem 1.2rem;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 0.9rem;
+  padding: 0.55rem 1rem;
   margin-bottom: 0.5rem;
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 600;
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  box-shadow: 0 1px 4px #3EAFF633;
+  box-shadow: 0 1px 3px #3EAFF622;
 }
 
-/* Rank badge */
+/* Rank Badge */
 .rank-badge {
   background: #3EAFF6;
   color: #001A42;
-  font-size: 1rem;
   font-weight: 700;
-  padding: 0.3rem 0.8rem;
-  border-radius: 1.3rem;
-  min-width: 2.2em;
-  text-align: center;
+  font-size: 0.95rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 1.2rem;
   margin-right: 0.8rem;
   flex-shrink: 0;
+  min-width: 2.2rem;
+  text-align: center;
 }
 
 /* Username */
@@ -258,29 +261,29 @@ canvas {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 600;
 }
 
 /* Score */
 .entry-score {
-  color: #3EAFF6;
   font-weight: 700;
-  font-size: 1rem;
-  min-width: 2.8em;
+  color: #3EAFF6;
   text-align: right;
   margin-left: 0.8rem;
+  min-width: 2.8rem;
   flex-shrink: 0;
+  font-size: 0.98rem;
 }
 
-/* Close button */
+/* Close Button */
 #closeLeaderboardBtn {
   position: absolute;
-  top: 1.4rem;
+  top: 1.2rem;
   right: 2.2rem;
   background: #3EAFF6;
   color: white;
   font-weight: 700;
-  padding: 0.55rem 1.4rem;
+  padding: 0.5rem 1.3rem;
+  font-size: 0.98rem;
   border: none;
   border-radius: 1.5rem;
   cursor: pointer;
@@ -289,8 +292,9 @@ canvas {
   transition: background 0.15s;
 }
 #closeLeaderboardBtn:hover {
-  background: #2595e8;
+  background: #2d96e2;
 }
+
 
 @media (max-width: 700px) {
   #leaderboard {
