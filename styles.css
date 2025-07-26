@@ -204,17 +204,29 @@ canvas {
 
 /* Container */
 #leaderboard {
-  margin-top: 1.5rem;
-  width: 96vw;
-  max-width: 620px;
   background: rgba(19, 37, 60, 0.97);
   border: 2px solid #3EAFF6;
   border-radius: 20px;
   box-shadow: 0 4px 28px #3EAFF655;
   padding: 1.6rem 2rem;
-  max-height: 64vh;
-  overflow-y: auto;
+  width: 92vw;
+  max-width: 520px;
+  max-height: 64vh; /* <--- adjust this if needed */
+  overflow-y: auto;  /* <--- enables scrolling */
+  margin: 1.5rem auto 0;
+  scroll-behavior: smooth;
 }
+#leaderboard::-webkit-scrollbar {
+  width: 8px;
+}
+#leaderboard::-webkit-scrollbar-thumb {
+  background-color: #3EAFF6;
+  border-radius: 4px;
+}
+#leaderboard::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 
 /* List */
 #leaderboard ol,
