@@ -95,6 +95,23 @@ async function initAuth() {
   try {
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
     piUsername = auth.user.username;
+    if (auth?.accessToken) {
+  window.Pi.authToken = auth.accessToken;
+  try {
+    const testRes = await fetch('/api/auth-test', {
+      headers: {
+        'Authorization': `Bearer ${auth.accessToken}`
+      }
+    });
+    const result = await testRes.text();
+    console.log('Auth test response:', result);
+  } catch (err) {
+    console.warn('Auth test failed:', err);
+  }
+}
+
+    window.piAccessToken = auth.accessToken;
+    console.log("✅ Pi Access Token:", window.piAccessToken);
     document.getElementById('username').innerText = piUsername;
     document.getElementById('loginBtn').style.display = 'none';
     useLocalHighScore = false;
@@ -888,11 +905,12 @@ document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
 
 async function syncBestScore(username, score) {
   try {
+    console.log("⬆️ Syncing best score with token:", window.piAccessToken);
     await fetch('/api/leaderboard', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${window?.Pi?.authToken || ''}`
+        'Authorization': `Bearer ${window.piAccessToken || ''}`
       },
       body: JSON.stringify({ score })
     });
@@ -903,9 +921,10 @@ async function syncBestScore(username, score) {
 
 async function fetchAndShowRank() {
   try {
+    console.log("🔍 Fetching rank with token:", window.piAccessToken)
     const res = await fetch('/api/leaderboard/rank', {
       headers: {
-        'Authorization': `Bearer ${window?.Pi?.authToken || ''}`
+        'Authorization': `Bearer ${window.piAccessToken || ''}`
       }
     });
     const data = await res.json();
