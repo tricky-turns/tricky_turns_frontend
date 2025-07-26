@@ -337,10 +337,7 @@ function create() {
 });
 
 
-  window.speedTestText = this.add.text(16, 100, 'Speed: 3.00', {
-    fontFamily: 'Poppins', fontSize: '22px',
-    color: '#eaeaea', stroke: '#222', strokeThickness: 2
-  }).setDepth(2).setVisible(true);
+
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
@@ -390,7 +387,6 @@ function create() {
         let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
         speed = Math.min(speed + ramp, maxSpeed);
       }
-      if (window.speedTestText) window.speedTestText.setText('Speed: ' + speed.toFixed(2));
     }
   });
 
