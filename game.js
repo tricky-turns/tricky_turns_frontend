@@ -320,10 +320,22 @@ function create() {
   }
 });
 
-  bestScoreText = this.add.text(16, 64, 'Best: ' + highScore, {
-    fontFamily: 'Poppins', fontSize: '28px',
-    color: '#fff', stroke: '#000', strokeThickness: 3
-  }).setDepth(2).setVisible(false);
+  bestScoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
+  fontFamily: 'Poppins',
+  fontSize: '28px',
+  fontStyle: 'bold',
+  color: '#ffffff',
+  stroke: '#1a7ef2',
+  strokeThickness: 3,
+  shadow: {
+    offsetX: 2,
+    offsetY: 2,
+    color: '#000000',
+    blur: 4,
+    fill: true
+  }
+});
+
 
   window.speedTestText = this.add.text(16, 100, 'Speed: 3.00', {
     fontFamily: 'Poppins', fontSize: '22px',
