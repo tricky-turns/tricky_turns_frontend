@@ -165,7 +165,10 @@ async function showHomeLeaderboard() {
     data.forEach((e, i) => {
       const li = document.createElement('li');
       li.setAttribute('data-rank', `#${i + 1}`);
-      li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
+      li.innerHTML = `<span class="rank-badge" data-rank="#${i + 1}">#${i + 1}</span>
+  <span class="entry-username">${e.username}</span>
+  <span class="entry-score">${e.score}</span>`;
+
       list.appendChild(li);
     });
 
