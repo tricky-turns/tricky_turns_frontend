@@ -164,11 +164,11 @@ async function showHomeLeaderboard() {
     while (list.firstChild) list.removeChild(list.firstChild);
     data.forEach((e, i) => {
       const li = document.createElement('li');
-      li.setAttribute('data-rank', `#${i + 1}`);
-      li.innerHTML = `<span class="rank-badge" data-rank="#${i + 1}">#${i + 1}</span>
-  <span class="entry-username">${e.username}</span>
-  <span class="entry-score">${e.score}</span>`;
-
+      // Three column style
+      li.innerHTML = `
+        <span class="rank-badge">#${i + 1}</span>
+        <span class="entry-username">${e.username}</span>
+        <span class="entry-score">${e.score}</span>`;
       list.appendChild(li);
     });
 
