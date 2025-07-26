@@ -677,3 +677,66 @@ canvas { display: block; margin: 0 auto; visibility: hidden; z-index: 1; }
   .rank-badge { font-size: 0.92em; margin-right: 0.5em; }
   .entry-score { min-width: 2.1em; margin-left: 0.3em; }
 }
+
+#leaderboard li,
+#leaderboardEntriesHome li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.10);
+  border-radius: 1.15em;
+  margin-bottom: 0.54rem;
+  padding: 0.72rem 2.2rem 0.72rem 2.2rem;
+  color: #fff;
+  font-size: 1.14rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  box-shadow: 0 1px 6px #3EAFF61f;
+  min-width: 0;
+  width: 100%;
+  gap: 0;
+}
+
+.rank-badge {
+  min-width: 3.1em;
+  text-align: left;
+  background: #3EAFF6;
+  color: #001A42;
+  font-size: 1.06em;
+  font-weight: 700;
+  padding: 0.22em 1.15em;
+  border-radius: 1.35em;
+  margin-right: 1.8em;
+  box-shadow: 0 1px 5px #3EAFF622;
+  display: inline-block;
+}
+
+.entry-username {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+
+.entry-score {
+  min-width: 3.5em;
+  text-align: right;
+  font-weight: 700;
+  color: #3EAFF6;
+  letter-spacing: 0.01em;
+  margin-left: 1.5em;
+  display: inline-block;
+}
+
+@media (max-width: 700px) {
+  #leaderboard li,
+  #leaderboardEntriesHome li {
+    padding-left: 0.7em;
+    padding-right: 0.7em;
+    font-size: 0.96rem;
+  }
+  .rank-badge { font-size: 0.92em; margin-right: 0.5em; }
+  .entry-score { min-width: 2em; margin-left: 0.3em; }
+}
