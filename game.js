@@ -421,10 +421,22 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
-  countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins', fontSize: '96px',
-    color: '#fff', stroke: '#000', strokeThickness: 6
-  }).setOrigin(0.5).setDepth(1000).setVisible(false);
+countdownText = this.add.text(cx, cy, '', {
+  fontFamily: 'Poppins',
+  fontSize: '96px',
+  fontStyle: 'bold',
+  color: '#ffffff',
+  stroke: '#1a7ef2',
+  strokeThickness: 6,
+  shadow: {
+    offsetX: 2,
+    offsetY: 2,
+    color: '#000000',
+    blur: 4,
+    fill: true
+  }
+}).setOrigin(0.5).setDepth(1000).setVisible(false);
+
   this.countdownText = countdownText;
   this.scoreText = scoreText;
   this.bestScoreText = bestScoreText;
