@@ -433,3 +433,13 @@ canvas {
   opacity: 0.5;
   font-style: italic;
 }
+
+#user-info.guest {
+  opacity: 0.4;
+  font-style: italic;
+}
+
+#user-info.logged-in {
+  opacity: 1;
+  font-style: normal;
+}

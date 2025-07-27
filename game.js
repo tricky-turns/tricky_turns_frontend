@@ -140,6 +140,10 @@ async function initAuth() {
     } else {
       document.getElementById('user-info').style.display = 'none';
     }
+    const userInfo = document.getElementById('user-info');
+userInfo.classList.toggle('guest', useLocalHighScore);
+userInfo.classList.toggle('logged-in', !useLocalHighScore);
+
     document.getElementById('loginBtn').style.display = 'none';
 
     useLocalHighScore = false;
@@ -899,8 +903,7 @@ function handleGoHome() {
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-    document.getElementById('user-info').style.display =
-    useLocalHighScore ? 'none' : 'flex';
+    document.getElementById('user-info').style.display = useLocalHighScore ? 'none' : 'flex';
 
     document.getElementById('start-screen').style.display = 'flex';
     document.getElementById('pause-overlay').style.display = 'none';
