@@ -777,7 +777,7 @@ function triggerGameOver() {
       loadingLi.style.fontStyle = 'italic';
       loadingLi.style.textAlign = 'center';
       list.appendChild(loadingLi);
-    }
+    
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
