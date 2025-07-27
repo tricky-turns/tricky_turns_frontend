@@ -5,7 +5,7 @@ const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
 async function preloadLeaderboard() {
   try {
-    const res = await fetch('${BACKEND_BASE}/api/leaderboard?top=100');
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`)
     cachedLeaderboard = await res.json();
     leaderboardFetched = true;
   } catch (err) {
