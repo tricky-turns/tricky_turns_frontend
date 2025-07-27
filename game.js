@@ -835,7 +835,6 @@ function handleStartGame() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
     });
   }, 200);
 }
@@ -901,7 +900,6 @@ function handlePlayAgain() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
-      scene.scheduleSpawn ? scene.scheduleSpawn() : null;
     });
   }, 0);
 }
