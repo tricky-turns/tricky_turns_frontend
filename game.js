@@ -151,10 +151,12 @@ async function initAuth() {
     userInfo.classList.remove('logged-in');
   }
   userInfo.style.display = 'flex'; // ✅ this was missing for guests
+  userInfo.classList.add('visible'); 
 
 
   // ✅ Now show the user info and screen
   userInfo.style.display = 'flex';
+  userInfo.classList.add('visible'); 
   startScreen.classList.add('ready');
 
   // Fetch or fallback high score
@@ -928,7 +930,8 @@ function handleGoHome() {
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-    document.getElementById('user-info').style.display = useLocalHighScore ? 'none' : 'flex';
+    document.getElementById('user-info').style.display = 'flex';
+
 
     document.getElementById('start-screen').style.display = 'flex';
     document.getElementById('pause-overlay').style.display = 'none';
