@@ -155,7 +155,6 @@ async function initAuth() {
 
 
   // ✅ Now show the user info and screen
-  userInfo.style.display = 'flex';
   userInfo.classList.add('visible'); 
   startScreen.classList.add('ready');
 
@@ -941,6 +940,9 @@ function handleGoHome() {
 
     fadeOut();
   });
+  document.getElementById('user-info').style.display = 'flex';
+document.getElementById('user-info').classList.add('visible');
+
 }
 
 function handlePlayAgain() {
