@@ -535,6 +535,7 @@ scheduleSpawnEvents(this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 if (pendingRestart) {
+  this.physics.resume();
   this.scoreText.setVisible(true);
   this.bestScoreText.setVisible(true);
   this.pauseIcon.setVisible(true);
