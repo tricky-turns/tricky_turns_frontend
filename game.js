@@ -771,8 +771,7 @@ function triggerGameOver() {
     document.getElementById('game-over-screen').style.display = 'flex';
 
     const list = document.getElementById('leaderboardEntries');
-    if (list) {
-      while (list.firstChild) list.removeChild(list.firstChild);
+    if (list) list.innerHTML = '';
       const loadingLi = document.createElement('li');
       loadingLi.textContent = 'Loading leaderboard...';
       loadingLi.style.fontStyle = 'italic';
