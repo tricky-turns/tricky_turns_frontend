@@ -770,72 +770,51 @@ function triggerGameOver() {
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
-
     document.getElementById('finalScore').innerText = score;
-
     if (score > highScore) {
       bestScoreText.setText('Best: ' + score);
       highScore = score;
       sfx.newBest.play();
     }
-
     document.getElementById('bestScore').innerText = highScore;
     bestScoreText.setText('Best: ' + highScore);
-
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
-
-    // ✅ Reorder score/best display BEFORE revealing game over screen
-const bestBlock = document.getElementById('bestBlock');
-const scoreBlock = document.getElementById('scoreBlock');
-const resultsBlock = document.getElementById('resultsBlock');
-
-if (bestBlock && scoreBlock && resultsBlock) {
-  // Clear container and re-insert in correct order
-  resultsBlock.innerHTML = '';
-  if (score >= highScore) {
-    resultsBlock.appendChild(scoreBlock);
-    resultsBlock.appendChild(bestBlock);
-  } else {
-    resultsBlock.appendChild(bestBlock);
-    resultsBlock.appendChild(scoreBlock);
-  }
-}
-
 
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'flex';
 
     const list = document.getElementById('leaderboardEntries');
     if (list) list.innerHTML = '';
-    const loadingLi = document.createElement('li');
-    loadingLi.textContent = 'Loading leaderboard...';
-    loadingLi.style.fontStyle = 'italic';
-    loadingLi.style.textAlign = 'center';
-    list.appendChild(loadingLi);
-
+      const loadingLi = document.createElement('li');
+      loadingLi.textContent = 'Loading leaderboard...';
+      loadingLi.style.fontStyle = 'italic';
+      loadingLi.style.textAlign = 'center';
+      list.appendChild(loadingLi);
+    
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
     (async () => {
       if (!useLocalHighScore) {
         try {
-          await fetch(`${BACKEND_BASE}/api/leaderboard`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${piToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              score: highScore,
-              username: piUsername
-            })
-          });
+await fetch(`${BACKEND_BASE}/api/leaderboard`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${piToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    score: highScore,
+    username: piUsername  // ✅ send username along with score
+  })
+});
+
+
         } catch (e) { /* ignore */ }
       }
-
       try {
         const data = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`).then(r => r.json());
         if (list) {
@@ -847,30 +826,29 @@ if (bestBlock && scoreBlock && resultsBlock) {
             list.appendChild(li);
           });
         }
+if (!useLocalHighScore && piToken) {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
+      headers: { Authorization: `Bearer ${piToken}` }
+    });
+    if (res.ok) {
+      const { rank } = await res.json();
+      if (rankMessage) rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
+      rankMessage.classList.remove('dimmed');
+    } else {
+      if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+    }
+  } catch (e) {
+    if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+  }
+} else {
+  if (rankMessage) {
+  rankMessage.innerText = `🔓 Sign in to track your global rank`;
+  rankMessage.classList.add('dimmed');
+}
 
-        if (!useLocalHighScore && piToken) {
-          try {
-            const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
-              headers: { Authorization: `Bearer ${piToken}` }
-            });
-            if (res.ok) {
-              const { rank } = await res.json();
-              if (rankMessage) {
-                rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
-                rankMessage.classList.remove('dimmed');
-              }
-            } else {
-              if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-            }
-          } catch (e) {
-            if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-          }
-        } else {
-          if (rankMessage) {
-            rankMessage.innerText = `🔓 Sign in to track your global rank`;
-            rankMessage.classList.add('dimmed');
-          }
-        }
+}
+
 
       } catch (e) {
         if (list) {
@@ -887,7 +865,6 @@ if (bestBlock && scoreBlock && resultsBlock) {
     })();
   });
 }
-
 
 
 function collectPoint(_, pt) {
