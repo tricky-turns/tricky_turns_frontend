@@ -127,15 +127,6 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
-  // ✅ Immediately show guest view to avoid blank UI
-  piUsername = 'Guest';
-  useLocalHighScore = true;
-  usernameLabel.innerText = `Guest`;
-  loginBtn.style.display = 'inline-block';
-  userInfo.classList.add('guest');
-  userInfo.classList.remove('logged-in');
-  userInfo.style.display = 'flex';
-
   try {
     const scopes = ['username'];
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
@@ -143,11 +134,12 @@ async function initAuth() {
     piToken = auth.accessToken;
     useLocalHighScore = false;
   } catch (e) {
+    piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
   }
 
-  // ✅ Update UI based on final auth result
+  // ✅ Apply final resolved user state
   if (useLocalHighScore) {
     usernameLabel.innerText = `Guest`;
     loginBtn.style.display = 'inline-block';
@@ -159,12 +151,13 @@ async function initAuth() {
     userInfo.classList.add('logged-in');
     userInfo.classList.remove('guest');
   }
-  userInfo.style.display = 'flex';
 
-  // ✅ Make start screen visible now that auth is resolved
+  // ✅ Only now, reveal the user UI and start screen
+  userInfo.classList.add('visible');
+  userInfo.style.display = 'flex';
   startScreen.classList.add('ready');
 
-  // ✅ Fetch existing score if authenticated
+  // ✅ Load backend score if signed in
   if (!useLocalHighScore && piToken) {
     try {
       const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
@@ -187,6 +180,7 @@ async function initAuth() {
     bestScoreText.setText('Best: ' + highScore);
   }
 }
+
 
 
 

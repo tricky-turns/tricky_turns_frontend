@@ -477,3 +477,11 @@ canvas {
 #user-info[style*="display: flex"] {
   opacity: 1;
 }
+
+#user-info {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+#user-info.visible {
+  opacity: 1;
+}
