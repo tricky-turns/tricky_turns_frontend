@@ -415,6 +415,26 @@ function create() {
 });
 
 bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
+})
+
+
+newBestText = this.newBestText = this.add.text(16, 16, '', {
+  fontFamily: 'Poppins',
+  fontSize: '30px',
+  fontStyle: 'bold',
+  color: '#fff176',
+  stroke: '#ff9800',
+  strokeThickness: 4,
+  shadow: {
+    offsetX: 1,
+    offsetY: 1,
+    color: '#000000',
+    blur: 2,
+    fill: true
+  }
+}).setVisible(false);
+
+
   fontFamily: 'Poppins',
   fontSize: '28px',
   fontStyle: 'bold',
@@ -866,35 +886,62 @@ function collectPoint(_, pt) {
   pt.destroy();
   score++;
   sfx.point.play();
-  scoreText.setText('Score: ' + score);
 
-  scene.tweens.add({
-    targets: scoreText,
-    scaleX: 1.1, scaleY: 1.1,
-    yoyo: true, duration: 80, ease: 'Sine.easeOut'
-  });
-
-  // ✅ Update best score live with animation
   if (score > highScore) {
+    if (highScore === score - 1) {
+      // first time beating best — celebrate
+      sfx.newBest.play();
+      bestScoreText.setVisible(false);
+      scoreText.setVisible(false);
+      newBestText.setVisible(true);
+
+      // floating label
+      const popup = scene.add.text(140, 60, '🎉 NEW HIGH SCORE!', {
+        fontFamily: 'Poppins',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: '#ffeb3b',
+        stroke: '#f57f17',
+        strokeThickness: 3,
+        shadow: {
+          offsetX: 1,
+          offsetY: 1,
+          color: '#000000',
+          blur: 2,
+          fill: true
+        }
+      }).setAlpha(0.9);
+
+      scene.tweens.add({
+        targets: popup,
+        y: 20,
+        alpha: 0,
+        duration: 1200,
+        ease: 'Cubic.easeOut',
+        onComplete: () => popup.destroy()
+      });
+    }
+
     highScore = score;
-    bestScoreText.setText('Best: ' + highScore);
+    newBestText.setText('🏆 NEW BEST: ' + highScore);
 
-    // Optional: glow or pulse animation
     scene.tweens.add({
-      targets: bestScoreText,
-      scaleX: 1.15,
-      scaleY: 1.15,
-      alpha: { from: 1, to: 0.6 },
+      targets: newBestText,
+      scaleX: 1.2,
+      scaleY: 1.2,
       yoyo: true,
-      ease: 'Sine.easeInOut',
-      duration: 300,
-      repeat: 2
+      duration: 250,
+      ease: 'Sine.easeInOut'
     });
-
-    sfx.newBest.play();
+  } else {
+    scoreText.setText('Score: ' + score);
+    scene.tweens.add({
+      targets: scoreText,
+      scaleX: 1.1, scaleY: 1.1,
+      yoyo: true, duration: 80, ease: 'Sine.easeOut'
+    });
   }
 }
-
 
 function handleStartGame() {
   sfx.uiClick.play();
@@ -906,6 +953,8 @@ function handleStartGame() {
   fadeOut(() => {
     const scene = window.game.scene.keys.default;
     scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.newBestText.setVisible(false);
     scene.bestScoreText.setVisible(true);
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
@@ -989,6 +1038,8 @@ function handlePlayAgain() {
 
     scheduleSpawnEvents(scene);
     scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.newBestText.setVisible(false);
     scene.bestScoreText.setVisible(true);
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
