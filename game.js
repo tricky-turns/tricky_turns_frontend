@@ -151,6 +151,9 @@ async function initAuth() {
   }
 
   // Show start screen now that auth is resolved
+  // ✅ Always ensure start screen shows even if auth fails
+document.getElementById('start-screen').classList.add('ready');
+
   startScreen.classList.add('ready');
 
   // Fetch remote score if logged in
