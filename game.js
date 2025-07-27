@@ -788,20 +788,22 @@ function triggerGameOver() {
     }
 
     // ✅ Reorder score/best display BEFORE revealing game over screen
-    const bestBlock = document.getElementById('bestBlock');
-    const scoreBlock = document.getElementById('scoreBlock');
-    const resultsBlock = document.getElementById('resultsBlock');
+const bestBlock = document.getElementById('bestBlock');
+const scoreBlock = document.getElementById('scoreBlock');
+const resultsBlock = document.getElementById('resultsBlock');
 
-    if (bestBlock && scoreBlock && resultsBlock) {
-      resultsBlock.innerHTML = '';
-      if (score >= highScore) {
-        resultsBlock.appendChild(scoreBlock);
-        resultsBlock.appendChild(bestBlock);
-      } else {
-        resultsBlock.appendChild(bestBlock);
-        resultsBlock.appendChild(scoreBlock);
-      }
-    }
+if (bestBlock && scoreBlock && resultsBlock) {
+  // Clear container and re-insert in correct order
+  resultsBlock.innerHTML = '';
+  if (score >= highScore) {
+    resultsBlock.appendChild(scoreBlock);
+    resultsBlock.appendChild(bestBlock);
+  } else {
+    resultsBlock.appendChild(bestBlock);
+    resultsBlock.appendChild(scoreBlock);
+  }
+}
+
 
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'flex';
