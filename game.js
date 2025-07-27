@@ -254,137 +254,29 @@ function preload() {
 }
 
 function create() {
-  // Always hide overlays and modals on game start (create)
+  // 1. Hide overlays/modals
   document.getElementById('game-over-screen').style.display = 'none';
   document.getElementById('leaderboard-screen').style.display = 'none';
   document.getElementById('pause-overlay').style.display = 'none';
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
 
-  const cam = this.cameras.main;
-  const cx = cam.centerX, cy = cam.centerY;
+  // 2. FULL GAME STATE RESET
+  gameStarted = false;
+  gameOver = false;
+  gamePaused = false;
+  score = 0;
+  angle = 0;
+  direction = 1;
+  speed = GAME_CONFIG.SPEED_START;
+  laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+  laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+  lastSpawnTimestamp = 0;
 
-  // --- Twinkling Starfield Parallax Setup ---
-  if (starfieldLayers.length) {
-    starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
-  }
-  starfieldLayers = [];
-  let t0 = performance.now() / 1000;
-  GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
-    let stars = [];
-    for (let n = 0; n < layer.count; n++) {
-      const x = Math.random() * cam.width;
-      const y = Math.random() * cam.height;
-      const size = layer.sizeMin + Math.random() * (layer.sizeMax - layer.sizeMin);
-      const baseAlpha = layer.alpha * (0.85 + 0.3 * Math.random());
-      const tw = Math.random() * Math.PI * 2;
-      const g = this.add.graphics();
-      g.fillStyle(layer.color, 1);
-      g.fillCircle(0, 0, size);
-      g.x = x;
-      g.y = y;
-      g.setDepth(-100 + i);
-      stars.push({ g, x, y, size, baseAlpha, tw });
-    }
-    starfieldLayers.push({ stars, layer });
-  });
-  // --- End Starfield Parallax ---
+  // ... your sprite, particle, and UI setup as before ...
 
-  for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
-    LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
-  }
-
-  if (this.textures.exists('orb')) this.textures.remove('orb');
-  this.make.graphics({ add: false })
-    .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
-    .fillStyle(0xffffff, 1).fillCircle(50, 50, 20)
-    .generateTexture('orb', 100, 100).destroy();
-  this.make.graphics({ add: false })
-    .fillStyle(0x0D1B2A, 1).fillRoundedRect(0, 0, 50, 50, 8)
-    .generateTexture('obstacle', 50, 50).destroy();
-  this.make.graphics({ add: false })
-    .fillStyle(0xffffff, 0.25).fillCircle(40, 40, 40)
-    .generateTexture('pointGlow', 80, 80).destroy();
-  this.make.graphics({ add: false })
-    .fillStyle(0xffffff, 1)
-    .beginPath().moveTo(25, 0).lineTo(50, 25).lineTo(25, 50).lineTo(0, 25)
-    .closePath().fillPath()
-    .generateTexture('point', 50, 50).destroy();
-
-  circle1 = this.add.image(0, 0, 'orb').setScale(1);
-  this.physics.add.existing(circle1);
-  circle1.body.setCircle(22.5, 27.5, 27.5);
-  circle2 = this.add.image(0, 0, 'orb').setScale(1);
-  this.physics.add.existing(circle2);
-  circle2.body.setCircle(22.5, 27.5, 27.5);
-
-  if (this.trail) { this.trail.destroy(); this.trail = null; }
-  this.trail = this.add.particles('orb');
-  [circle1, circle2].forEach(c => this.trail.createEmitter({
-    follow: c, lifespan: 300, speed: 0,
-    scale: { start: 0.3, end: 0 }, alpha: { start: 0.4, end: 0 },
-    frequency: 50, blendMode: 'ADD'
-  }));
-  this.events.on('shutdown', () => { if (this.trail) { this.trail.destroy(); this.trail = null; } });
-
-  obstacles = this.physics.add.group();
-  points = this.physics.add.group();
-
-  scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#1a7ef2',
-    strokeThickness: 3,
-    shadow: {
-      offsetX: 1,
-      offsetY: 1,
-      color: '#000000',
-      blur: 1,
-      fill: true
-    }
-  });
-
-  bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#1a7ef2',
-    strokeThickness: 3,
-    shadow: {
-      offsetX: 1,
-      offsetY: 1,
-      color: '#000000',
-      blur: 1,
-      fill: true
-    }
-  });
-
-  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
-  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
-  window.muteIcon = muteIcon;
-  this.sound.mute = isMuted;
-  muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-  if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
-  pauseOverlay = document.getElementById('pause-overlay');
-
-  countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins', fontSize: '96px',
-    color: '#fff', stroke: '#000', strokeThickness: 6
-  }).setOrigin(0.5).setDepth(1000).setVisible(false);
-  this.countdownText = countdownText;
-  this.scoreText = scoreText;
-  this.bestScoreText = bestScoreText;
-  this.pauseIcon = pauseIcon;
-  this.muteIcon = muteIcon;
-
-  // ==========================
-  //   START GAME / PLAY AGAIN LOGIC
-  // ==========================
+  // 3. Only start if start screen is hidden
   if (document.getElementById('start-screen').style.display === 'none') {
-    // If start screen is hidden, this is a Play Again or direct game start.
     this.scoreText.setVisible(true);
     this.bestScoreText.setVisible(true);
     this.pauseIcon.setVisible(true);
@@ -393,16 +285,15 @@ function create() {
       gameStarted = true;
     });
   } else {
-    // In home/start menu state, don't start game loop yet.
     this.scoreText.setVisible(false);
     this.bestScoreText.setVisible(false);
     this.pauseIcon.setVisible(false);
     this.muteIcon.setVisible(false);
   }
 
-  // ... rest of your existing create() code (timers, overlaps, input, etc) ...
-  // (everything below here remains unchanged in your file)
+  // ... the rest of your create function ...
 }
+
 
 
 // DELTA TIME PATCHED update
