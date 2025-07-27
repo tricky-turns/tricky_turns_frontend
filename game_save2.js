@@ -1,7 +1,5 @@
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
-let spawnIntervalUpdater = null; // Add this global with other timers
-
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
 
@@ -418,34 +416,18 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
     return interval + Phaser.Math.Between(-50, 50);
   }
 
-function scheduleSpawnEvents(scene) {
   if (spawnEvent) spawnEvent.remove(false);
-  spawnEvent = scene.time.addEvent({
+  spawnEvent = this.time.addEvent({
     delay: getSpawnInterval(),
     loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        spawnObjects.call(scene);
-        lastSpawnTimestamp = scene.time.now;
+        spawnObjects.call(this);
+        lastSpawnTimestamp = this.time.now;
       }
+      spawnEvent.delay = getSpawnInterval();
     }
   });
-
-  // Periodically (every 5s) update the spawn interval for smooth ramping
-  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
-  spawnIntervalUpdater = scene.time.addEvent({
-    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
-    loop: true,
-    callback: () => {
-      if (spawnEvent) {
-        let newDelay = getSpawnInterval();
-        spawnEvent.reset({ delay: newDelay, loop: true });
-      }
-    }
-  });
-}
-scheduleSpawnEvents(this);
-
 
   this.time.addEvent({
     delay: 250,
@@ -912,7 +894,6 @@ function handlePlayAgain() {
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
     const scene = window.game.scene.keys.default;
-    scheduleSpawnEvents(scene);
     scene.scoreText.setVisible(true);
     scene.bestScoreText.setVisible(true);
     scene.pauseIcon.setVisible(true);

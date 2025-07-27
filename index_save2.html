@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <meta name="theme-color" content="#3199E4">
+  <title>Tricky Turns</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css">
+ </head>
+ <body>
+  <div class="bg-cloud one"></div>
+  <div class="bg-cloud two"></div>
+  <div class="bg-cloud three"></div>
+  <div class="bg-cloud four"></div>
+
+  <img id="muteToggleHome" src="assets/icon-unmute.svg" style="position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; cursor: pointer; z-index: 3;">
+
+  <div id="start-screen">
+   <div id="user-info">
+    User: <strong id="username">Guest</strong>
+    <button class="btn-secondary" id="loginBtn">Login</button>
+   </div>
+
+   <div class="start-cloud one"></div>
+   <div class="start-cloud two"></div>
+   <div class="start-cloud three"></div>
+   <div class="start-cloud four"></div>
+
+   <h1>TRICKY<br/>TURNS</h1>
+   <button class="btn-primary" id="startBtn">TAP TO START</button>
+   <button class="btn-primary" id="viewLeaderboardBtn">VIEW LEADERBOARD</button>
+
+   <div class="orbit">
+    <div class="ring"></div>
+    <div class="circle top"></div>
+    <div class="circle bottom"></div>
+   </div>
+  </div>
+
+  <!-- Leaderboard -->
+<div id="leaderboard-screen">
+    <div class="bg-cloud one"></div>
+  <div class="bg-cloud two"></div>
+  <div class="bg-cloud three"></div>
+  <div class="bg-cloud four"></div>
+  <div class="leaderboard-wrapper">
+    <div class="leaderboard-sticky">
+      <button id="closeLeaderboardBtn" aria-label="Close leaderboard">✕</button>
+      <h2 id="leaderboardHeader">Top 100 Leaderboard</h2>
+      <div class="leaderboard-columns">
+        <span class="col-rank"># | User</span>
+        <span class="col-score">Score</span>
+      </div>
+    </div>
+    <ol id="leaderboardEntriesHome"></ol>
+  </div>
+</div>
+
+
+  <!-- Pause -->
+  <div id="pause-overlay">
+    <div class="paused-text">Paused</div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
+   <h1 style="color: #fff; font-size: 4rem; text-transform: uppercase; letter-spacing: 0.1rem; text-align: center; line-height: 1.1; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); -webkit-text-stroke: 0.6px #0F3D75;">GAME OVER</h1>
+
+   <div class="result-wrapper">
+    <div class="orb-bg" style="display:none;"></div>
+    <div class="results" style="color: #fff; font-size: 2rem; text-align: center;text-shadow: 0 0 4px #000; text-transform: uppercase;">
+     SCORE: <span id="finalScore">0</span><br/>
+     BEST: <span id="bestScore">0</span>
+    </div>
+   </div>
+
+   <div id="rankMessage"></div>
+   <button class="btn-primary" id="playAgainBtn">PLAY AGAIN</button>
+   <button class="btn-primary" id="homeBtn">HOME</button>
+  </div>
+
+  <div id="fade-screen"></div>
+  <script src="game.js" defer></script>
+ </body>
+</html>
