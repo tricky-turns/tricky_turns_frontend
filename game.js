@@ -134,52 +134,28 @@ async function initAuth() {
     piToken = auth.accessToken;
     useLocalHighScore = false;
 
-    // Auth succeeded — show Pi user
+    // Auth succeeded
     usernameLabel.innerText = `@${piUsername}`;
     loginBtn.style.display = 'none';
-    userInfo.classList.add('logged-in');
     userInfo.classList.remove('guest');
+    userInfo.classList.add('logged-in');
   } catch (e) {
-    // Auth failed — fallback to guest
+    // Guest fallback
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
 
-    usernameLabel.innerText = `Guest`;
+    usernameLabel.innerText = 'Guest';
     loginBtn.style.display = 'inline-block';
-    userInfo.classList.add('guest');
     userInfo.classList.remove('logged-in');
+    userInfo.classList.add('guest');
   }
-  userInfo.style.display = 'flex'; // ✅ this was missing for guests
-  userInfo.classList.add('visible'); 
 
-
-  // ✅ Now show the user info and screen
-  userInfo.classList.add('visible'); 
+  // Always show user info container
+  userInfo.style.display = 'flex';
   startScreen.classList.add('ready');
-
-  // Fetch or fallback high score
-  if (!useLocalHighScore && piToken) {
-    try {
-      const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
-        headers: { Authorization: `Bearer ${piToken}` }
-      });
-      if (res.ok) {
-        const entry = await res.json();
-        highScore = entry.score;
-      } else {
-        highScore = 0;
-      }
-    } catch (e) {
-      highScore = 0;
-    }
-  }
-
-  localStorage.setItem('tricky_high_score', highScore);
-  if (typeof bestScoreText !== 'undefined') {
-    bestScoreText.setText('Best: ' + highScore);
-  }
 }
+
 
 
 

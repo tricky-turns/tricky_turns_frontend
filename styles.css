@@ -471,24 +471,23 @@ canvas {
 }
 
 #user-info {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-#user-info[style*="display: flex"] {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-size: 1rem;
+  text-shadow: 0 0 4px #000;
   opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
-#user-info {
-  opacity: 0;
-  transition: opacity 0.3s ease;
+#user-info.guest {
+  opacity: 0.4;
+  font-style: italic;
 }
-#user-info.visible {
+
+#user-info.logged-in {
   opacity: 1;
+  font-style: normal;
 }
-#user-info {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-#user-info.visible {
-  opacity: 1;
-}
+
