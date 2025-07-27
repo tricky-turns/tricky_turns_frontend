@@ -860,8 +860,9 @@ function collectPoint(_, pt) {
   score++;
   sfx.point.play();
 
-  // === PREMIUM SCORE HANDLING ===
+  // ==== PREMIUM SCORE HANDLING ====
   if (!surpassedBest && score > highScore) {
+    // First time surpassing
     surpassedBest = true;
     scoreText.setVisible(false);
     bestScoreText.setVisible(false);
@@ -869,7 +870,7 @@ function collectPoint(_, pt) {
     newBestText.setVisible(true);
     newBestText.setText('NEW BEST: ' + score);
 
-    // Animation: Pulse/grow + play sound
+    // Flourish animation and sound
     scene.tweens.add({
       targets: newBestText,
       scaleX: 1.27, scaleY: 1.27,
@@ -877,17 +878,26 @@ function collectPoint(_, pt) {
       yoyo: true, duration: 340, ease: 'Back.easeOut'
     });
     sfx.newBest.play();
+
   } else if (surpassedBest) {
+    // Already surpassed: keep showing and updating NEW BEST
+    newBestText.setVisible(true);
     newBestText.setText('NEW BEST: ' + score);
+
+    // Small pop animation on each score increment
     scene.tweens.add({
       targets: newBestText,
       scaleX: 1.11, scaleY: 1.11,
       yoyo: true,
-      ease: 'Sine.easeInOut',
       duration: 90,
+      ease: 'Sine.easeInOut'
     });
   } else {
+    // Not yet surpassed: show Score as usual
+    scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
     scoreText.setText('Score: ' + score);
+
     scene.tweens.add({
       targets: scoreText,
       scaleX: 1.1, scaleY: 1.1,
@@ -895,6 +905,7 @@ function collectPoint(_, pt) {
     });
   }
 }
+
 
 
 function handleStartGame() {
