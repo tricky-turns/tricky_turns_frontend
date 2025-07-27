@@ -127,20 +127,34 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
-  try {
-    const scopes = ['username'];
-    const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
-    piUsername = auth.user.username;
-    piToken = auth.accessToken;
-    useLocalHighScore = false;
+  let timedOut = false;
 
-    // Auth succeeded
-    usernameLabel.innerText = `@${piUsername}`;
-    loginBtn.style.display = 'none';
-    userInfo.classList.remove('guest');
-    userInfo.classList.add('logged-in');
+  // Setup a timeout in case Pi.authenticate hangs
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => {
+      timedOut = true;
+      reject(new Error("Pi.authenticate timed out"));
+    }, 3000)
+  );
+
+  try {
+    const auth = await Promise.race([
+      Pi.authenticate(['username'], onIncompletePaymentFound),
+      timeout
+    ]);
+
+    if (!timedOut) {
+      piUsername = auth.user.username;
+      piToken = auth.accessToken;
+      useLocalHighScore = false;
+
+      usernameLabel.innerText = `@${piUsername}`;
+      loginBtn.style.display = 'none';
+      userInfo.classList.remove('guest');
+      userInfo.classList.add('logged-in');
+    }
   } catch (e) {
-    // Guest fallback
+    console.warn('Auth fallback to Guest due to:', e.message);
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
@@ -151,10 +165,10 @@ async function initAuth() {
     userInfo.classList.add('guest');
   }
 
-  // Always show user info container
   userInfo.style.display = 'flex';
   startScreen.classList.add('ready');
 }
+
 
 
 
@@ -995,4 +1009,7 @@ document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
 });
 window.addEventListener('DOMContentLoaded', () => {
   initAuth();  // ✅ Safe to run now
+  console.log('🌐 Detected hostname:', window.location.hostname);
+console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
+
 });
