@@ -127,34 +127,40 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
-  let timedOut = false;
+  let authResolved = false;
+  let piUser = null;
+  let token = null;
 
-  // Setup a timeout in case Pi.authenticate hangs
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => {
-      timedOut = true;
-      reject(new Error("Pi.authenticate timed out"));
-    }, 3000)
-  );
+  // Start Pi authentication in background
+  const authPromise = Pi.authenticate(['username'], onIncompletePaymentFound)
+    .then(auth => {
+      authResolved = true;
+      piUser = auth.user.username;
+      token = auth.accessToken;
+    })
+    .catch(err => {
+      authResolved = true;
+      console.warn("Fallback to guest:", err.message);
+    });
 
-  try {
-    const auth = await Promise.race([
-      Pi.authenticate(['username'], onIncompletePaymentFound),
-      timeout
-    ]);
+  // Wait max 600ms before fallback to guest
+  await Promise.race([
+    authPromise,
+    new Promise(resolve => setTimeout(resolve, 600))
+  ]);
 
-    if (!timedOut) {
-      piUsername = auth.user.username;
-      piToken = auth.accessToken;
-      useLocalHighScore = false;
+  if (authResolved && piUser) {
+    // ✅ Auth succeeded
+    piUsername = piUser;
+    piToken = token;
+    useLocalHighScore = false;
 
-      usernameLabel.innerText = `@${piUsername}`;
-      loginBtn.style.display = 'none';
-      userInfo.classList.remove('guest');
-      userInfo.classList.add('logged-in');
-    }
-  } catch (e) {
-    console.warn('Auth fallback to Guest due to:', e.message);
+    usernameLabel.innerText = `@${piUsername}`;
+    loginBtn.style.display = 'none';
+    userInfo.classList.remove('guest');
+    userInfo.classList.add('logged-in');
+  } else {
+    // ⚠️ Fallback to guest (either timeout or error)
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
@@ -168,6 +174,7 @@ async function initAuth() {
   userInfo.style.display = 'flex';
   startScreen.classList.add('ready');
 }
+
 
 
 
