@@ -254,14 +254,14 @@ function preload() {
 }
 
 function create() {
-  // 1. Hide overlays/modals
+  // Hide overlays/modals (always)
   document.getElementById('game-over-screen').style.display = 'none';
   document.getElementById('leaderboard-screen').style.display = 'none';
   document.getElementById('pause-overlay').style.display = 'none';
-  if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
+  if (muteBtnHome) muteBtnHome.style.display = 'none';
 
-  // 2. FULL GAME STATE RESET
+  // Game state reset
   gameStarted = false;
   gameOver = false;
   gamePaused = false;
@@ -280,7 +280,6 @@ function create() {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
-  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -340,7 +339,6 @@ function create() {
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  // Create all UI text/icons BEFORE calling setVisible on them!
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
     fontFamily: 'Poppins',
     fontSize: '28px',
@@ -391,25 +389,35 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  // 4. Only start if start screen is hidden
-  if (document.getElementById('start-screen').style.display === 'none') {
+  // === Always HIDE all HUD, icons, and orbs on fresh scene ===
+  this.scoreText.setVisible(false);
+  this.bestScoreText.setVisible(false);
+  this.pauseIcon.setVisible(false);
+  this.muteIcon.setVisible(false);
+  circle1.setVisible(false);
+  circle2.setVisible(false);
+
+  // Store scene ref globally for DOM comms
+  window.trickyTurnsScene = this;
+
+  // Listen for DOM start event, and start game/countdown
+  this.events.on('start-game', () => {
     this.scoreText.setVisible(true);
     this.bestScoreText.setVisible(true);
     this.pauseIcon.setVisible(true);
     this.muteIcon.setVisible(true);
-    this.startCountdown(function() {
-      gameStarted = true;
-    });
-  } else {
-    this.scoreText.setVisible(false);
-    this.bestScoreText.setVisible(false);
-    this.pauseIcon.setVisible(false);
-    this.muteIcon.setVisible(false);
-  }
+    circle1.setVisible(true);
+    circle2.setVisible(true);
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('leaderboard-screen').style.display = 'none';
+    this.startCountdown(() => { gameStarted = true; });
+  });
 
-  // ...the rest of your create function (timers, input, overlaps, etc.)...
-  // (No changes needed below this point in your create)
+  // (No more "if start-screen is hidden" logic here!)
+
+  // ... (rest of your create as before: timers, physics, overlaps, etc.)
 }
+
 
 
 
@@ -719,16 +727,18 @@ function collectPoint(_, pt) {
 }
 
 function handleStartGame() {
-  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') {
-    sfx.uiClick.play();
-  }
+  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
   document.getElementById('viewLeaderboardBtn').style.display = 'none';
   document.getElementById('start-screen').style.display = 'none';
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
-  fadeOut(); // <- NO callback here!
+  fadeOut(() => {
+    // Fire Phaser start event
+    if (window.trickyTurnsScene) window.trickyTurnsScene.events.emit('start-game');
+  }, 200);
 }
+
 
 
 
