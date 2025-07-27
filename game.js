@@ -843,7 +843,6 @@ function triggerGameOver() {
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
 
-  // --- Floating "+1" feedback at point location ---
   let scene = window.game.scene.keys.default;
   const plusOne = scene.add.text(pt.x, pt.y, '+1', {
     fontFamily: 'Poppins',
@@ -868,12 +867,34 @@ function collectPoint(_, pt) {
   score++;
   sfx.point.play();
   scoreText.setText('Score: ' + score);
-  window.game.scene.keys.default.tweens.add({
+
+  scene.tweens.add({
     targets: scoreText,
     scaleX: 1.1, scaleY: 1.1,
     yoyo: true, duration: 80, ease: 'Sine.easeOut'
   });
+
+  // ✅ Update best score live with animation
+  if (score > highScore) {
+    highScore = score;
+    bestScoreText.setText('Best: ' + highScore);
+
+    // Optional: glow or pulse animation
+    scene.tweens.add({
+      targets: bestScoreText,
+      scaleX: 1.15,
+      scaleY: 1.15,
+      alpha: { from: 1, to: 0.6 },
+      yoyo: true,
+      ease: 'Sine.easeInOut',
+      duration: 300,
+      repeat: 2
+    });
+
+    sfx.newBest.play();
+  }
 }
+
 
 function handleStartGame() {
   sfx.uiClick.play();
