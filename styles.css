@@ -551,3 +551,11 @@ canvas {
 .hidden {
   display: none !important;
 }
+
+
+.results div {
+  margin: 0.2rem 0;
+  font-size: 2rem;
+  text-transform: uppercase;
+  text-shadow: 0 0 4px #000;
+}
