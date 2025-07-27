@@ -134,8 +134,14 @@ async function initAuth() {
     document.body.appendChild(debugDiv);
 
 
-    document.getElementById('username').innerText = piUsername;
+    if (!useLocalHighScore) {
+      document.getElementById('username').innerText = `@${piUsername}`;
+      document.getElementById('user-info').style.display = 'flex';
+    } else {
+      document.getElementById('user-info').style.display = 'none';
+    }
     document.getElementById('loginBtn').style.display = 'none';
+
     useLocalHighScore = false;
 
 if (!useLocalHighScore && piToken) {
@@ -791,6 +797,7 @@ if (!useLocalHighScore && piToken) {
     if (res.ok) {
       const { rank } = await res.json();
       if (rankMessage) rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
+      rankMessage.classList.remove('dimmed');
     } else {
       if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
     }
@@ -798,7 +805,11 @@ if (!useLocalHighScore && piToken) {
     if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
   }
 } else {
-  if (rankMessage) rankMessage.innerText = `🔓 Sign in to track your global rank`;
+  if (rankMessage) {
+  rankMessage.innerText = `🔓 Sign in to track your global rank`;
+  rankMessage.classList.add('dimmed');
+}
+
 }
 
 
@@ -888,6 +899,9 @@ function handleGoHome() {
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
+    document.getElementById('user-info').style.display =
+    useLocalHighScore ? 'none' : 'flex';
+
     document.getElementById('start-screen').style.display = 'flex';
     document.getElementById('pause-overlay').style.display = 'none';
     if (muteBtnHome) muteBtnHome.style.display = 'block';

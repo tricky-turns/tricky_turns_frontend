@@ -428,3 +428,8 @@ canvas {
 #muteToggleHome:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+.dimmed {
+  opacity: 0.5;
+  font-style: italic;
+}
