@@ -150,6 +150,8 @@ async function initAuth() {
     userInfo.classList.add('guest');
     userInfo.classList.remove('logged-in');
   }
+  userInfo.style.display = 'flex'; // ✅ this was missing for guests
+
 
   // ✅ Now show the user info and screen
   userInfo.style.display = 'flex';
