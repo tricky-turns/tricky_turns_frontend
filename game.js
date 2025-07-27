@@ -401,7 +401,7 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
-      if (gameStarted && !gameOver && !gamePaused && this.scene.isActive()) {
+      if (gameStarted && !gameOver && !gamePaused) {
         let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
         speed = Math.min(speed + ramp, maxSpeed);
       }
@@ -416,22 +416,18 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
     return interval + Phaser.Math.Between(-50, 50);
   }
 
-function scheduleSpawnLoop(scene) {
-  if (spawnEvent) spawnEvent.remove(false); // Clear any old spawns
-
-  function spawnNext() {
-    if (gameStarted && !gameOver && !gamePaused && scene.scene.isActive()) {
-      spawnObjects.call(scene);
-      lastSpawnTimestamp = scene.time.now;
+  if (spawnEvent) spawnEvent.remove(false);
+  spawnEvent = this.time.addEvent({
+    delay: getSpawnInterval(),
+    loop: true,
+    callback: () => {
+      if (gameStarted && !gameOver && !gamePaused) {
+        spawnObjects.call(this);
+        lastSpawnTimestamp = this.time.now;
+      }
+      spawnEvent.delay = getSpawnInterval();
     }
-
-    const delay = getSpawnInterval();
-    spawnEvent = scene.time.delayedCall(delay, spawnNext);
-  }
-
-  spawnNext(); // Kick off the loop
-}
-
+  });
 
   this.time.addEvent({
     delay: 250,
@@ -503,7 +499,7 @@ function scheduleSpawnLoop(scene) {
       obj === this.pauseIcon || obj === this.muteIcon
     )) return;
 
-    if (gameStarted && !gameOver && !gamePaused && scene.scene.isActive()) {
+    if (gameStarted && !gameOver && !gamePaused) {
       direction *= -1;
       sfx.move.play();
       this.tweens.add({
@@ -838,11 +834,7 @@ function handleStartGame() {
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
-    gameStarted = true;
-    scene.time.delayedCall(100, () => {
-      scheduleSpawnLoop(scene);
-    });
-
+      gameStarted = true;
     });
   }, 200);
 }
@@ -907,10 +899,7 @@ function handlePlayAgain() {
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
-    gameStarted = true;
-    scene.time.delayedCall(100, () => {
-      scheduleSpawnLoop(scene);
-    });
+      gameStarted = true;
     });
   }, 0);
 }
