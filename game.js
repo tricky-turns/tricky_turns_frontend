@@ -426,16 +426,17 @@ countdownText = this.add.text(cx, cy, '', {
   fontSize: '96px',
   fontStyle: 'bold',
   color: '#ffffff',
-  stroke: '#1a7ef2',
-  strokeThickness: 6,
+  stroke: '#25b7e6',
+  strokeThickness: 2,
   shadow: {
-    offsetX: 2,
-    offsetY: 2,
-    color: '#000000',
-    blur: 4,
+    offsetX: 1.5,
+    offsetY: 3,
+    color: '#23b6e9cc',
+    blur: 12,
     fill: true
   }
 }).setOrigin(0.5).setDepth(1000).setVisible(false);
+
 
   this.countdownText = countdownText;
   this.scoreText = scoreText;

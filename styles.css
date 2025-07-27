@@ -443,3 +443,20 @@ canvas {
   opacity: 1;
   font-style: normal;
 }
+
+.game-over-title {
+  color: #ffffff;
+  font-size: 4.2rem;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 0.12rem;
+  font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  text-shadow:
+    3px 5px 18px #17366c65,
+    1px 2px 7px #1762bb99,
+    1px 1px 4px #000a;
+  -webkit-text-stroke: 1.2px #1a7ef2;
+  filter: brightness(1.08);
+  line-height: 1.1;
+}
