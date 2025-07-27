@@ -534,16 +534,19 @@ scheduleSpawnEvents(this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
-  if (pendingRestart) {
-    this.scoreText.setVisible(true);
-    this.bestScoreText.setVisible(true);
-    this.pauseIcon.setVisible(true);
-    this.muteIcon.setVisible(true);
-    this.startCountdown(function() {
-      gameStarted = true;
-      pendingRestart = false; // reset the flag!
-    });
-  }
+if (pendingRestart) {
+  this.scoreText.setVisible(true);
+  this.bestScoreText.setVisible(true);
+  this.pauseIcon.setVisible(true);
+  this.muteIcon.setVisible(true);
+  circle1.setVisible(true);     // <-- ENSURE ORBS ARE VISIBLE
+  circle2.setVisible(true);     // <-- ENSURE ORBS ARE VISIBLE
+  this.startCountdown(function() {
+    gameStarted = true;
+    pendingRestart = false; // reset the flag!
+  });
+}
+
 }
 
 // DELTA TIME PATCHED update
