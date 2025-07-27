@@ -724,11 +724,15 @@ function triggerGameOver() {
 await fetch(`${BACKEND_BASE}/api/leaderboard`, {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${piToken}`
+    'Authorization': `Bearer ${piToken}`,
+    'Content-Type': 'application/json'
   },
-  body: JSON.stringify({ score: highScore }) // ✅ no more username
+  body: JSON.stringify({
+    score: highScore,
+    username: piUsername  // ✅ send username along with score
+  })
 });
+
 
         } catch (e) { /* ignore */ }
       }
