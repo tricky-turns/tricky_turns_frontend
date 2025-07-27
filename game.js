@@ -1017,3 +1017,6 @@ document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 });
+window.addEventListener('DOMContentLoaded', () => {
+  initAuth();  // ✅ Safe to run now
+});
