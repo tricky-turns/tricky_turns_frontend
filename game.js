@@ -787,10 +787,11 @@ function triggerGameOver() {
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
     }
 
-    // ✅ Reorder score/best display
+    // ✅ Reorder score/best display BEFORE revealing game over screen
     const bestBlock = document.getElementById('bestBlock');
     const scoreBlock = document.getElementById('scoreBlock');
     const resultsBlock = document.getElementById('resultsBlock');
+
     if (bestBlock && scoreBlock && resultsBlock) {
       resultsBlock.innerHTML = '';
       if (score >= highScore) {
@@ -884,6 +885,7 @@ function triggerGameOver() {
     })();
   });
 }
+
 
 
 function collectPoint(_, pt) {
