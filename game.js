@@ -121,6 +121,7 @@ function onIncompletePaymentFound(payment) {
 }
 async function initAuth() {
   await initPi();
+
   const userInfo = document.getElementById('user-info');
   const usernameLabel = document.getElementById('username');
   const loginBtn = document.getElementById('loginBtn');
@@ -132,41 +133,32 @@ async function initAuth() {
     piUsername = auth.user.username;
     piToken = auth.accessToken;
     useLocalHighScore = false;
-
-
-// ✅ Always update UI after resolving auth state
-if (useLocalHighScore) {
-  usernameLabel.innerText = `Guest`;
-  loginBtn.style.display = 'inline-block';
-  userInfo.classList.add('guest');
-  userInfo.classList.remove('logged-in');
-} else {
-  usernameLabel.innerText = `@${piUsername}`;
-  loginBtn.style.display = 'none';
-  userInfo.classList.add('logged-in');
-  userInfo.classList.remove('guest');
-}
-userInfo.style.display = 'flex';
-
   } catch (e) {
     useLocalHighScore = true;
     piUsername = 'Guest';
     piToken = null;
+  }
 
+  // ✅ Always update UI after resolving auth state
+  if (useLocalHighScore) {
     usernameLabel.innerText = `Guest`;
-    userInfo.style.display = 'flex';
     loginBtn.style.display = 'inline-block';
     userInfo.classList.add('guest');
     userInfo.classList.remove('logged-in');
+  } else {
+    usernameLabel.innerText = `@${piUsername}`;
+    loginBtn.style.display = 'none';
+    userInfo.classList.add('logged-in');
+    userInfo.classList.remove('guest');
   }
 
-  // Show start screen now that auth is resolved
-  // ✅ Always ensure start screen shows even if auth fails
-document.getElementById('start-screen').classList.add('ready');
+  // ✅ Show the user info block no matter what
+  userInfo.style.display = 'flex';
 
+  // ✅ Show the start screen after auth completes
   startScreen.classList.add('ready');
 
-  // Fetch remote score if logged in
+  // ✅ Fetch existing high score if logged in
   if (!useLocalHighScore && piToken) {
     try {
       const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
@@ -184,9 +176,11 @@ document.getElementById('start-screen').classList.add('ready');
     }
   }
 
+  // ✅ Fallback to local high score if guest
   localStorage.setItem('tricky_high_score', highScore);
   if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
 }
+
 
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
