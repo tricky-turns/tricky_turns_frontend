@@ -883,13 +883,13 @@ function handleGoHome() {
 
 function handlePlayAgain() {
   sfx.uiClick.play();
-  const scene = window.game.scene.keys.default;
-  if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
+  const oldScene = window.game.scene.keys.default;
+  if (oldScene.trail) { oldScene.trail.destroy(); oldScene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
-  scene.scene.restart();
 
-  setTimeout(() => {
+  // Listen ONCE for the scene's "create" event (the *next* scene instance)
+  window.game.scene.scenes[0].events.once('create', function () {
     const newScene = window.game.scene.keys.default;
     newScene.scoreText.setVisible(true);
     newScene.bestScoreText.setVisible(true);
@@ -898,8 +898,11 @@ function handlePlayAgain() {
     newScene.startCountdown(function() {
       gameStarted = true;
     });
-  }, 25); // 1 frame later
+  });
+
+  oldScene.scene.restart();
 }
+
 
 
 
