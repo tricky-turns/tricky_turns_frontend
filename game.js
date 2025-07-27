@@ -1,6 +1,8 @@
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
 let spawnIntervalUpdater = null; // Add this global with other timers
+let pendingRestart = false;
+
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
@@ -532,6 +534,16 @@ scheduleSpawnEvents(this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
+  if (pendingRestart) {
+    this.scoreText.setVisible(true);
+    this.bestScoreText.setVisible(true);
+    this.pauseIcon.setVisible(true);
+    this.muteIcon.setVisible(true);
+    this.startCountdown(function() {
+      gameStarted = true;
+      pendingRestart = false; // reset the flag!
+    });
+  }
 }
 
 // DELTA TIME PATCHED update
@@ -839,7 +851,7 @@ function collectPoint(_, pt) {
 }
 
 function handleStartGame() {
-  sfx.uiClick.play();
+  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
   document.getElementById('viewLeaderboardBtn').style.display = 'none';
   document.getElementById('start-screen').style.display = 'none';
@@ -882,26 +894,15 @@ function handleGoHome() {
 }
 
 function handlePlayAgain() {
-  sfx.uiClick.play();
-  const oldScene = window.game.scene.keys.default;
-  if (oldScene.trail) { oldScene.trail.destroy(); oldScene.trail = null; }
+  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
+  pendingRestart = true; // set this before restarting
+  const scene = window.game.scene.keys.default;
+  if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
-
-  // Listen ONCE for the scene's "create" event (the *next* scene instance)
-  window.game.scene.scenes[0].events.once('create', function () {
-    const newScene = window.game.scene.keys.default;
-    newScene.scoreText.setVisible(true);
-    newScene.bestScoreText.setVisible(true);
-    newScene.pauseIcon.setVisible(true);
-    newScene.muteIcon.setVisible(true);
-    newScene.startCountdown(function() {
-      gameStarted = true;
-    });
-  });
-
-  oldScene.scene.restart();
+  scene.scene.restart();
 }
+
 
 
 
