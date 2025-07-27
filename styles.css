@@ -525,3 +525,29 @@ canvas {
   color: #ffffffcc;
   font-size: 0.9rem;
 }
+
+#user-info {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  text-shadow: 0 0 4px #000;
+  z-index: 10;
+}
+
+#user-info .label {
+  font-weight: 600;
+  color: #ffffffcc;
+  font-size: 0.9rem;
+}
+
+.hidden {
+  display: none !important;
+}

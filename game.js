@@ -123,13 +123,21 @@ async function initAuth() {
   await initPi();
 
   const userInfo = document.getElementById('user-info');
+  const authLoading = document.getElementById('auth-loading');
   const usernameLabel = document.getElementById('username');
+  const piLabel = userInfo.querySelector('.label:not(#auth-loading)');
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
+  // Step 1: Show loading state only
+  authLoading.classList.remove('hidden');
+  piLabel.classList.add('hidden');
+  usernameLabel.classList.add('hidden');
+  loginBtn.classList.add('hidden');
+  userInfo.style.display = 'flex';
+
   let timedOut = false;
 
-  // Setup a timeout in case Pi.authenticate hangs
   const timeout = new Promise((_, reject) =>
     setTimeout(() => {
       timedOut = true;
@@ -143,38 +151,46 @@ async function initAuth() {
       timeout
     ]);
 
-    if (!timedOut) {
+    if (!timedOut && auth?.user?.username) {
+      // ✅ Auth success
       piUsername = auth.user.username;
       piToken = auth.accessToken;
       useLocalHighScore = false;
 
       usernameLabel.innerText = `@${piUsername}`;
       loginBtn.style.display = 'none';
+
       userInfo.classList.remove('guest');
       userInfo.classList.add('logged-in');
+    } else {
+      throw new Error('Auth fallback (null)');
     }
   } catch (e) {
-    console.warn('Auth fallback to Guest due to:', e.message);
+    // ❌ Fallback to guest
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
 
     usernameLabel.innerText = 'Guest';
     loginBtn.style.display = 'inline-block';
+
     userInfo.classList.remove('logged-in');
     userInfo.classList.add('guest');
   }
-  const authLoading = document.getElementById('auth-loading');
-if (authLoading) authLoading.style.display = 'none';
 
-  userInfo.style.display = 'flex';
+  // Step 2: Hide loading, show actual info
+  authLoading.classList.add('hidden');
+  piLabel.classList.remove('hidden');
+  usernameLabel.classList.remove('hidden');
+
+  if (piUsername === 'Guest') {
+    loginBtn.classList.remove('hidden');
+  } else {
+    loginBtn.classList.add('hidden');
+  }
+
   startScreen.classList.add('ready');
 }
-
-
-
-
-
 
 
 
