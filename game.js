@@ -127,37 +127,37 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
+  // Set guest UI immediately
+  piUsername = 'Guest';
+  useLocalHighScore = true;
+  usernameLabel.innerText = `Guest`;
+  loginBtn.style.display = 'inline-block';
+  userInfo.classList.add('guest');
+  userInfo.classList.remove('logged-in');
+  userInfo.style.display = 'flex';
+  userInfo.classList.add('visible');
+
   try {
     const scopes = ['username'];
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
     piUsername = auth.user.username;
     piToken = auth.accessToken;
     useLocalHighScore = false;
-  } catch (e) {
-    piUsername = 'Guest';
-    piToken = null;
-    useLocalHighScore = true;
-  }
 
-  // ✅ Apply final resolved user state
-  if (useLocalHighScore) {
-    usernameLabel.innerText = `Guest`;
-    loginBtn.style.display = 'inline-block';
-    userInfo.classList.add('guest');
-    userInfo.classList.remove('logged-in');
-  } else {
+    // Override with logged-in info
     usernameLabel.innerText = `@${piUsername}`;
     loginBtn.style.display = 'none';
     userInfo.classList.add('logged-in');
     userInfo.classList.remove('guest');
+  } catch (e) {
+    // Auth failed — guest UI already shown
+    piToken = null;
+    useLocalHighScore = true;
   }
 
-  // ✅ Only now, reveal the user UI and start screen
-  userInfo.classList.add('visible');
-  userInfo.style.display = 'flex';
   startScreen.classList.add('ready');
 
-  // ✅ Load backend score if signed in
+  // Load high score
   if (!useLocalHighScore && piToken) {
     try {
       const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
@@ -170,7 +170,6 @@ async function initAuth() {
         highScore = 0;
       }
     } catch (e) {
-      console.warn("Failed to fetch user score:", e);
       highScore = 0;
     }
   }
@@ -180,6 +179,7 @@ async function initAuth() {
     bestScoreText.setText('Best: ' + highScore);
   }
 }
+
 
 
 
