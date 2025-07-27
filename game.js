@@ -1,8 +1,6 @@
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
 let spawnIntervalUpdater = null; // Add this global with other timers
-let pendingRestart = false;
-
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
@@ -534,20 +532,6 @@ scheduleSpawnEvents(this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
-if (pendingRestart) {
-  this.physics.resume();
-  this.scoreText.setVisible(true);
-  this.bestScoreText.setVisible(true);
-  this.pauseIcon.setVisible(true);
-  this.muteIcon.setVisible(true);
-  circle1.setVisible(true);     // <-- ENSURE ORBS ARE VISIBLE
-  circle2.setVisible(true);     // <-- ENSURE ORBS ARE VISIBLE
-  this.startCountdown(function() {
-    gameStarted = true;
-    pendingRestart = false; // reset the flag!
-  });
-}
-
 }
 
 // DELTA TIME PATCHED update
@@ -855,7 +839,7 @@ function collectPoint(_, pt) {
 }
 
 function handleStartGame() {
-  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
+  sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
   document.getElementById('viewLeaderboardBtn').style.display = 'none';
   document.getElementById('start-screen').style.display = 'none';
@@ -898,19 +882,46 @@ function handleGoHome() {
 }
 
 function handlePlayAgain() {
-  document.getElementById('game-over-screen').style.display = 'none';
-  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
-  pendingRestart = true; // set this before restarting
+  sfx.uiClick.play();
   const scene = window.game.scene.keys.default;
   if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
-  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
   scene.scene.restart();
+  setTimeout(() => {
+    score = 0;
+    speed = GAME_CONFIG.SPEED_START;
+    direction = 1;
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+    laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+    laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+    lastSpawnTimestamp = 0;
+    [
+      'game-over-screen', 'leaderboard-screen', 'pause-overlay',
+      'start-screen', 'leaderboard'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) userInfo.style.display = 'none';
+    const viewLb = document.getElementById('viewLeaderboardBtn');
+    if (viewLb) viewLb.style.display = 'none';
+    const canvas = document.querySelector('canvas');
+    if (canvas) canvas.style.visibility = 'visible';
+    const scene = window.game.scene.keys.default;
+    scheduleSpawnEvents(scene);
+    scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.pauseIcon.setVisible(true);
+    scene.muteIcon.setVisible(true);
+    scene.startCountdown(function() {
+      gameStarted = true;
+    });
+  }, 0);
 }
-
-
-
-
 
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
