@@ -727,17 +727,10 @@ function handleStartGame() {
   document.getElementById('start-screen').style.display = 'none';
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
-  fadeOut(() => {
-    const scene = window.game.scene.keys.default;
-    scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.pauseIcon.setVisible(true);
-    scene.muteIcon.setVisible(true);
-    scene.startCountdown(function() {
-      gameStarted = true;
-    });
-  }, 200);
+  fadeOut(); // <- NO callback here!
 }
+
+
 
 
 function handleGoHome() {
