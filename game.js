@@ -15,6 +15,26 @@ async function preloadLeaderboard() {
   }
 }
 
+Phaser.Scene.prototype.startCountdown = function(callback) {
+  const text = this.countdownText;
+  text.setVisible(true);
+  let count = 3;
+  text.setText(count);
+  const tick = () => {
+    count--;
+    if (count > 0) {
+      text.setText(count);
+      this.time.delayedCall(700, tick, [], this);
+    } else {
+      text.setText('GO!');
+      this.time.delayedCall(500, () => {
+        text.setVisible(false);
+        if (callback) callback();
+      }, [], this);
+    }
+  };
+  this.time.delayedCall(700, tick, [], this);
+};
 
 // ==========================
 //   TRICKY TURNS GAME CONFIG
