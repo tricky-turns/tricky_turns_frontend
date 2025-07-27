@@ -416,18 +416,22 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
     return interval + Phaser.Math.Between(-50, 50);
   }
 
-  if (spawnEvent) spawnEvent.remove(false);
-  spawnEvent = this.time.addEvent({
-    delay: getSpawnInterval(),
-    loop: true,
-    callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) {
-        spawnObjects.call(this);
-        lastSpawnTimestamp = this.time.now;
-      }
-      spawnEvent.delay = getSpawnInterval();
+function scheduleSpawnLoop(scene) {
+  if (spawnEvent) spawnEvent.remove(false); // Clear any old spawns
+
+  function spawnNext() {
+    if (gameStarted && !gameOver && !gamePaused) {
+      spawnObjects.call(scene);
+      lastSpawnTimestamp = scene.time.now;
     }
-  });
+
+    const delay = getSpawnInterval();
+    spawnEvent = scene.time.delayedCall(delay, spawnNext);
+  }
+
+  spawnNext(); // Kick off the loop
+}
+
 
   this.time.addEvent({
     delay: 250,
@@ -835,6 +839,7 @@ function handleStartGame() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
+      scheduleSpawnLoop(this);
     });
   }, 200);
 }
