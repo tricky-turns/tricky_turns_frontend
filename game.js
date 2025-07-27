@@ -883,11 +883,16 @@ function handleGoHome() {
 
 function handlePlayAgain() {
   sfx.uiClick.play();
+
   const scene = window.game.scene.keys.default;
   if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
+  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
+
   scene.scene.restart();
-  setTimeout(() => {
+
+  scene.events.once('create', () => {
+    // Reset all game state only after scene is fully recreated
     score = 0;
     speed = GAME_CONFIG.SPEED_START;
     direction = 1;
@@ -897,6 +902,7 @@ function handlePlayAgain() {
     laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
+
     [
       'game-over-screen', 'leaderboard-screen', 'pause-overlay',
       'start-screen', 'leaderboard'
@@ -904,6 +910,7 @@ function handlePlayAgain() {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
+
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     const userInfo = document.getElementById('user-info');
     if (userInfo) userInfo.style.display = 'none';
@@ -911,17 +918,18 @@ function handlePlayAgain() {
     if (viewLb) viewLb.style.display = 'none';
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
-    const scene = window.game.scene.keys.default;
+
     scheduleSpawnEvents(scene);
     scene.scoreText.setVisible(true);
     scene.bestScoreText.setVisible(true);
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
-    scene.startCountdown(function() {
+    scene.startCountdown(function () {
       gameStarted = true;
     });
-  }, 0);
+  });
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
