@@ -252,6 +252,32 @@ function preload() {
   this.load.image('iconMute', 'assets/icon-mute.svg');
   this.load.image('iconUnmute', 'assets/icon-unmute.svg');
 }
+function scheduleSpawnEvents(scene) {
+  if (spawnEvent) spawnEvent.remove(false);
+  spawnEvent = scene.time.addEvent({
+    delay: getSpawnInterval(),
+    loop: true,
+    callback: () => {
+      if (gameStarted && !gameOver && !gamePaused) {
+        spawnObjects.call(scene);
+        lastSpawnTimestamp = scene.time.now;
+      }
+    }
+  });
+
+  // Periodically (every 5s) update the spawn interval for smooth ramping
+  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
+  spawnIntervalUpdater = scene.time.addEvent({
+    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
+    loop: true,
+    callback: () => {
+      if (spawnEvent) {
+        let newDelay = getSpawnInterval();
+        spawnEvent.reset({ delay: newDelay, loop: true });
+      }
+    }
+  });
+}
 
 function create() {
   const cam = this.cameras.main;
@@ -418,32 +444,6 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
     return interval + Phaser.Math.Between(-50, 50);
   }
 
-function scheduleSpawnEvents(scene) {
-  if (spawnEvent) spawnEvent.remove(false);
-  spawnEvent = scene.time.addEvent({
-    delay: getSpawnInterval(),
-    loop: true,
-    callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) {
-        spawnObjects.call(scene);
-        lastSpawnTimestamp = scene.time.now;
-      }
-    }
-  });
-
-  // Periodically (every 5s) update the spawn interval for smooth ramping
-  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
-  spawnIntervalUpdater = scene.time.addEvent({
-    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
-    loop: true,
-    callback: () => {
-      if (spawnEvent) {
-        let newDelay = getSpawnInterval();
-        spawnEvent.reset({ delay: newDelay, loop: true });
-      }
-    }
-  });
-}
 scheduleSpawnEvents(this);
 
 
