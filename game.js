@@ -786,85 +786,59 @@ function triggerGameOver() {
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'flex';
 
-    const list = document.getElementById('leaderboardEntries');
-    if (list) list.innerHTML = '';
-      const loadingLi = document.createElement('li');
-      loadingLi.textContent = 'Loading leaderboard...';
-      loadingLi.style.fontStyle = 'italic';
-      loadingLi.style.textAlign = 'center';
-      list.appendChild(loadingLi);
-    
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
     (async () => {
-      if (!useLocalHighScore) {
+      // ✅ Submit score if authenticated
+      if (!useLocalHighScore && piToken) {
         try {
-await fetch(`${BACKEND_BASE}/api/leaderboard`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${piToken}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    score: highScore,
-    username: piUsername  // ✅ send username along with score
-  })
-});
-
-
-        } catch (e) { /* ignore */ }
-      }
-      try {
-        const data = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`).then(r => r.json());
-        if (list) {
-          while (list.firstChild) list.removeChild(list.firstChild);
-          data.forEach((e, i) => {
-            const li = document.createElement('li');
-            li.setAttribute('data-rank', `#${i + 1}`);
-            li.innerHTML = `<strong>${e.username}</strong><strong>${e.score}</strong>`;
-            list.appendChild(li);
+          await fetch(`${BACKEND_BASE}/api/leaderboard`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${piToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              score: highScore,
+              username: piUsername
+            })
           });
+        } catch (e) { /* silently ignore */ }
+      }
+
+      // ✅ Fetch and display ONLY the user's rank
+      if (!useLocalHighScore && piToken) {
+        try {
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
+            headers: { Authorization: `Bearer ${piToken}` }
+          });
+          if (res.ok) {
+            const { rank } = await res.json();
+            if (rankMessage) {
+              rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
+              rankMessage.classList.remove('dimmed');
+            }
+          } else {
+            if (rankMessage) {
+              rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+            }
+          }
+        } catch (e) {
+          if (rankMessage) {
+            rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+          }
         }
-if (!useLocalHighScore && piToken) {
-  try {
-    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
-      headers: { Authorization: `Bearer ${piToken}` }
-    });
-    if (res.ok) {
-      const { rank } = await res.json();
-      if (rankMessage) rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
-      rankMessage.classList.remove('dimmed');
-    } else {
-      if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-    }
-  } catch (e) {
-    if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-  }
-} else {
-  if (rankMessage) {
-  rankMessage.innerText = `🔓 Sign in to track your global rank`;
-  rankMessage.classList.add('dimmed');
-}
-
-}
-
-
-      } catch (e) {
-        if (list) {
-          while (list.firstChild) list.removeChild(list.firstChild);
-          const errorLi = document.createElement('li');
-          errorLi.textContent = 'Failed to load leaderboard.';
-          errorLi.style.color = '#F66';
-          errorLi.style.fontStyle = 'italic';
-          errorLi.style.textAlign = 'center';
-          list.appendChild(errorLi);
+      } else {
+        if (rankMessage) {
+          rankMessage.innerText = `🔓 Sign in to track your global rank`;
+          rankMessage.classList.add('dimmed');
         }
-        if (rankMessage) rankMessage.innerText = '';
       }
     })();
   });
 }
+
 
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
