@@ -138,6 +138,8 @@ async function initAuth() {
     document.getElementById('loginBtn').style.display = 'none';
     useLocalHighScore = false;
 
+if (!useLocalHighScore && piToken) {
+  try {
     const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, { 
       headers: { Authorization: `Bearer ${piToken}` }
     });
@@ -148,6 +150,12 @@ async function initAuth() {
     } else {
       highScore = 0;
     }
+  } catch (e) {
+    console.warn("Failed to fetch user score:", e);
+    highScore = 0;
+  }
+}
+
 
     localStorage.setItem('tricky_high_score', highScore);
     if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
