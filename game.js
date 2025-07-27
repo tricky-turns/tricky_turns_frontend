@@ -15,26 +15,6 @@ async function preloadLeaderboard() {
   }
 }
 
-Phaser.Scene.prototype.startCountdown = function(callback) {
-  const text = this.countdownText;
-  text.setVisible(true);
-  let count = 3;
-  text.setText(count);
-  const tick = () => {
-    count--;
-    if (count > 0) {
-      text.setText(count);
-      this.time.delayedCall(700, tick, [], this);
-    } else {
-      text.setText('GO!');
-      this.time.delayedCall(500, () => {
-        text.setVisible(false);
-        if (callback) callback();
-      }, [], this);
-    }
-  };
-  this.time.delayedCall(700, tick, [], this);
-};
 
 // ==========================
 //   TRICKY TURNS GAME CONFIG
@@ -274,32 +254,15 @@ function preload() {
 }
 
 function create() {
-  // Hide overlays/modals (always)
-  document.getElementById('game-over-screen').style.display = 'none';
-  document.getElementById('leaderboard-screen').style.display = 'none';
-  document.getElementById('pause-overlay').style.display = 'none';
-  document.querySelector('canvas').style.visibility = 'visible';
-  if (muteBtnHome) muteBtnHome.style.display = 'none';
-
-  // Game state reset
-  gameStarted = false;
-  gameOver = false;
-  gamePaused = false;
-  score = 0;
-  angle = 0;
-  direction = 1;
-  speed = GAME_CONFIG.SPEED_START;
-  laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-  laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-  lastSpawnTimestamp = 0;
-
-  // Starfield setup
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
+
+  // --- Twinkling Starfield Parallax Setup ---
   if (starfieldLayers.length) {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
+  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -318,6 +281,7 @@ function create() {
     }
     starfieldLayers.push({ stars, layer });
   });
+  // --- End Starfield Parallax ---
 
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
@@ -360,36 +324,40 @@ function create() {
   points = this.physics.add.group();
 
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#1a7ef2',
-    strokeThickness: 3,
-    shadow: {
-      offsetX: 1,
-      offsetY: 1,
-      color: '#000000',
-      blur: 1,
-      fill: true
-    }
-  });
+  fontFamily: 'Poppins',
+  fontSize: '28px',
+  fontStyle: 'bold',
+  color: '#ffffff',
+  stroke: '#1a7ef2',
+  strokeThickness: 3,
+  shadow: {
+    offsetX: 1,
+    offsetY: 1,
+    color: '#000000',
+    blur: 1,
+    fill: true
+  }
+});
 
-  bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#1a7ef2',
-    strokeThickness: 3,
-    shadow: {
-      offsetX: 1,
-      offsetY: 1,
-      color: '#000000',
-      blur: 1,
-      fill: true
-    }
-  });
+bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
+  fontFamily: 'Poppins',
+  fontSize: '28px',
+  fontStyle: 'bold',
+  color: '#ffffff',
+  stroke: '#1a7ef2',
+  strokeThickness: 3,
+  shadow: {
+    offsetX: 1,
+    offsetY: 1,
+    color: '#000000',
+    blur: 1,
+    fill: true
+  }
+});
+
+
+
+
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
@@ -409,38 +377,162 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  // === Always HIDE all HUD, icons, and orbs on fresh scene ===
-  this.scoreText.setVisible(false);
-  this.bestScoreText.setVisible(false);
-  this.pauseIcon.setVisible(false);
-  this.muteIcon.setVisible(false);
-  circle1.setVisible(false);
-  circle2.setVisible(false);
+  this.startCountdown = function(callback) {
+    let count = 3;
+    this.countdownText.setText(count).setVisible(true);
+    this.countdownText.setDepth(1000);
+    const countdownEvent = this.time.addEvent({
+      delay: 1000,
+      repeat: 3,
+      callback: () => {
+        count--;
+        if (count > 0) {
+          this.countdownText.setText(count);
+        } else if (count === 0) {
+          this.countdownText.setText('Go!');
+        } else {
+          this.countdownText.setVisible(false);
+          countdownEvent.remove(false);
+          if (typeof callback === "function") callback.call(this);
+        }
+      }
+    });
+  };
 
-  // Store scene ref globally for DOM comms
-  window.trickyTurnsScene = this;
-
-  // Listen for DOM start event, and start game/countdown
-  this.events.on('start-game', () => {
-    this.scoreText.setVisible(true);
-    this.bestScoreText.setVisible(true);
-    this.pauseIcon.setVisible(true);
-    this.muteIcon.setVisible(true);
-    circle1.setVisible(true);
-    circle2.setVisible(true);
-    document.getElementById('game-over-screen').style.display = 'none';
-    document.getElementById('leaderboard-screen').style.display = 'none';
-    this.startCountdown(() => { gameStarted = true; });
+  // Speed ramp-up based on score and config
+  this.time.addEvent({
+    delay: 1000, loop: true,
+    callback: () => {
+      if (gameStarted && !gameOver && !gamePaused) {
+        let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
+        speed = Math.min(speed + ramp, maxSpeed);
+      }
+    }
   });
 
-  // (No more "if start-screen is hidden" logic here!)
+  function getSpawnInterval() {
+    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
+    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
+    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+    return interval + Phaser.Math.Between(-50, 50);
+  }
 
-  // ... (rest of your create as before: timers, physics, overlaps, etc.)
+function scheduleSpawnEvents(scene) {
+  if (spawnEvent) spawnEvent.remove(false);
+  spawnEvent = scene.time.addEvent({
+    delay: getSpawnInterval(),
+    loop: true,
+    callback: () => {
+      if (gameStarted && !gameOver && !gamePaused) {
+        spawnObjects.call(scene);
+        lastSpawnTimestamp = scene.time.now;
+      }
+    }
+  });
+
+  // Periodically (every 5s) update the spawn interval for smooth ramping
+  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
+  spawnIntervalUpdater = scene.time.addEvent({
+    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
+    loop: true,
+    callback: () => {
+      if (spawnEvent) {
+        let newDelay = getSpawnInterval();
+        spawnEvent.reset({ delay: newDelay, loop: true });
+      }
+    }
+  });
 }
+scheduleSpawnEvents(this);
 
 
+  this.time.addEvent({
+    delay: 250,
+    loop: true,
+    callback: () => {
+      if (!gameStarted || gameOver || gamePaused) return;
+      if (this.time.now - lastSpawnTimestamp > GAME_CONFIG.FORCED_SPAWN_INTERVAL) {
+        spawnObjects.call(this);
+        lastSpawnTimestamp = this.time.now;
+      }
+    }
+  });
 
+  sfx.explode = this.sound.add('explode');
+  sfx.move = this.sound.add('move');
+  sfx.point = this.sound.add('point');
+  sfx.newBest = this.sound.add('newBest');
+  sfx.uiClick = this.sound.add('uiClick');
+  sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
 
+  pauseIcon.on('pointerdown', (_, x, y, e) => {
+    if (pauseIconLocked) return;
+    pauseIconLocked = true;
+    e.stopPropagation();
+    if (!gameStarted || gameOver) {
+      pauseIconLocked = false;
+      return;
+    }
+    if (!gamePaused) {
+      gamePaused = true;
+      pauseIcon.setTexture('iconPlay');
+      sfx.pauseWhoosh.play();
+      this.physics.pause();
+      pauseOverlay.style.display = 'flex';
+      setTimeout(() => { pauseIconLocked = false; }, 300);
+    } else {
+      sfx.pauseWhoosh.play();
+      pauseOverlay.style.display = 'none';
+      let count = 3;
+      countdownText.setText(count).setVisible(true).setDepth(1000);
+
+      const resumeEvent = this.time.addEvent({
+        delay: 1000, repeat: 2,
+        callback: () => {
+          count--;
+          if (count > 0) countdownText.setText(count);
+          else {
+            countdownText.setVisible(false);
+            gamePaused = false;
+            pauseIcon.setTexture('iconPause');
+            this.physics.resume();
+            pauseIconLocked = false;
+          }
+        }
+      });
+    }
+  });
+
+  muteIcon.on('pointerdown', () => {
+    isMuted = !isMuted;
+    this.sound.mute = isMuted;
+    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    if (!isMuted) sfx.uiClick.play();
+  });
+
+  this.input.on('pointerdown', (pointer, currentlyOver) => {
+    if (currentlyOver && currentlyOver.some(obj =>
+      obj === this.pauseIcon || obj === this.muteIcon
+    )) return;
+
+    if (gameStarted && !gameOver && !gamePaused) {
+      direction *= -1;
+      sfx.move.play();
+      this.tweens.add({
+        targets: [circle1, circle2],
+        scaleX: 1.15, scaleY: 1.15,
+        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+      });
+    }
+  });
+
+  this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle1, points, collectPoint, null, this);
+  this.physics.add.overlap(circle2, points, collectPoint, null, this);
+}
 
 // DELTA TIME PATCHED update
 function update(time, delta) {
@@ -747,21 +839,23 @@ function collectPoint(_, pt) {
 }
 
 function handleStartGame() {
-  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
+  sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
   document.getElementById('viewLeaderboardBtn').style.display = 'none';
   document.getElementById('start-screen').style.display = 'none';
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
   fadeOut(() => {
-    // Fire Phaser start event
-    if (window.trickyTurnsScene) window.trickyTurnsScene.events.emit('start-game');
+    const scene = window.game.scene.keys.default;
+    scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.pauseIcon.setVisible(true);
+    scene.muteIcon.setVisible(true);
+    scene.startCountdown(function() {
+      gameStarted = true;
+    });
   }, 200);
 }
-
-
-
-
 
 function handleGoHome() {
   fadeIn(() => {
@@ -788,17 +882,46 @@ function handleGoHome() {
 }
 
 function handlePlayAgain() {
-  if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') {
-    sfx.uiClick.play();
-  }
+  sfx.uiClick.play();
   const scene = window.game.scene.keys.default;
   if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
-  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
   scene.scene.restart();
+  setTimeout(() => {
+    score = 0;
+    speed = GAME_CONFIG.SPEED_START;
+    direction = 1;
+    gameStarted = false;
+    gameOver = false;
+    gamePaused = false;
+    laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+    laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+    lastSpawnTimestamp = 0;
+    [
+      'game-over-screen', 'leaderboard-screen', 'pause-overlay',
+      'start-screen', 'leaderboard'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) userInfo.style.display = 'none';
+    const viewLb = document.getElementById('viewLeaderboardBtn');
+    if (viewLb) viewLb.style.display = 'none';
+    const canvas = document.querySelector('canvas');
+    if (canvas) canvas.style.visibility = 'visible';
+    const scene = window.game.scene.keys.default;
+    scheduleSpawnEvents(scene);
+    scene.scoreText.setVisible(true);
+    scene.bestScoreText.setVisible(true);
+    scene.pauseIcon.setVisible(true);
+    scene.muteIcon.setVisible(true);
+    scene.startCountdown(function() {
+      gameStarted = true;
+    });
+  }, 0);
 }
-
-
 
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startBtn').onclick = handleStartGame;
