@@ -104,7 +104,9 @@ let starfieldLayers = [];
 let piInitPromise = null;
 function initPi() {
   if (!piInitPromise) {
-    piInitPromise = Pi.init({ version: "2.0", sandbox: true });
+   const isPiBrowser = window.location.hostname.includes('pi') || window.location.href.includes('pi://');
+   piInitPromise = Pi.init({ version: "2.0", sandbox: !isPiBrowser });
+
   }
   return piInitPromise;
 }
