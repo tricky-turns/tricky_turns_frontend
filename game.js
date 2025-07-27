@@ -894,6 +894,7 @@ function handleGoHome() {
 }
 
 function handlePlayAgain() {
+  document.getElementById('game-over-screen').style.display = 'none';
   if (sfx && sfx.uiClick && typeof sfx.uiClick.play === 'function') sfx.uiClick.play();
   pendingRestart = true; // set this before restarting
   const scene = window.game.scene.keys.default;
