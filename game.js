@@ -866,7 +866,6 @@ if (!useLocalHighScore && piToken) {
   });
 }
 
-
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
 
