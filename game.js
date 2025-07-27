@@ -888,9 +888,19 @@ function handlePlayAgain() {
   if (spawnEvent) spawnEvent.remove(false);
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
   scene.scene.restart();
-  // No setTimeout, no manual resets, no DOM fiddling.
-  // All game state/UI is reset in create().
+
+  setTimeout(() => {
+    const newScene = window.game.scene.keys.default;
+    newScene.scoreText.setVisible(true);
+    newScene.bestScoreText.setVisible(true);
+    newScene.pauseIcon.setVisible(true);
+    newScene.muteIcon.setVisible(true);
+    newScene.startCountdown(function() {
+      gameStarted = true;
+    });
+  }, 25); // 1 frame later
 }
+
 
 
 window.addEventListener('DOMContentLoaded', () => {
