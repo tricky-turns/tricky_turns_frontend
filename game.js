@@ -127,16 +127,6 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
-  // Set guest UI immediately
-  piUsername = 'Guest';
-  useLocalHighScore = true;
-  usernameLabel.innerText = `Guest`;
-  loginBtn.style.display = 'inline-block';
-  userInfo.classList.add('guest');
-  userInfo.classList.remove('logged-in');
-  userInfo.style.display = 'flex';
-  userInfo.classList.add('visible');
-
   try {
     const scopes = ['username'];
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
@@ -144,20 +134,28 @@ async function initAuth() {
     piToken = auth.accessToken;
     useLocalHighScore = false;
 
-    // Override with logged-in info
+    // Auth succeeded — show Pi user
     usernameLabel.innerText = `@${piUsername}`;
     loginBtn.style.display = 'none';
     userInfo.classList.add('logged-in');
     userInfo.classList.remove('guest');
   } catch (e) {
-    // Auth failed — guest UI already shown
+    // Auth failed — fallback to guest
+    piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
+
+    usernameLabel.innerText = `Guest`;
+    loginBtn.style.display = 'inline-block';
+    userInfo.classList.add('guest');
+    userInfo.classList.remove('logged-in');
   }
 
+  // ✅ Now show the user info and screen
+  userInfo.style.display = 'flex';
   startScreen.classList.add('ready');
 
-  // Load high score
+  // Fetch or fallback high score
   if (!useLocalHighScore && piToken) {
     try {
       const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
@@ -179,6 +177,7 @@ async function initAuth() {
     bestScoreText.setText('Best: ' + highScore);
   }
 }
+
 
 
 
