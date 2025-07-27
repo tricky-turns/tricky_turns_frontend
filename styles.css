@@ -491,3 +491,15 @@ canvas {
   font-style: normal;
 }
 
+.loading-indicator {
+  font-size: 0.95rem;
+  color: #ffffffbb;
+  font-style: italic;
+  text-shadow: 0 0 4px #000;
+  animation: pulseFade 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseFade {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
