@@ -79,6 +79,14 @@ const GAME_CONFIG = {
 //
 // ==========================
 
+  function getSpawnInterval() {
+    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
+    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
+    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+    return interval + Phaser.Math.Between(-50, 50);
+  }
+
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
 let spawnEvent = null;
@@ -435,14 +443,6 @@ bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore,
       }
     }
   });
-
-  function getSpawnInterval() {
-    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
-    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
-    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
-    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-    return interval + Phaser.Math.Between(-50, 50);
-  }
 
 scheduleSpawnEvents(this);
 
