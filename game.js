@@ -118,7 +118,7 @@ async function initAuth() {
     document.getElementById('loginBtn').style.display = 'none';
     useLocalHighScore = false;
 
-    const res = await fetch('/api/leaderboard/me', {
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, { 
       headers: { Authorization: `Bearer ${piToken}` }
     });
 
@@ -178,7 +178,7 @@ async function showHomeLeaderboard() {
 
   const data = leaderboardFetched
     ? cachedLeaderboard
-    : await fetch('/api/leaderboard?top=100').then(r => r.json());
+    : await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`).then(r => r.json());
 
   data.forEach((e, i) => {
     const li = document.createElement('li');
@@ -721,7 +721,7 @@ function triggerGameOver() {
     (async () => {
       if (!useLocalHighScore) {
         try {
-await fetch('/api/leaderboard', {
+await fetch(`${BACKEND_BASE}/api/leaderboard`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -733,7 +733,7 @@ await fetch('/api/leaderboard', {
         } catch (e) { /* ignore */ }
       }
       try {
-        const data = await fetch('/api/leaderboard?top=100').then(r => r.json());
+        const data = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`).then(r => r.json());
         if (list) {
           while (list.firstChild) list.removeChild(list.firstChild);
           data.forEach((e, i) => {
@@ -744,7 +744,7 @@ await fetch('/api/leaderboard', {
           });
         }
         try {
-  const res = await fetch('/api/leaderboard/rank', {
+  const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
     headers: { Authorization: `Bearer ${piToken}` }
   });
   if (res.ok) {
