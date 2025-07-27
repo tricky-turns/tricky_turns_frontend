@@ -121,58 +121,60 @@ function onIncompletePaymentFound(payment) {
 }
 async function initAuth() {
   await initPi();
+  const userInfo = document.getElementById('user-info');
+  const usernameLabel = document.getElementById('username');
+  const loginBtn = document.getElementById('loginBtn');
+  const startScreen = document.getElementById('start-screen');
+
   try {
+    const scopes = ['username'];
     const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
     piUsername = auth.user.username;
-    piToken = auth.accessToken; // new: store token
-
-
-// Temporary debug UI
-    // const debugDiv = document.createElement("div");
-    // debugDiv.style = "position:absolute;top:0;left:0;background:#000;color:#0f0;padding:10px;z-index:9999;max-width:100vw;overflow-wrap:break-word;font-size:10px";
-    // debugDiv.innerText = `USER: ${piUsername}\nTOKEN: ${piToken?.slice(0, 60)}...`;
-    // document.body.appendChild(debugDiv);
-
-
-    if (!useLocalHighScore) {
-      document.getElementById('username').innerText = `@${piUsername}`;
-      document.getElementById('user-info').style.display = 'flex';
-    } else {
-      document.getElementById('user-info').style.display = 'none';
-    }
-    const userInfo = document.getElementById('user-info');
-userInfo.classList.toggle('guest', useLocalHighScore);
-userInfo.classList.toggle('logged-in', !useLocalHighScore);
-
-    document.getElementById('loginBtn').style.display = 'none';
-
+    piToken = auth.accessToken;
     useLocalHighScore = false;
 
-if (!useLocalHighScore && piToken) {
-  try {
-    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, { 
-      headers: { Authorization: `Bearer ${piToken}` }
-    });
+    usernameLabel.innerText = `@${piUsername}`;
+    userInfo.style.display = 'flex';
+    loginBtn.style.display = 'none';
+    userInfo.classList.add('logged-in');
+    userInfo.classList.remove('guest');
+  } catch (e) {
+    useLocalHighScore = true;
+    piUsername = 'Guest';
+    piToken = null;
 
-    if (res.ok) {
-      const entry = await res.json();
-      highScore = entry.score;
-    } else {
+    usernameLabel.innerText = `Guest`;
+    userInfo.style.display = 'flex';
+    loginBtn.style.display = 'inline-block';
+    userInfo.classList.add('guest');
+    userInfo.classList.remove('logged-in');
+  }
+
+  // Show start screen now that auth is resolved
+  startScreen.classList.add('ready');
+
+  // Fetch remote score if logged in
+  if (!useLocalHighScore && piToken) {
+    try {
+      const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+        headers: { Authorization: `Bearer ${piToken}` }
+      });
+      if (res.ok) {
+        const entry = await res.json();
+        highScore = entry.score;
+      } else {
+        highScore = 0;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch user score:", e);
       highScore = 0;
     }
-  } catch (e) {
-    console.warn("Failed to fetch user score:", e);
-    highScore = 0;
   }
+
+  localStorage.setItem('tricky_high_score', highScore);
+  if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
 }
 
-
-    localStorage.setItem('tricky_high_score', highScore);
-    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
-  } catch (e) {
-    console.log('Not signed in:', e);
-  }
-}
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 

@@ -460,3 +460,12 @@ canvas {
   filter: brightness(1.08);
   line-height: 1.1;
 }
+
+#start-screen {
+  transition: visibility 0s ease-in, opacity 0.3s ease-in;
+}
+
+#start-screen.ready {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
