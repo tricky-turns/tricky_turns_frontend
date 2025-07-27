@@ -1,6 +1,9 @@
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
 let spawnIntervalUpdater = null; // Add this global with other timers
+let surpassedBest = false;
+let newBestText; // For "NEW BEST" animated UI
+
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
@@ -398,61 +401,37 @@ function create() {
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
+  // ==== SCORE TEXTS ====
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-  fontFamily: 'Poppins',
-  fontSize: '28px',
-  fontStyle: 'bold',
-  color: '#ffffff',
-  stroke: '#1a7ef2',
-  strokeThickness: 3,
-  shadow: {
-    offsetX: 1,
-    offsetY: 1,
-    color: '#000000',
-    blur: 1,
-    fill: true
-  }
-});
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#1a7ef2',
+    strokeThickness: 3,
+    shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
+  }).setDepth(10).setVisible(true);
 
-bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-})
+  bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#1a7ef2',
+    strokeThickness: 3,
+    shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
+  }).setDepth(10).setVisible(true);
 
-
-newBestText = this.newBestText = this.add.text(16, 16, '', {
-  fontFamily: 'Poppins',
-  fontSize: '30px',
-  fontStyle: 'bold',
-  color: '#fff176',
-  stroke: '#ff9800',
-  strokeThickness: 4,
-  shadow: {
-    offsetX: 1,
-    offsetY: 1,
-    color: '#000000',
-    blur: 2,
-    fill: true
-  }
-}).setVisible(false);
-
-
-  fontFamily: 'Poppins',
-  fontSize: '28px',
-  fontStyle: 'bold',
-  color: '#ffffff',
-  stroke: '#1a7ef2',
-  strokeThickness: 3,
-  shadow: {
-    offsetX: 1,
-    offsetY: 1,
-    color: '#000000',
-    blur: 1,
-    fill: true
-  }
-});
-
-
-
-
+  // ==== NEW BEST TEXT (Initially Hidden) ====
+  newBestText = this.newBestText = this.add.text(16, 36, '', {
+    fontFamily: 'Poppins',
+    fontSize: '32px',
+    fontStyle: 'bold',
+    color: '#ffe167',
+    stroke: '#f89e2c',
+    strokeThickness: 4,
+    shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
+  }).setDepth(11).setVisible(false);
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
@@ -462,26 +441,20 @@ newBestText = this.newBestText = this.add.text(16, 16, '', {
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
-countdownText = this.add.text(cx, cy, '', {
-  fontFamily: 'Poppins',
-  fontSize: '96px',
-  fontStyle: 'bold',
-  color: '#ffffff',
-  stroke: '#25b7e6',
-  strokeThickness: 2,
-  shadow: {
-    offsetX: 1.5,
-    offsetY: 3,
-    color: '#23b6e9cc',
-    blur: 12,
-    fill: true
-  }
-}).setOrigin(0.5).setDepth(1000).setVisible(false);
-
+  countdownText = this.add.text(cx, cy, '', {
+    fontFamily: 'Poppins',
+    fontSize: '96px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#25b7e6',
+    strokeThickness: 2,
+    shadow: { offsetX: 1.5, offsetY: 3, color: '#23b6e9cc', blur: 12, fill: true }
+  }).setOrigin(0.5).setDepth(1000).setVisible(false);
 
   this.countdownText = countdownText;
   this.scoreText = scoreText;
   this.bestScoreText = bestScoreText;
+  this.newBestText = newBestText;
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
@@ -518,8 +491,7 @@ countdownText = this.add.text(cx, cy, '', {
     }
   });
 
-scheduleSpawnEvents(this);
-
+  scheduleSpawnEvents(this);
 
   this.time.addEvent({
     delay: 250,
@@ -607,6 +579,7 @@ scheduleSpawnEvents(this);
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
+
 
 // DELTA TIME PATCHED update
 function update(time, delta) {
@@ -887,51 +860,31 @@ function collectPoint(_, pt) {
   score++;
   sfx.point.play();
 
-  if (score > highScore) {
-    if (highScore === score - 1) {
-      // first time beating best — celebrate
-      sfx.newBest.play();
-      bestScoreText.setVisible(false);
-      scoreText.setVisible(false);
-      newBestText.setVisible(true);
+  // === PREMIUM SCORE HANDLING ===
+  if (!surpassedBest && score > highScore) {
+    surpassedBest = true;
+    scoreText.setVisible(false);
+    bestScoreText.setVisible(false);
 
-      // floating label
-      const popup = scene.add.text(140, 60, '🎉 NEW HIGH SCORE!', {
-        fontFamily: 'Poppins',
-        fontSize: '24px',
-        fontWeight: 'bold',
-        color: '#ffeb3b',
-        stroke: '#f57f17',
-        strokeThickness: 3,
-        shadow: {
-          offsetX: 1,
-          offsetY: 1,
-          color: '#000000',
-          blur: 2,
-          fill: true
-        }
-      }).setAlpha(0.9);
+    newBestText.setVisible(true);
+    newBestText.setText('NEW BEST: ' + score);
 
-      scene.tweens.add({
-        targets: popup,
-        y: 20,
-        alpha: 0,
-        duration: 1200,
-        ease: 'Cubic.easeOut',
-        onComplete: () => popup.destroy()
-      });
-    }
-
-    highScore = score;
-    newBestText.setText('🏆 NEW BEST: ' + highScore);
-
+    // Animation: Pulse/grow + play sound
     scene.tweens.add({
       targets: newBestText,
-      scaleX: 1.2,
-      scaleY: 1.2,
+      scaleX: 1.27, scaleY: 1.27,
+      alpha: { from: 0, to: 1 },
+      yoyo: true, duration: 340, ease: 'Back.easeOut'
+    });
+    sfx.newBest.play();
+  } else if (surpassedBest) {
+    newBestText.setText('NEW BEST: ' + score);
+    scene.tweens.add({
+      targets: newBestText,
+      scaleX: 1.11, scaleY: 1.11,
       yoyo: true,
-      duration: 250,
-      ease: 'Sine.easeInOut'
+      ease: 'Sine.easeInOut',
+      duration: 90,
     });
   } else {
     scoreText.setText('Score: ' + score);
@@ -943,6 +896,7 @@ function collectPoint(_, pt) {
   }
 }
 
+
 function handleStartGame() {
   sfx.uiClick.play();
   document.getElementById('user-info').style.display = 'none';
@@ -953,8 +907,6 @@ function handleStartGame() {
   fadeOut(() => {
     const scene = window.game.scene.keys.default;
     scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.newBestText.setVisible(false);
     scene.bestScoreText.setVisible(true);
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
@@ -981,8 +933,6 @@ function handleGoHome() {
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
     document.getElementById('user-info').style.display = 'flex';
-
-
     document.getElementById('start-screen').style.display = 'flex';
     document.getElementById('pause-overlay').style.display = 'none';
     if (muteBtnHome) muteBtnHome.style.display = 'block';
@@ -990,11 +940,21 @@ function handleGoHome() {
     window.scrollTo(0, 0);
 
     fadeOut();
+
+    // --- SCORE UI STATE RESET ---
+    surpassedBest = false;
+    if (scoreText) scoreText.setVisible(true);
+    if (bestScoreText) bestScoreText.setVisible(true);
+    if (newBestText) newBestText.setVisible(false);
+
+    if (scene.scoreText) scene.scoreText.setVisible(true);
+    if (scene.bestScoreText) scene.bestScoreText.setVisible(true);
+    if (scene.newBestText) scene.newBestText.setVisible(false);
   });
   document.getElementById('user-info').style.display = 'flex';
-document.getElementById('user-info').classList.add('visible');
-
+  document.getElementById('user-info').classList.add('visible');
 }
+
 
 function handlePlayAgain() {
   sfx.uiClick.play();
@@ -1007,7 +967,6 @@ function handlePlayAgain() {
   scene.scene.restart();
 
   scene.events.once('create', () => {
-    // Reset all game state only after scene is fully recreated
     score = 0;
     speed = GAME_CONFIG.SPEED_START;
     direction = 1;
@@ -1035,12 +994,16 @@ function handlePlayAgain() {
     if (canvas) canvas.style.visibility = 'visible';
     window.scrollTo(0, 0);
 
+    // --- SCORE UI STATE RESET ---
+    surpassedBest = false;
+    if (scoreText) scoreText.setVisible(true);
+    if (bestScoreText) bestScoreText.setVisible(true);
+    if (newBestText) newBestText.setVisible(false);
 
     scheduleSpawnEvents(scene);
     scene.scoreText.setVisible(true);
     scene.bestScoreText.setVisible(true);
     scene.newBestText.setVisible(false);
-    scene.bestScoreText.setVisible(true);
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function () {
@@ -1048,6 +1011,7 @@ function handlePlayAgain() {
     });
   });
 }
+
 
 
 window.addEventListener('DOMContentLoaded', () => {
