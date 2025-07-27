@@ -469,3 +469,11 @@ canvas {
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+#user-info {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+#user-info[style*="display: flex"] {
+  opacity: 1;
+}

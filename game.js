@@ -133,11 +133,24 @@ async function initAuth() {
     piToken = auth.accessToken;
     useLocalHighScore = false;
 
-    usernameLabel.innerText = `@${piUsername}`;
-    userInfo.style.display = 'flex';
-    loginBtn.style.display = 'none';
-    userInfo.classList.add('logged-in');
-    userInfo.classList.remove('guest');
+const userInfo = document.getElementById('user-info');
+const usernameLabel = document.getElementById('username');
+const loginBtn = document.getElementById('loginBtn');
+
+// ✅ Always update UI after resolving auth state
+if (useLocalHighScore) {
+  usernameLabel.innerText = `Guest`;
+  loginBtn.style.display = 'inline-block';
+  userInfo.classList.add('guest');
+  userInfo.classList.remove('logged-in');
+} else {
+  usernameLabel.innerText = `@${piUsername}`;
+  loginBtn.style.display = 'none';
+  userInfo.classList.add('logged-in');
+  userInfo.classList.remove('guest');
+}
+userInfo.style.display = 'flex';
+
   } catch (e) {
     useLocalHighScore = true;
     piUsername = 'Guest';
