@@ -115,15 +115,11 @@ async function initAuth() {
     piToken = auth.accessToken; // new: store token
 
 
-    const auth = await Pi.authenticate(scopes);
-const piUsername = auth.user?.username;
-const piToken = auth.accessToken;
-
 // Temporary debug UI
-const debugDiv = document.createElement("div");
-debugDiv.style = "position:absolute;top:0;left:0;background:#000;color:#0f0;padding:10px;z-index:9999;max-width:100vw;overflow-wrap:break-word;font-size:10px";
-debugDiv.innerText = `USER: ${piUsername}\nTOKEN: ${piToken?.slice(0, 60)}...`;
-document.body.appendChild(debugDiv);
+    const debugDiv = document.createElement("div");
+    debugDiv.style = "position:absolute;top:0;left:0;background:#000;color:#0f0;padding:10px;z-index:9999;max-width:100vw;overflow-wrap:break-word;font-size:10px";
+    debugDiv.innerText = `USER: ${piUsername}\nTOKEN: ${piToken?.slice(0, 60)}...`;
+    document.body.appendChild(debugDiv);
 
 
     document.getElementById('username').innerText = piUsername;
