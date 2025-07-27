@@ -775,19 +775,24 @@ await fetch(`${BACKEND_BASE}/api/leaderboard`, {
             list.appendChild(li);
           });
         }
-        try {
-  const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
-    headers: { Authorization: `Bearer ${piToken}` }
-  });
-  if (res.ok) {
-    const { rank } = await res.json();
-    if (rankMessage) rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
-  } else {
+if (!useLocalHighScore && piToken) {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
+      headers: { Authorization: `Bearer ${piToken}` }
+    });
+    if (res.ok) {
+      const { rank } = await res.json();
+      if (rankMessage) rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
+    } else {
+      if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+    }
+  } catch (e) {
     if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
   }
-} catch (e) {
-  if (rankMessage) rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+} else {
+  if (rankMessage) rankMessage.innerText = `🔓 Sign in to track your global rank`;
 }
+
 
       } catch (e) {
         if (list) {
