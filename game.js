@@ -254,6 +254,14 @@ function preload() {
 }
 
 function create() {
+  // Hide all overlays and modals on game start (create)
+document.getElementById('game-over-screen').style.display = 'none';
+document.getElementById('leaderboard-screen').style.display = 'none';
+document.getElementById('pause-overlay').style.display = 'none';
+document.getElementById('start-screen').style.display = 'none';
+if (muteBtnHome) muteBtnHome.style.display = 'none';
+document.querySelector('canvas').style.visibility = 'visible';
+
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
