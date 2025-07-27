@@ -839,7 +839,7 @@ function handleStartGame() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
-      scheduleSpawnLoop(this);
+      scheduleSpawnLoop(scene);
     });
   }, 200);
 }
@@ -905,6 +905,7 @@ function handlePlayAgain() {
     scene.muteIcon.setVisible(true);
     scene.startCountdown(function() {
       gameStarted = true;
+      scheduleSpawnLoop(scene);
     });
   }, 0);
 }
