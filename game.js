@@ -879,6 +879,8 @@ function handleGoHome() {
     document.getElementById('pause-overlay').style.display = 'none';
     if (muteBtnHome) muteBtnHome.style.display = 'block';
     document.querySelector('canvas').style.visibility = 'hidden';
+    window.scrollTo(0, 0);
+
     fadeOut();
   });
 }
@@ -920,6 +922,8 @@ function handlePlayAgain() {
     if (viewLb) viewLb.style.display = 'none';
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
+    window.scrollTo(0, 0);
+
 
     scheduleSpawnEvents(scene);
     scene.scoreText.setVisible(true);
