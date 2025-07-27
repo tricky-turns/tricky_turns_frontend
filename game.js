@@ -133,9 +133,6 @@ async function initAuth() {
     piToken = auth.accessToken;
     useLocalHighScore = false;
 
-const userInfo = document.getElementById('user-info');
-const usernameLabel = document.getElementById('username');
-const loginBtn = document.getElementById('loginBtn');
 
 // ✅ Always update UI after resolving auth state
 if (useLocalHighScore) {
