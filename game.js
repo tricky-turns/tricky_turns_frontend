@@ -32,21 +32,21 @@ const GAME_CONFIG = {
   NUM_LANES: 3,
   RADIUS: 100,
   // --- Spawn mechanics ---
-  SPAWN_BUFFER_X: 220,
-  SPAWN_INTERVAL_MIN: 350,
-  SPAWN_INTERVAL_MAX: 1100,
+  SPAWN_BUFFER_X: 185,
+  SPAWN_INTERVAL_MIN: 300,
+  SPAWN_INTERVAL_MAX: 900,
   SPAWN_INTERVAL_BASE_SPEED: 3,
-  FORCED_SPAWN_INTERVAL: 1800,
+  FORCED_SPAWN_INTERVAL: 1300,
   // --- Orb movement ---
   ANGULAR_BASE: 0.05,
-  ANGULAR_SCALE: 0.005,
+  ANGULAR_SCALE: 0.009,
   // --- Obstacle/point speed ---
   SPEED_START: 3,
-  SPEED_MAX: 20,
+  SPEED_MAX: 16,
   SPEED_RAMP: [
-    { until: 20,   perTick: 0.05 },
-    { until: 50,   perTick: 0.75 },
-    { until: 9999, perTick: 0.10 }
+    { until: 10,   perTick: 0.15 },
+    { until: 35,   perTick: 0.25 },
+    { until: 9999, perTick: 0.30 }
   ],
   // --- Point spawn probability ---
   POINT_CHANCE: [
