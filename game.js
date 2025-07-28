@@ -134,11 +134,10 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
-  // PATCH: Make user info bar visible with loading indicator
+  // Show user info bar and loading
   userInfo.classList.remove('hidden');
   userInfo.style.display = 'flex';
 
-  // Show only the loading spinner/text
   authLoading.classList.remove('hidden');
   piLabel.classList.add('hidden');
   usernameLabel.classList.add('hidden');
@@ -160,7 +159,7 @@ async function initAuth() {
     ]);
 
     if (!timedOut && auth?.user?.username) {
-      // ✅ Auth success
+      // ✅ Pi authentication
       piUsername = auth.user.username;
       piToken = auth.accessToken;
       useLocalHighScore = false;
@@ -171,8 +170,20 @@ async function initAuth() {
       userInfo.classList.remove('guest');
       userInfo.classList.add('logged-in');
 
-      // ...fetch high score from backend...
-      // (same as before)
+      // Fetch high score from backend API
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+          headers: { Authorization: `Bearer ${piToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          highScore = data.highScore || 0;
+        } else {
+          highScore = 0;
+        }
+      } catch {
+        highScore = 0;
+      }
 
     } else {
       // ❌ Fallback to guest
@@ -185,10 +196,12 @@ async function initAuth() {
 
       userInfo.classList.remove('logged-in');
       userInfo.classList.add('guest');
-      // ...fetch high score from localStorage...
+
+      // Load high score from localStorage
+      highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
     }
   } catch (e) {
-    // ❌ Fallback to guest
+    // ❌ Catch branch: fallback to guest
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
@@ -198,26 +211,31 @@ async function initAuth() {
 
     userInfo.classList.remove('logged-in');
     userInfo.classList.add('guest');
-    // ...fetch high score from localStorage...
+
+    // Load high score from localStorage
+    highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
   }
 
-  // PATCH: Show user info after auth result
+  // Hide loader, show info
   authLoading.classList.add('hidden');
   piLabel.classList.remove('hidden');
   usernameLabel.classList.remove('hidden');
-
   if (piUsername === 'Guest') {
     loginBtn.classList.remove('hidden');
   } else {
     loginBtn.classList.add('hidden');
   }
 
+  // (Optional) Update best score text UI on start screen
+  if (typeof bestScoreText !== 'undefined' && bestScoreText) {
+    bestScoreText.setText('Best: ' + highScore);
+  }
+  // If you want to update DOM too:
+  const bestScoreDom = document.getElementById('bestScore');
+  if (bestScoreDom) bestScoreDom.innerText = highScore;
+
   startScreen.classList.add('ready');
 }
-
-
-
-
 
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
@@ -810,6 +828,11 @@ function triggerGameOver() {
   const bestBlock = document.getElementById('bestBlock');
   const scoreBlock = document.getElementById('scoreBlock');
 
+  // --- PATCH: always reset state ---
+  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+  if (bestBlock) bestBlock.style.display = '';
+  if (scoreBlock) scoreBlock.style.display = '';
+
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
@@ -833,7 +856,7 @@ function triggerGameOver() {
 
     document.getElementById('finalScore').innerText = score;
     document.getElementById('bestScore').innerText = highScore;
-    bestScoreText.setText('Best: ' + highScore);
+    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
 
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
@@ -843,15 +866,13 @@ function triggerGameOver() {
     if (muteBtnHome) muteBtnHome.style.display = 'none';
     const gameOverScreen = document.getElementById('game-over-screen');
     gameOverScreen.classList.remove('hidden');
-    gameOverScreen.style.display = 'flex'; // You may keep this for flex layout
-
+    gameOverScreen.style.display = 'flex';
 
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
     // --- Leaderboard/rank logic ---
     (async () => {
-      // ✅ Submit score if authenticated
       if (!useLocalHighScore && piToken) {
         try {
           await fetch(`${BACKEND_BASE}/api/leaderboard`, {
@@ -868,7 +889,6 @@ function triggerGameOver() {
         } catch (e) { /* silently ignore */ }
       }
 
-      // ✅ Fetch and display ONLY the user's rank
       if (!useLocalHighScore && piToken) {
         try {
           const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
@@ -900,6 +920,7 @@ function triggerGameOver() {
     // --- End leaderboard logic ---
   });
 }
+
 
 
 
@@ -1010,18 +1031,26 @@ function handleGoHome() {
     laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
-document.getElementById('game-over-screen').classList.add('hidden');
-['user-info', 'viewLeaderboardBtn', 'start-screen'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('hidden');
-  if (el) el.style.display = '';
-});
-document.getElementById('pause-overlay').classList.add('hidden');
-document.getElementById('pause-overlay').style.display = '';
-if (muteBtnHome) muteBtnHome.style.display = 'block';
-document.querySelector('canvas').style.visibility = 'hidden';
-window.scrollTo(0, 0);
 
+    // --- PATCH: Always reset all result blocks to default state
+    const newHighScoreBlock = document.getElementById('newHighScoreBlock');
+    const bestBlock = document.getElementById('bestBlock');
+    const scoreBlock = document.getElementById('scoreBlock');
+    if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+    if (bestBlock) bestBlock.style.display = '';
+    if (scoreBlock) scoreBlock.style.display = '';
+
+    document.getElementById('game-over-screen').classList.add('hidden');
+    ['user-info', 'viewLeaderboardBtn', 'start-screen'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+      if (el) el.style.display = '';
+    });
+    document.getElementById('pause-overlay').classList.add('hidden');
+    document.getElementById('pause-overlay').style.display = '';
+    if (muteBtnHome) muteBtnHome.style.display = 'block';
+    document.querySelector('canvas').style.visibility = 'hidden';
+    window.scrollTo(0, 0);
 
     fadeOut();
 
@@ -1039,6 +1068,7 @@ window.scrollTo(0, 0);
 }
 
 
+
 function handlePlayAgain() {
   sfx.uiClick.play();
 
@@ -1047,11 +1077,18 @@ function handlePlayAgain() {
   if (spawnEvent) spawnEvent.remove(false);
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
 
+  // --- PATCH: Always reset all result blocks to default state
+  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
+  const bestBlock = document.getElementById('bestBlock');
+  const scoreBlock = document.getElementById('scoreBlock');
+  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+  if (bestBlock) bestBlock.style.display = '';
+  if (scoreBlock) scoreBlock.style.display = '';
+
   scene.scene.restart();
 
   scene.events.once('create', () => {
     newBestJustSurpassed = false;
-
     score = 0;
     speed = GAME_CONFIG.SPEED_START;
     direction = 1;
@@ -1062,18 +1099,18 @@ function handlePlayAgain() {
     laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
 
-[
-  'game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'
-].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('hidden');
-  if (el) el.style.display = '';
-});
-if (muteBtnHome) muteBtnHome.style.display = 'none';
-const userInfo = document.getElementById('user-info');
-if (userInfo) userInfo.classList.add('hidden');
-const viewLb = document.getElementById('viewLeaderboardBtn');
-if (viewLb) viewLb.classList.add('hidden');
+    [
+      'game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+      if (el) el.style.display = '';
+    });
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) userInfo.classList.add('hidden');
+    const viewLb = document.getElementById('viewLeaderboardBtn');
+    if (viewLb) viewLb.classList.add('hidden');
 
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
@@ -1096,6 +1133,7 @@ if (viewLb) viewLb.classList.add('hidden');
     });
   });
 }
+
 
 
 
