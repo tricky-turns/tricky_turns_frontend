@@ -165,9 +165,11 @@ async function initAuth() {
       usernameLabel.innerText = `@${piUsername}`;
       loginBtn.style.display = 'none';
 
-      userInfo.classList.remove('guest');
-      userInfo.classList.add('logged-in');
-
+       userInfo.classList.remove('guest');
+       userInfo.classList.add('logged-in');
+       userInfo.classList.remove('hidden');
+       userInfo.style.display = 'flex';
+ 
       // ==== FETCH USER'S BEST SCORE FROM BACKEND ====
       try {
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
@@ -208,6 +210,8 @@ async function initAuth() {
 
       userInfo.classList.remove('logged-in');
       userInfo.classList.add('guest');
+      userInfo.classList.remove('hidden');
+      userInfo.style.display = 'flex';
       // Also set best from localStorage as before:
       highScore = parseInt(localStorage.getItem('tricky_high_score') || "0", 10) || 0;
       if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: ' + highScore);
@@ -225,6 +229,9 @@ async function initAuth() {
 
     userInfo.classList.remove('logged-in');
     userInfo.classList.add('guest');
+    userInfo.classList.remove('hidden');
+    userInfo.style.display = 'flex';
+
     highScore = parseInt(localStorage.getItem('tricky_high_score') || "0", 10) || 0;
     if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: ' + highScore);
     const bestScoreDom = document.getElementById('bestScore');
