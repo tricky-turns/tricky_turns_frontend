@@ -640,3 +640,41 @@ canvas {
   animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
 }
 
+
+
+
+
+
+.new-high-score-banner {
+  color: #d1f5ff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 24px #58c0f2cc,
+    0 1px 5px #fff,
+    0 1px 6px #197dbb88;
+  background: linear-gradient(90deg, #b7f2ff 25%, #e9fbff 60%, #3199e4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.2rem;
+  animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
+  text-align: center;
+}
+
+.new-high-score-number {
+  font-size: 3.4rem;
+  color: #d1f5ff;
+  font-weight: 900;
+  text-shadow:
+    0 0 24px #58c0f2cc,
+    0 2px 12px #fff,
+    0 1px 6px #197dbb88;
+  background: linear-gradient(90deg, #b7f2ff 25%, #e9fbff 60%, #3199e4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.4rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
+}
