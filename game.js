@@ -283,6 +283,7 @@ function fadeOut(callback, duration = 600) {
 
 async function showHomeLeaderboard() {
   const lb = document.getElementById('leaderboard-screen');
+  lb.classList.remove('hidden');
   lb.style.display = 'flex';
   requestAnimationFrame(() => lb.classList.add('visible'));
 
@@ -577,6 +578,7 @@ newBestText = this.newBestText = this.add.text(16, 16, '', {
       pauseIcon.setTexture('iconPlay');
       sfx.pauseWhoosh.play();
       this.physics.pause();
+      pauseOverlay.classList.remove('hidden');
       pauseOverlay.style.display = 'flex';
       setTimeout(() => { pauseIconLocked = false; }, 300);
     } else {
@@ -1117,8 +1119,9 @@ document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
 
 document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
   const lb = document.getElementById('leaderboard-screen');
+  lb.classList.add('hidden');
   lb.classList.remove('visible');
-  lb.style.display = 'none';
+  lb.style.display = '';
 });
 
   const playAgainBtn = document.getElementById('playAgainBtn');
