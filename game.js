@@ -849,7 +849,10 @@ function triggerGameOver() {
     }
 
     if (muteBtnHome) muteBtnHome.style.display = 'none';
-    document.getElementById('game-over-screen').style.display = 'flex';
+    const gameOverScreen = document.getElementById('game-over-screen');
+    gameOverScreen.classList.remove('hidden');
+    gameOverScreen.style.display = 'flex'; // You may keep this for flex layout
+
 
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
