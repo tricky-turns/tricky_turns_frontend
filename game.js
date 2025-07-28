@@ -107,6 +107,15 @@ let lastSpawnTimestamp = 0;
 let starfieldLayers = [];
 
 let piInitPromise = null;
+
+function showDebug(msg) {
+  const box = document.getElementById('debugBox');
+  if (!box) return;
+  box.style.display = 'block';
+  box.innerText = '[DEBUG] ' + msg;
+}
+
+
 function initPi() {
   if (!piInitPromise) {
    const isPiBrowser = window.location.hostname.includes('pi') || window.location.href.includes('pi://');
@@ -127,14 +136,24 @@ function onIncompletePaymentFound(payment) {
 async function initAuth() {
   await initPi();
 
+  // --- UI elements ---
   const userInfo = document.getElementById('user-info');
   const authLoading = document.getElementById('auth-loading');
   const usernameLabel = document.getElementById('username');
   const piLabel = userInfo.querySelector('.label:not(#auth-loading)');
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
+  const debugBox = document.getElementById('debugBox');
 
-  // Show user info bar and loading
+  // Helper to show debug info in the UI
+  function showDebug(msg) {
+    if (!debugBox) return;
+    debugBox.style.display = 'block';
+    debugBox.innerText = '[DEBUG] ' + msg;
+    setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
+  }
+
+  // Show user info bar and loading spinner
   userInfo.classList.remove('hidden');
   userInfo.style.display = 'flex';
 
@@ -170,22 +189,29 @@ async function initAuth() {
       userInfo.classList.remove('guest');
       userInfo.classList.add('logged-in');
 
-      // Fetch high score from backend API
+      // --- Fetch high score from backend API with debug ---
       try {
+        showDebug("Fetching high score from API...");
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
           headers: { Authorization: `Bearer ${piToken}` }
         });
+        const txt = await res.clone().text();
+        showDebug(`API status: ${res.status}\nRaw: ${txt}`);
         if (res.ok) {
-          const data = await res.json();
+          const data = JSON.parse(txt);
+          showDebug(`Parsed: highScore=${data.highScore}`);
           highScore = data.highScore || 0;
         } else {
           highScore = 0;
+          showDebug(`API error, status ${res.status}`);
         }
         updateBestScoreEverywhere();
-      } catch {
+      } catch (err) {
+        showDebug("Fetch error: " + (err && err.message ? err.message : err));
         highScore = 0;
         updateBestScoreEverywhere();
       }
+
     } else {
       // ❌ Fallback to guest
       piUsername = 'Guest';
@@ -201,6 +227,7 @@ async function initAuth() {
       // Load high score from localStorage
       highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
       updateBestScoreEverywhere();
+      showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
     }
   } catch (e) {
     // ❌ Catch branch: fallback to guest
@@ -217,6 +244,7 @@ async function initAuth() {
     // Load high score from localStorage
     highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
     updateBestScoreEverywhere();
+    showDebug(`Guest mode (auth error): loaded highScore=${highScore} from localStorage`);
   }
 
   // Hide loader, show info
