@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
- <head>
+<head>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <meta charset="utf-8"/>
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
@@ -9,91 +9,89 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="styles.css">
- </head>
- <body>
+</head>
+<body>
+  <!-- Background Clouds -->
   <div class="bg-cloud one"></div>
   <div class="bg-cloud two"></div>
   <div class="bg-cloud three"></div>
   <div class="bg-cloud four"></div>
 
-  <img id="muteToggleHome" src="assets/icon-unmute.svg" style="position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; cursor: pointer; z-index: 3;">
+  <!-- Mute Button -->
+  <img id="muteToggleHome" src="assets/icon-unmute.svg" alt="Mute/Unmute" style="position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; cursor: pointer; z-index: 3;">
 
+  <!-- Start Screen & Auth -->
   <div id="start-screen">
-<div id="user-info" style="display: none;">
-  <span class="label" id="auth-loading">🔄 Authenticating...</span>
-  <span class="label hidden">🔵 Pi Username:</span>
-  <span id="username" class="label hidden">Guest</span>
-  <button id="loginBtn" class="btn-secondary hidden">Login</button>
-</div>
-
-
-
-   <div class="start-cloud one"></div>
-   <div class="start-cloud two"></div>
-   <div class="start-cloud three"></div>
-   <div class="start-cloud four"></div>
-
-   <h1>TRICKY<br/>TURNS</h1>
-   <button class="btn-primary" id="startBtn">TAP TO START</button>
-   <button class="btn-primary" id="viewLeaderboardBtn">VIEW LEADERBOARD</button>
-
-   <div class="orbit">
-    <div class="ring"></div>
-    <div class="circle top"></div>
-    <div class="circle bottom"></div>
-   </div>
-  </div>
-
-  <!-- Leaderboard -->
-<div id="leaderboard-screen">
-    <div class="bg-cloud one"></div>
-  <div class="bg-cloud two"></div>
-  <div class="bg-cloud three"></div>
-  <div class="bg-cloud four"></div>
-  <div class="leaderboard-wrapper">
-    <div class="leaderboard-sticky">
-      <button id="closeLeaderboardBtn" aria-label="Close leaderboard">✕</button>
-      <h2 id="leaderboardHeader">Top 100 Leaderboard</h2>
-      <div class="leaderboard-columns">
-        <span class="col-rank"># | User</span>
-        <span class="col-score">Score</span>
-      </div>
+    <div id="user-info" class="hidden">
+      <span class="label" id="auth-loading">🔄 Authenticating...</span>
+      <span class="label hidden">🔵 Pi Username:</span>
+      <span id="username" class="label hidden">Guest</span>
+      <button id="loginBtn" class="btn-secondary hidden" type="button">Login</button>
     </div>
-    <ol id="leaderboardEntriesHome"></ol>
+
+    <!-- Decorative Clouds for Start Screen -->
+    <div class="start-cloud one"></div>
+    <div class="start-cloud two"></div>
+    <div class="start-cloud three"></div>
+    <div class="start-cloud four"></div>
+
+    <h1>TRICKY<br/>TURNS</h1>
+    <button class="btn-primary" id="startBtn" type="button">TAP TO START</button>
+    <button class="btn-primary" id="viewLeaderboardBtn" type="button">VIEW LEADERBOARD</button>
+
+    <div class="orbit">
+      <div class="ring"></div>
+      <div class="circle top"></div>
+      <div class="circle bottom"></div>
+    </div>
   </div>
-</div>
 
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-screen" aria-modal="true" role="dialog" class="hidden">
+    <div class="bg-cloud one"></div>
+    <div class="bg-cloud two"></div>
+    <div class="bg-cloud three"></div>
+    <div class="bg-cloud four"></div>
+    <div class="leaderboard-wrapper">
+      <div class="leaderboard-sticky">
+        <button id="closeLeaderboardBtn" aria-label="Close leaderboard" type="button">✕</button>
+        <h2 id="leaderboardHeader">Top 100 Leaderboard</h2>
+        <div class="leaderboard-columns">
+          <span class="col-rank"># | User</span>
+          <span class="col-score">Score</span>
+        </div>
+      </div>
+      <ol id="leaderboardEntriesHome"></ol>
+    </div>
+  </div>
 
-  <!-- Pause -->
-  <div id="pause-overlay">
+  <!-- Pause Overlay -->
+  <div id="pause-overlay" class="hidden">
     <div class="paused-text">Paused</div>
   </div>
 
-  <!-- Game Over -->
-  <div id="game-over-screen" style="flex-direction: column; align-items: center; justify-content: center; gap: 2rem; z-index: 3;">
-  <h1 class="game-over-title">GAME OVER</h1>
-
-    <div id="newHighScoreBanner" style="display: none;" class="new-high-score-banner">NEW HIGH SCORE!</div>
-    <div id="newHighScoreBlock" style="display:none; flex-direction:column; align-items:center;">
-  <div class="new-high-score-banner">NEW HIGH SCORE!</div>
-  <div class="new-high-score-number" id="newHighScoreValue"></div>
-</div>
-
-   <div class="result-wrapper">
-    <div class="orb-bg" style="display:none;"></div>
-<div class="results" id="resultsBlock">
-  <div id="bestBlock">BEST: <span id="bestScore">0</span></div>
-  <div id="scoreBlock">SCORE: <span id="finalScore">0</span></div>
-</div>
-
-   </div>
-
-   <div id="rankMessage"></div>
-   <button class="btn-primary" id="playAgainBtn">PLAY AGAIN</button>
-   <button class="btn-primary" id="homeBtn">HOME</button>
+  <!-- Game Over Screen -->
+  <div id="game-over-screen" class="hidden">
+    <h1 class="game-over-title">GAME OVER</h1>
+    <div id="newHighScoreBanner" class="new-high-score-banner hidden">NEW HIGH SCORE!</div>
+    <div id="newHighScoreBlock" class="hidden" style="flex-direction:column; align-items:center;">
+      <div class="new-high-score-banner">NEW HIGH SCORE!</div>
+      <div class="new-high-score-number" id="newHighScoreValue"></div>
+    </div>
+    <div class="result-wrapper">
+      <div class="orb-bg hidden"></div>
+      <div class="results" id="resultsBlock">
+        <div id="bestBlock">BEST: <span id="bestScore">0</span></div>
+        <div id="scoreBlock">SCORE: <span id="finalScore">0</span></div>
+      </div>
+    </div>
+    <div id="rankMessage"></div>
+    <button class="btn-primary" id="playAgainBtn" type="button">PLAY AGAIN</button>
+    <button class="btn-primary" id="homeBtn" type="button">HOME</button>
   </div>
 
+  <!-- Fade Overlay -->
   <div id="fade-screen"></div>
   <script src="game.js" defer></script>
- </body>
+</body>
 </html>
