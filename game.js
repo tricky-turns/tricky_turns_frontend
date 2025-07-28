@@ -1022,22 +1022,17 @@ function handleGoHome() {
     laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
 document.getElementById('game-over-screen').classList.add('hidden');
-document.getElementById('user-info').classList.remove('hidden');
-document.getElementById('viewLeaderboardBtn').classList.remove('hidden');
-document.getElementById('start-screen').classList.remove('hidden');
-document.getElementById('pause-overlay').classList.add('hidden');
-[
-  'user-info',
-  'viewLeaderboardBtn',
-  'start-screen',
-  'pause-overlay'
-].forEach(id => {
+['user-info', 'viewLeaderboardBtn', 'start-screen'].forEach(id => {
   const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
   if (el) el.style.display = '';
 });
-    if (muteBtnHome) muteBtnHome.style.display = 'block';
-    document.querySelector('canvas').style.visibility = 'hidden';
-    window.scrollTo(0, 0);
+document.getElementById('pause-overlay').classList.add('hidden');
+document.getElementById('pause-overlay').style.display = '';
+if (muteBtnHome) muteBtnHome.style.display = 'block';
+document.querySelector('canvas').style.visibility = 'hidden';
+window.scrollTo(0, 0);
+
 
     fadeOut();
 
@@ -1051,7 +1046,6 @@ document.getElementById('pause-overlay').classList.add('hidden');
     if (scene.bestScoreText) scene.bestScoreText.setVisible(true);
     if (scene.newBestText) scene.newBestText.setVisible(false);
   });
-  document.getElementById('user-info').style.display = 'flex';
   document.getElementById('user-info').classList.add('visible');
 }
 
