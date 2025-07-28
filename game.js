@@ -446,24 +446,44 @@ function create() {
   }).setDepth(10).setVisible(true);
 
   // ==== NEW BEST TEXT (Initially Hidden) ====
-newBestText = this.newBestText = this.add.text(16, 16, '', {
-  fontFamily: 'Poppins',
-  fontSize: '28px',
-  fontStyle: 'bold',
-  color: '#ffe167',
-  stroke: '#f89e2c',
-  strokeThickness: 4,
-  shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
-}).setDepth(11).setVisible(false);
+  newBestText = this.newBestText = this.add.text(16, 16, '', {
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffe167',
+    stroke: '#f89e2c',
+    strokeThickness: 4,
+    shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
+  }).setDepth(11).setVisible(false);
 
-
-  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
-  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
+  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive({ useHandCursor: true }).setDepth(3).setVisible(false);
+  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive({ useHandCursor: true }).setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
+
+  // ======= HOVER EFFECTS FOR PAUSE & MUTE ICONS =======
+  pauseIcon
+    .on('pointerover', function () {
+      this.setScale(1.13);
+      this.setTint(0x66CCFF); // Light blue
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+      this.clearTint();
+    });
+  muteIcon
+    .on('pointerover', function () {
+      this.setScale(1.13);
+      this.setTint(0x66CCFF);
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+      this.clearTint();
+    });
+  // ====================================================
 
   countdownText = this.add.text(cx, cy, '', {
     fontFamily: 'Poppins',
@@ -554,8 +574,8 @@ newBestText = this.newBestText = this.add.text(16, 16, '', {
       setTimeout(() => { pauseIconLocked = false; }, 300);
     } else {
       sfx.pauseWhoosh.play();
-        pauseOverlay.classList.add('hidden');
-        pauseOverlay.style.display = '';
+      pauseOverlay.classList.add('hidden');
+      pauseOverlay.style.display = '';
       let count = 3;
       countdownText.setText(count).setVisible(true).setDepth(1000);
 
@@ -605,6 +625,8 @@ newBestText = this.newBestText = this.add.text(16, 16, '', {
   this.physics.add.overlap(circle1, points, collectPoint, null, this);
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
+
+
 
 
 // DELTA TIME PATCHED update
