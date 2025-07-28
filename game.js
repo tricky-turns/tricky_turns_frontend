@@ -184,7 +184,6 @@ async function initAuth() {
       } catch {
         highScore = 0;
       }
-
     } else {
       // ❌ Fallback to guest
       piUsername = 'Guest';
@@ -226,16 +225,17 @@ async function initAuth() {
     loginBtn.classList.add('hidden');
   }
 
-  // (Optional) Update best score text UI on start screen
-  if (typeof bestScoreText !== 'undefined' && bestScoreText) {
-    bestScoreText.setText('Best: ' + highScore);
+  // --- Always update visible best score text (Phaser & DOM) ---
+  if (window.game && window.game.scene && window.game.scene.keys.default) {
+    const scene = window.game.scene.keys.default;
+    if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
   }
-  // If you want to update DOM too:
   const bestScoreDom = document.getElementById('bestScore');
   if (bestScoreDom) bestScoreDom.innerText = highScore;
 
   startScreen.classList.add('ready');
 }
+
 
 initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
@@ -828,7 +828,7 @@ function triggerGameOver() {
   const bestBlock = document.getElementById('bestBlock');
   const scoreBlock = document.getElementById('scoreBlock');
 
-  // --- PATCH: always reset state (both class and display) ---
+  // --- Reset state (both class and display) ---
   if (newHighScoreBlock) {
     newHighScoreBlock.classList.add('hidden');
     newHighScoreBlock.style.display = 'none';
@@ -836,14 +836,13 @@ function triggerGameOver() {
   if (bestBlock) bestBlock.style.display = '';
   if (scoreBlock) scoreBlock.style.display = '';
 
-  window.game.scene.keys.default.time.delayedCall(700, () => {
+  window.game.scene.keys.default.time.delayedCall(700, async () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
 
     const isNewHigh = score > highScore;
 
     if (isNewHigh) {
-      // Show new high score banner and number, hide default results
       if (newHighScoreBlock) {
         newHighScoreBlock.classList.remove('hidden');
         newHighScoreBlock.style.display = 'flex';
@@ -854,7 +853,6 @@ function triggerGameOver() {
       highScore = score;
       sfx.newBest.play();
     } else {
-      // Show normal results, hide new high block
       if (newHighScoreBlock) {
         newHighScoreBlock.classList.add('hidden');
         newHighScoreBlock.style.display = 'none';
@@ -870,6 +868,36 @@ function triggerGameOver() {
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+      const bestScoreDom = document.getElementById('bestScore');
+      if (bestScoreDom) bestScoreDom.innerText = highScore;
+    } else if (piToken) {
+      // POST score, then re-fetch to sync
+      try {
+        await fetch(`${BACKEND_BASE}/api/leaderboard`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${piToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            score: highScore,
+            username: piUsername
+          })
+        });
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+          headers: { Authorization: `Bearer ${piToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          highScore = data.highScore || highScore;
+          if (window.game && window.game.scene && window.game.scene.keys.default) {
+            const scene = window.game.scene.keys.default;
+            if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
+          }
+          const bestScoreDom = document.getElementById('bestScore');
+          if (bestScoreDom) bestScoreDom.innerText = highScore;
+        }
+      } catch (e) {}
     }
 
     if (muteBtnHome) muteBtnHome.style.display = 'none';
@@ -880,24 +908,8 @@ function triggerGameOver() {
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
-    // --- Leaderboard/rank logic ---
+    // --- Leaderboard/rank logic (unchanged) ---
     (async () => {
-      if (!useLocalHighScore && piToken) {
-        try {
-          await fetch(`${BACKEND_BASE}/api/leaderboard`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${piToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              score: highScore,
-              username: piUsername
-            })
-          });
-        } catch (e) { /* silently ignore */ }
-      }
-
       if (!useLocalHighScore && piToken) {
         try {
           const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
@@ -929,6 +941,7 @@ function triggerGameOver() {
     // --- End leaderboard logic ---
   });
 }
+
 
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
