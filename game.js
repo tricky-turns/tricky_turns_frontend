@@ -167,8 +167,52 @@ async function initAuth() {
 
       userInfo.classList.remove('guest');
       userInfo.classList.add('logged-in');
+
+      // ==== FETCH USER'S BEST SCORE FROM BACKEND ====
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+          headers: { Authorization: `Bearer ${piToken}` }
+        });
+        if (res.ok) {
+          const entry = await res.json();
+          if (typeof entry.score === "number") {
+            highScore = entry.score;
+            if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: ' + highScore);
+            const bestScoreDom = document.getElementById('bestScore');
+            if (bestScoreDom) bestScoreDom.innerText = highScore;
+          }
+        } else if (res.status === 404) {
+          // User has no score yet
+          highScore = 0;
+          if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: 0');
+          const bestScoreDom = document.getElementById('bestScore');
+          if (bestScoreDom) bestScoreDom.innerText = 0;
+        }
+      } catch (e) {
+        // fallback: keep local highScore = 0 or previously set
+        highScore = 0;
+        if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: 0');
+        const bestScoreDom = document.getElementById('bestScore');
+        if (bestScoreDom) bestScoreDom.innerText = 0;
+      }
+      // ==== END FETCH ====
+
     } else {
-      throw new Error('Auth fallback (null)');
+      // ❌ Fallback to guest
+      piUsername = 'Guest';
+      piToken = null;
+      useLocalHighScore = true;
+
+      usernameLabel.innerText = 'Guest';
+      loginBtn.style.display = 'inline-block';
+
+      userInfo.classList.remove('logged-in');
+      userInfo.classList.add('guest');
+      // Also set best from localStorage as before:
+      highScore = parseInt(localStorage.getItem('tricky_high_score') || "0", 10) || 0;
+      if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: ' + highScore);
+      const bestScoreDom = document.getElementById('bestScore');
+      if (bestScoreDom) bestScoreDom.innerText = highScore;
     }
   } catch (e) {
     // ❌ Fallback to guest
@@ -181,6 +225,10 @@ async function initAuth() {
 
     userInfo.classList.remove('logged-in');
     userInfo.classList.add('guest');
+    highScore = parseInt(localStorage.getItem('tricky_high_score') || "0", 10) || 0;
+    if (typeof bestScoreText !== "undefined") bestScoreText.setText('Best: ' + highScore);
+    const bestScoreDom = document.getElementById('bestScore');
+    if (bestScoreDom) bestScoreDom.innerText = highScore;
   }
 
   // Step 2: Hide loading, show actual info
@@ -196,6 +244,7 @@ async function initAuth() {
 
   startScreen.classList.add('ready');
 }
+
 
 
 
