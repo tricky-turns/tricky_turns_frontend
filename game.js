@@ -425,7 +425,7 @@ function create() {
   }).setDepth(10).setVisible(true);
 
   // ==== NEW BEST TEXT (Initially Hidden) ====
-  newBestText = this.newBestText = this.add.text(16, 36, '', {
+  newBestText = this.newBestText = this.add.text(16, 16, '', {
     fontFamily: 'Poppins',
     fontSize: '32px',
     fontStyle: 'bold',
@@ -864,32 +864,31 @@ function collectPoint(_, pt) {
 
   // ==== PREMIUM SCORE HANDLING ====
   if (!surpassedBest && score > highScore) {
-    // First time surpassing best
+    // First time surpassing best: switch to NEW BEST
     surpassedBest = true;
-    newBestJustSurpassed = true; // Mark for animation
     scoreText.setVisible(false);
     bestScoreText.setVisible(false);
 
+    // Place NEW BEST in the same spot as Score was
     newBestText.setVisible(true);
     newBestText.setText('NEW BEST: ' + score);
 
-    // Flourish animation and sound
+    // One-time flourish animation & sound
     scene.tweens.add({
       targets: newBestText,
       scaleX: 1.27, scaleY: 1.27,
       alpha: { from: 0, to: 1 },
-      yoyo: true, duration: 340, ease: 'Back.easeOut',
-      onComplete: () => { newBestJustSurpassed = false; }
+      yoyo: true, duration: 340, ease: 'Back.easeOut'
     });
     sfx.newBest.play();
 
   } else if (surpassedBest) {
-    // Keep NEW BEST visible and just update the number—no animation!
-    newBestText.setVisible(true);
+    // Already surpassed: just keep updating NEW BEST with no animation
+    newBestText.setVisible(true); // Ensure always visible
     newBestText.setText('NEW BEST: ' + score);
-    // No animation here!
+    // NO animation or flicker—just update number!
   } else {
-    // Normal before surpassing best
+    // Standard: show Score and Best as usual
     scoreText.setVisible(true);
     bestScoreText.setVisible(true);
     scoreText.setText('Score: ' + score);
@@ -901,6 +900,7 @@ function collectPoint(_, pt) {
     });
   }
 }
+
 
 
 
@@ -928,6 +928,7 @@ function handleGoHome() {
   fadeIn(() => {
     const scene = window.game.scene.keys.default;
     scene.scene.restart();
+    newBestJustSurpassed = false;
     score = 0;
     speed = GAME_CONFIG.SPEED_START;
     direction = 1;
@@ -975,6 +976,8 @@ function handlePlayAgain() {
   scene.scene.restart();
 
   scene.events.once('create', () => {
+    newBestJustSurpassed = false;
+
     score = 0;
     speed = GAME_CONFIG.SPEED_START;
     direction = 1;
