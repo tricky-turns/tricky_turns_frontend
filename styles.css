@@ -612,17 +612,31 @@ canvas {
 
 
 
-
 .new-high-score-banner {
   color: #ffe167;
   font-size: 2.2rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-shadow:
-    0 3px 16px #3199E4bb,
-    0 1px 5px #fff,
-    1px 1px 6px #000a;
+    0 0 22px #3199e4cc,   /* blue glow */
+    0 2px 12px #fff,      /* white pop */
+    0 1px 6px #0007;      /* soft shadow */
   margin-bottom: 0.2rem;
   animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
   text-align: center;
 }
+
+.new-high-score-number {
+  font-size: 3.4rem;
+  color: #ffe167;
+  font-weight: 900;
+  text-shadow:
+    0 0 22px #3199e4cc,
+    0 2px 12px #fff,
+    0 1px 6px #0007;
+  margin-bottom: 0.4rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
+}
+
