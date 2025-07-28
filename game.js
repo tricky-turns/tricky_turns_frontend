@@ -875,12 +875,14 @@ function collectPoint(_, pt) {
     newBestText.setText('NEW BEST: ' + score);
 
     // One-time flourish animation & sound
-    scene.tweens.add({
-      targets: newBestText,
-      scaleX: 1.27, scaleY: 1.27,
-      alpha: { from: 0, to: 1 },
-      yoyo: true, duration: 340, ease: 'Back.easeOut'
-    });
+scene.tweens.add({
+  targets: newBestText,
+  scaleX: 1.27, scaleY: 1.27,
+  yoyo: true, duration: 340, ease: 'Back.easeOut'
+});
+// Always ensure the text is visible!
+newBestText.setAlpha(1);
+
     sfx.newBest.play();
 
   } else if (surpassedBest) {
