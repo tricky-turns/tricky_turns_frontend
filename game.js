@@ -828,8 +828,11 @@ function triggerGameOver() {
   const bestBlock = document.getElementById('bestBlock');
   const scoreBlock = document.getElementById('scoreBlock');
 
-  // --- PATCH: always reset state ---
-  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+  // --- PATCH: always reset state (both class and display) ---
+  if (newHighScoreBlock) {
+    newHighScoreBlock.classList.add('hidden');
+    newHighScoreBlock.style.display = 'none';
+  }
   if (bestBlock) bestBlock.style.display = '';
   if (scoreBlock) scoreBlock.style.display = '';
 
@@ -841,7 +844,10 @@ function triggerGameOver() {
 
     if (isNewHigh) {
       // Show new high score banner and number, hide default results
-      if (newHighScoreBlock) newHighScoreBlock.style.display = 'flex';
+      if (newHighScoreBlock) {
+        newHighScoreBlock.classList.remove('hidden');
+        newHighScoreBlock.style.display = 'flex';
+      }
       if (newHighScoreValue) newHighScoreValue.innerText = score;
       if (bestBlock) bestBlock.style.display = 'none';
       if (scoreBlock) scoreBlock.style.display = 'none';
@@ -849,7 +855,10 @@ function triggerGameOver() {
       sfx.newBest.play();
     } else {
       // Show normal results, hide new high block
-      if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+      if (newHighScoreBlock) {
+        newHighScoreBlock.classList.add('hidden');
+        newHighScoreBlock.style.display = 'none';
+      }
       if (bestBlock) bestBlock.style.display = '';
       if (scoreBlock) scoreBlock.style.display = '';
     }
@@ -920,10 +929,6 @@ function triggerGameOver() {
     // --- End leaderboard logic ---
   });
 }
-
-
-
-
 
 function collectPoint(_, pt) {
   if (pt.glow) pt.glow.destroy();
