@@ -181,8 +181,10 @@ async function initAuth() {
         } else {
           highScore = 0;
         }
+        updateBestScoreEverywhere();
       } catch {
         highScore = 0;
+        updateBestScoreEverywhere();
       }
     } else {
       // ❌ Fallback to guest
@@ -198,6 +200,7 @@ async function initAuth() {
 
       // Load high score from localStorage
       highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+      updateBestScoreEverywhere();
     }
   } catch (e) {
     // ❌ Catch branch: fallback to guest
@@ -213,6 +216,7 @@ async function initAuth() {
 
     // Load high score from localStorage
     highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+    updateBestScoreEverywhere();
   }
 
   // Hide loader, show info
@@ -225,16 +229,9 @@ async function initAuth() {
     loginBtn.classList.add('hidden');
   }
 
-  // --- Always update visible best score text (Phaser & DOM) ---
-  if (window.game && window.game.scene && window.game.scene.keys.default) {
-    const scene = window.game.scene.keys.default;
-    if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
-  }
-  const bestScoreDom = document.getElementById('bestScore');
-  if (bestScoreDom) bestScoreDom.innerText = highScore;
-
   startScreen.classList.add('ready');
 }
+
 
 
 initAuth();
@@ -293,6 +290,17 @@ async function showHomeLeaderboard() {
     li.classList.add('animated-entry');
     list.appendChild(li);
   });
+}
+
+function updateBestScoreEverywhere() {
+  // Phaser HUD
+  if (window.game && window.game.scene && window.game.scene.keys.default) {
+    const scene = window.game.scene.keys.default;
+    if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
+  }
+  // Game over DOM
+  const bestScoreDom = document.getElementById('bestScore');
+  if (bestScoreDom) bestScoreDom.innerText = highScore;
 }
 
 
@@ -473,7 +481,7 @@ function create() {
     strokeThickness: 4,
     shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
   }).setDepth(11).setVisible(false);
-
+  updateBestScoreEverywhere();
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive({ useHandCursor: true }).setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive({ useHandCursor: true }).setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
@@ -852,6 +860,7 @@ function triggerGameOver() {
       if (scoreBlock) scoreBlock.style.display = 'none';
       highScore = score;
       sfx.newBest.play();
+      updateBestScoreEverywhere();
     } else {
       if (newHighScoreBlock) {
         newHighScoreBlock.classList.add('hidden');
@@ -867,9 +876,7 @@ function triggerGameOver() {
 
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
-      if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
-      const bestScoreDom = document.getElementById('bestScore');
-      if (bestScoreDom) bestScoreDom.innerText = highScore;
+      updateBestScoreEverywhere();
     } else if (piToken) {
       // POST score, then re-fetch to sync
       try {
@@ -890,12 +897,7 @@ function triggerGameOver() {
         if (res.ok) {
           const data = await res.json();
           highScore = data.highScore || highScore;
-          if (window.game && window.game.scene && window.game.scene.keys.default) {
-            const scene = window.game.scene.keys.default;
-            if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
-          }
-          const bestScoreDom = document.getElementById('bestScore');
-          if (bestScoreDom) bestScoreDom.innerText = highScore;
+          updateBestScoreEverywhere();
         }
       } catch (e) {}
     }
@@ -941,6 +943,7 @@ function triggerGameOver() {
     // --- End leaderboard logic ---
   });
 }
+
 
 
 function collectPoint(_, pt) {
