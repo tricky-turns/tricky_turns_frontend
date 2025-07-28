@@ -199,8 +199,8 @@ async function initAuth() {
         showDebug(`API status: ${res.status}\nRaw: ${txt}`);
         if (res.ok) {
           const data = JSON.parse(txt);
-          showDebug(`Parsed: highScore=${data.highScore}`);
-          highScore = data.highScore || 0;
+          showDebug(`Parsed: highScore=${data.score}`);
+          highScore = data.score || 0;
         } else {
           highScore = 0;
           showDebug(`API error, status ${res.status}`);
