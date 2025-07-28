@@ -559,3 +559,20 @@ canvas {
   text-transform: uppercase;
   text-shadow: 0 0 4px #000;
 }
+
+.new-high-score-banner {
+  color: #ffe167;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-shadow: 0 3px 16px #f8c66a77, 1px 2px 7px #eea900, 1px 1px 6px #000b;
+  margin-bottom: 0.5rem;
+  animation: popIn 0.7s cubic-bezier(.2,1.4,.6,1.2);
+  text-align: center;
+}
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.7);}
+  60%  { opacity: 1; transform: scale(1.25);}
+  90%  { transform: scale(0.92);}
+  100% { opacity: 1; transform: scale(1);}
+}

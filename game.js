@@ -763,15 +763,25 @@ function triggerGameOver() {
   });
   sfx.explode.play();
 
+  // ---- Banner element reference ----
+  const newHighScoreBanner = document.getElementById('newHighScoreBanner');
+
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
     document.getElementById('finalScore').innerText = score;
+
+    // ---- New High Score Banner logic ----
     if (score > highScore) {
       bestScoreText.setText('Best: ' + score);
       highScore = score;
       sfx.newBest.play();
+      if (newHighScoreBanner) newHighScoreBanner.style.display = 'block';
+    } else {
+      if (newHighScoreBanner) newHighScoreBanner.style.display = 'none';
     }
+    // ---- End Banner logic ----
+
     document.getElementById('bestScore').innerText = highScore;
     bestScoreText.setText('Best: ' + highScore);
     if (useLocalHighScore) {
@@ -834,6 +844,7 @@ function triggerGameOver() {
     })();
   });
 }
+
 
 
 function collectPoint(_, pt) {
