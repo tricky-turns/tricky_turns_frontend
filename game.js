@@ -425,15 +425,16 @@ function create() {
   }).setDepth(10).setVisible(true);
 
   // ==== NEW BEST TEXT (Initially Hidden) ====
-  newBestText = this.newBestText = this.add.text(16, 16, '', {
-    fontFamily: 'Poppins',
-    fontSize: '32px',
-    fontStyle: 'bold',
-    color: '#ffe167',
-    stroke: '#f89e2c',
-    strokeThickness: 4,
-    shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
-  }).setDepth(11).setVisible(false);
+newBestText = this.newBestText = this.add.text(16, 16, '', {
+  fontFamily: 'Poppins',
+  fontSize: '28px',
+  fontStyle: 'bold',
+  color: '#ffe167',
+  stroke: '#f89e2c',
+  strokeThickness: 4,
+  shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
+}).setDepth(11).setVisible(false);
+
 
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
