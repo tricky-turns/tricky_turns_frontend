@@ -467,21 +467,17 @@ function create() {
   // ======= HOVER EFFECTS FOR PAUSE & MUTE ICONS =======
   pauseIcon
     .on('pointerover', function () {
-      this.setScale(1.13);
-      this.setTint(0x66CCFF); // Light blue
+      this.setScale(1.13); // Light blue
     })
     .on('pointerout', function () {
       this.setScale(1);
-      this.clearTint();
     });
   muteIcon
     .on('pointerover', function () {
       this.setScale(1.13);
-      this.setTint(0x66CCFF);
     })
     .on('pointerout', function () {
       this.setScale(1);
-      this.clearTint();
     });
   // ====================================================
 
