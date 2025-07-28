@@ -603,3 +603,26 @@ canvas {
   90%  { transform: scale(0.95);}
   100% { opacity: 1; transform: scale(1);}
 }
+
+
+
+
+
+
+
+
+
+
+.new-high-score-banner {
+  color: #ffe167;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 3px 16px #3199E4bb,
+    0 1px 5px #fff,
+    1px 1px 6px #000a;
+  margin-bottom: 0.2rem;
+  animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
+  text-align: center;
+}
