@@ -763,27 +763,37 @@ function triggerGameOver() {
   });
   sfx.explode.play();
 
-  // ---- Banner element reference ----
-  const newHighScoreBanner = document.getElementById('newHighScoreBanner');
+  // -- DOM references for all result UI blocks --
+  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
+  const newHighScoreValue = document.getElementById('newHighScoreValue');
+  const bestBlock = document.getElementById('bestBlock');
+  const scoreBlock = document.getElementById('scoreBlock');
 
   window.game.scene.keys.default.time.delayedCall(700, () => {
     window.game.scene.keys.default.physics.pause();
     document.querySelector('canvas').style.visibility = 'hidden';
-    document.getElementById('finalScore').innerText = score;
 
-    // ---- New High Score Banner logic ----
-    if (score > highScore) {
-      bestScoreText.setText('Best: ' + score);
+    const isNewHigh = score > highScore;
+
+    if (isNewHigh) {
+      // Show new high score banner and number, hide default results
+      if (newHighScoreBlock) newHighScoreBlock.style.display = 'flex';
+      if (newHighScoreValue) newHighScoreValue.innerText = score;
+      if (bestBlock) bestBlock.style.display = 'none';
+      if (scoreBlock) scoreBlock.style.display = 'none';
       highScore = score;
       sfx.newBest.play();
-      if (newHighScoreBanner) newHighScoreBanner.style.display = 'block';
     } else {
-      if (newHighScoreBanner) newHighScoreBanner.style.display = 'none';
+      // Show normal results, hide new high block
+      if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+      if (bestBlock) bestBlock.style.display = '';
+      if (scoreBlock) scoreBlock.style.display = '';
     }
-    // ---- End Banner logic ----
 
+    document.getElementById('finalScore').innerText = score;
     document.getElementById('bestScore').innerText = highScore;
     bestScoreText.setText('Best: ' + highScore);
+
     if (useLocalHighScore) {
       localStorage.setItem('tricky_high_score', highScore);
       if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
@@ -795,6 +805,7 @@ function triggerGameOver() {
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
 
+    // --- Leaderboard/rank logic ---
     (async () => {
       // ✅ Submit score if authenticated
       if (!useLocalHighScore && piToken) {
@@ -842,8 +853,10 @@ function triggerGameOver() {
         }
       }
     })();
+    // --- End leaderboard logic ---
   });
 }
+
 
 
 

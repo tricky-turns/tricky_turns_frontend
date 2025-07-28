@@ -576,3 +576,30 @@ canvas {
   90%  { transform: scale(0.92);}
   100% { opacity: 1; transform: scale(1);}
 }
+
+.new-high-score-banner {
+  color: #ffe167;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 3px 16px #f8c66a77, 1px 2px 7px #eea900, 1px 1px 6px #000b;
+  margin-bottom: 0.2rem;
+  animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
+  text-align: center;
+}
+.new-high-score-number {
+  font-size: 3.4rem;
+  color: #ffe167;
+  font-weight: 900;
+  text-shadow: 0 1px 12px #f7d66aa7, 1px 1px 4px #0008;
+  margin-bottom: 0.4rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  animation: popIn 0.8s cubic-bezier(.2,1.4,.6,1.2);
+}
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.7);}
+  60%  { opacity: 1; transform: scale(1.20);}
+  90%  { transform: scale(0.95);}
+  100% { opacity: 1; transform: scale(1);}
+}
