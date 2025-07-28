@@ -583,7 +583,8 @@ newBestText = this.newBestText = this.add.text(16, 16, '', {
       setTimeout(() => { pauseIconLocked = false; }, 300);
     } else {
       sfx.pauseWhoosh.play();
-      pauseOverlay.style.display = 'none';
+        pauseOverlay.classList.add('hidden');
+        pauseOverlay.style.display = '';
       let count = 3;
       countdownText.setText(count).setVisible(true).setDepth(1000);
 
@@ -988,9 +989,9 @@ newBestText.setAlpha(1);
 
 function handleStartGame() {
   sfx.uiClick.play();
-  document.getElementById('user-info').style.display = 'none';
-  document.getElementById('viewLeaderboardBtn').style.display = 'none';
-  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('user-info').classList.add('hidden');
+  document.getElementById('viewLeaderboardBtn').classList.add('hidden');
+  document.getElementById('start-screen').classList.add('hidden');
   if (muteBtnHome) muteBtnHome.style.display = 'none';
   document.querySelector('canvas').style.visibility = 'visible';
   fadeOut(() => {
@@ -1004,6 +1005,7 @@ function handleStartGame() {
     });
   }, 200);
 }
+
 
 function handleGoHome() {
   fadeIn(() => {
@@ -1019,12 +1021,20 @@ function handleGoHome() {
     laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
-    document.getElementById('game-over-screen').style.display = 'none';
-    document.getElementById('user-info').style.display = 'flex';
-    document.getElementById('viewLeaderboardBtn').style.display = 'inline-block';
-    document.getElementById('user-info').style.display = 'flex';
-    document.getElementById('start-screen').style.display = 'flex';
-    document.getElementById('pause-overlay').style.display = 'none';
+document.getElementById('game-over-screen').classList.add('hidden');
+document.getElementById('user-info').classList.remove('hidden');
+document.getElementById('viewLeaderboardBtn').classList.remove('hidden');
+document.getElementById('start-screen').classList.remove('hidden');
+document.getElementById('pause-overlay').classList.add('hidden');
+[
+  'user-info',
+  'viewLeaderboardBtn',
+  'start-screen',
+  'pause-overlay'
+].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.style.display = '';
+});
     if (muteBtnHome) muteBtnHome.style.display = 'block';
     document.querySelector('canvas').style.visibility = 'hidden';
     window.scrollTo(0, 0);
@@ -1069,19 +1079,19 @@ function handlePlayAgain() {
     laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
     lastSpawnTimestamp = 0;
 
-    [
-      'game-over-screen', 'leaderboard-screen', 'pause-overlay',
-      'start-screen', 'leaderboard'
-    ].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
+[
+  'game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'
+].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+  if (el) el.style.display = '';
+});
+if (muteBtnHome) muteBtnHome.style.display = 'none';
+const userInfo = document.getElementById('user-info');
+if (userInfo) userInfo.classList.add('hidden');
+const viewLb = document.getElementById('viewLeaderboardBtn');
+if (viewLb) viewLb.classList.add('hidden');
 
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
-    const userInfo = document.getElementById('user-info');
-    if (userInfo) userInfo.style.display = 'none';
-    const viewLb = document.getElementById('viewLeaderboardBtn');
-    if (viewLb) viewLb.style.display = 'none';
     const canvas = document.querySelector('canvas');
     if (canvas) canvas.style.visibility = 'visible';
     window.scrollTo(0, 0);
