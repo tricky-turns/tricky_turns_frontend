@@ -1100,29 +1100,33 @@ if (viewLb) viewLb.classList.add('hidden');
 
 
 window.addEventListener('DOMContentLoaded', () => {
+  // --- AUTH / USER INFO ---
+  initAuth();
+
+  // --- UI BUTTONS ---
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
+
   const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
   leaderboardBtn.addEventListener('mouseenter', preloadLeaderboard);
   leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
+  leaderboardBtn.addEventListener('click', showHomeLeaderboard);
 
-document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
-  showHomeLeaderboard();
-});
-
-document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
-  const lb = document.getElementById('leaderboard-screen');
-  lb.classList.add('hidden');
-  lb.classList.remove('visible');
-  lb.style.display = '';
-});
+  document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+    const lb = document.getElementById('leaderboard-screen');
+    lb.classList.add('hidden');
+    lb.classList.remove('visible');
+    lb.style.display = '';
+  });
 
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
-});
-window.addEventListener('DOMContentLoaded', () => {
-  initAuth();  // ✅ Safe to run now
-  console.log('🌐 Detected hostname:', window.location.hostname);
-console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 
+  // --- Login Button (for guest mode to Pi auth) ---
+  document.getElementById('loginBtn').addEventListener('click', initAuth);
+
+  // --- Debug logs (optional) ---
+  console.log('🌐 Detected hostname:', window.location.hostname);
+  console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 });
+
