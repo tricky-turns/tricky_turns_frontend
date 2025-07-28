@@ -924,7 +924,7 @@ function triggerGameOver() {
         });
         if (res.ok) {
           const data = await res.json();
-          highScore = data.highScore || highScore;
+          highScore = data.score || highScore;
           updateBestScoreEverywhere();
         }
       } catch (e) {}
