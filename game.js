@@ -134,14 +134,18 @@ async function initAuth() {
   const loginBtn = document.getElementById('loginBtn');
   const startScreen = document.getElementById('start-screen');
 
+  // === PATCH: SHOW THE BAR IMMEDIATELY SO "Authenticating..." is visible ===
+  userInfo.classList.remove('hidden');
+  userInfo.style.display = 'flex';
+
   // Step 1: Show loading state only
   authLoading.classList.remove('hidden');
   piLabel.classList.add('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
-  userInfo.style.display = 'flex';
 
   let timedOut = false;
+
 
   const timeout = new Promise((_, reject) =>
     setTimeout(() => {
