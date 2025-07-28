@@ -3,6 +3,8 @@ let leaderboardFetched = false;
 let spawnIntervalUpdater = null; // Add this global with other timers
 let surpassedBest = false;
 let newBestText; // For "NEW BEST" animated UI
+let newBestJustSurpassed = false;
+
 
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
@@ -862,8 +864,9 @@ function collectPoint(_, pt) {
 
   // ==== PREMIUM SCORE HANDLING ====
   if (!surpassedBest && score > highScore) {
-    // First time surpassing
+    // First time surpassing best
     surpassedBest = true;
+    newBestJustSurpassed = true; // Mark for animation
     scoreText.setVisible(false);
     bestScoreText.setVisible(false);
 
@@ -875,25 +878,18 @@ function collectPoint(_, pt) {
       targets: newBestText,
       scaleX: 1.27, scaleY: 1.27,
       alpha: { from: 0, to: 1 },
-      yoyo: true, duration: 340, ease: 'Back.easeOut'
+      yoyo: true, duration: 340, ease: 'Back.easeOut',
+      onComplete: () => { newBestJustSurpassed = false; }
     });
     sfx.newBest.play();
 
   } else if (surpassedBest) {
-    // Already surpassed: keep showing and updating NEW BEST
+    // Keep NEW BEST visible and just update the number—no animation!
     newBestText.setVisible(true);
     newBestText.setText('NEW BEST: ' + score);
-
-    // Small pop animation on each score increment
-    scene.tweens.add({
-      targets: newBestText,
-      scaleX: 1.11, scaleY: 1.11,
-      yoyo: true,
-      duration: 90,
-      ease: 'Sine.easeInOut'
-    });
+    // No animation here!
   } else {
-    // Not yet surpassed: show Score as usual
+    // Normal before surpassing best
     scoreText.setVisible(true);
     bestScoreText.setVisible(true);
     scoreText.setText('Score: ' + score);
@@ -905,6 +901,7 @@ function collectPoint(_, pt) {
     });
   }
 }
+
 
 
 
