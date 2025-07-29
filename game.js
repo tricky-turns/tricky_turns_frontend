@@ -649,7 +649,7 @@ function create() {
     }
   });
 
-  muteIcon.on('pointerdown', () => {
+  muteIcon.on('pointerup', () => {
     isMuted = !isMuted;
     this.sound.mute = isMuted;
     muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
