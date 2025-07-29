@@ -902,10 +902,18 @@ function triggerGameOver() {
     document.getElementById('bestScore').innerText = highScore;
     if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
 
-    if (useLocalHighScore) {
-      localStorage.setItem('tricky_high_score', highScore);
-      updateBestScoreEverywhere();
-    } else if (piToken) {
+if (useLocalHighScore) {
+    // Ensure we only ever overwrite with a higher score
+    let storedScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+    if (highScore > storedScore) {
+        localStorage.setItem('tricky_high_score', highScore);
+        console.log(`[Local] New high score saved: ${highScore}`);
+    } else {
+        console.log(`[Local] Current session high score (${highScore}) did not beat stored (${storedScore}), not saved.`);
+    }
+    updateBestScoreEverywhere();
+}
+ else if (piToken) {
       // POST score, then re-fetch to sync
       try {
         await fetch(`${BACKEND_BASE}/api/leaderboard`, {
@@ -1189,7 +1197,6 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   // --- AUTH / USER INFO ---
   initAuth();
-
   // --- UI BUTTONS ---
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
