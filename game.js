@@ -657,21 +657,31 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-  this.input.on('pointerdown', (pointer, currentlyOver) => {
-    if (currentlyOver && currentlyOver.some(obj =>
-      obj === this.pauseIcon || obj === this.muteIcon
-    )) return;
+this.input.on('pointerdown', (pointer, currentlyOver) => {
+  // Ignore only if pause/mute or a major overlay is actually visible
+  const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+  const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+                          !document.getElementById('start-screen')?.classList.contains('hidden');
 
-    if (gameStarted && !gameOver && !gamePaused) {
-      direction *= -1;
-      sfx.move.play();
-      this.tweens.add({
-        targets: [circle1, circle2],
-        scaleX: 1.15, scaleY: 1.15,
-        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-      });
-    }
-  });
+  if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
+
+  // Ignore pause/mute buttons if tapped directly
+  if (currentlyOver && currentlyOver.some(obj =>
+    obj === this.pauseIcon || obj === this.muteIcon
+  )) return;
+
+  // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
+  if (gameStarted && !gameOver && !gamePaused) {
+    direction *= -1;
+    sfx.move.play();
+    this.tweens.add({
+      targets: [circle1, circle2],
+      scaleX: 1.15, scaleY: 1.15,
+      yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+    });
+  }
+});
+
 
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
