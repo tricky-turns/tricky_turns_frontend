@@ -148,7 +148,6 @@ async function initAuth() {
   const startScreen = document.getElementById('start-screen');
   const debugBox = document.getElementById('debugBox');
 
-  // Helper to show debug info in the UI
   function showDebug(msg) {
     if (!debugBox) return;
     debugBox.style.display = 'block';
@@ -156,7 +155,7 @@ async function initAuth() {
     setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
   }
 
-  // Reset UI for loading/auth state
+  // --- Common UI reset ---
   userInfo.classList.remove('hidden');
   userInfo.style.display = 'flex';
   authLoading.classList.remove('hidden');
@@ -164,9 +163,8 @@ async function initAuth() {
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
 
-  // --- Pi Browser check (use your isPiBrowser helper) ---
-  if (typeof isPiBrowser === "function" && (!isPiBrowser() || typeof Pi === 'undefined')) {
-    // --- Guest mode fallback ---
+  // --- Helper for guest mode ---
+  function runGuestFlow() {
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
@@ -177,117 +175,102 @@ async function initAuth() {
     userInfo.classList.remove('logged-in');
     userInfo.classList.add('guest');
 
-    // Load guest high score from localStorage
     highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
     console.log(`[Local] Loaded guest high score: ${highScore}`);
     updateBestScoreEverywhere();
     showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
 
-    // Show UI
     authLoading.classList.add('hidden');
     piLabel.classList.remove('hidden');
     usernameLabel.classList.remove('hidden');
     loginBtn.classList.remove('hidden');
     startScreen.classList.add('ready');
-    return;
   }
 
-  // --- Pi Browser: Try to auth ---
-  let timedOut = false;
+  // --- Main detection ---
+  if (typeof isPiBrowser === "function" && isPiBrowser()) {
+    if (typeof Pi !== "undefined") {
+      // In Pi Browser and Pi SDK loaded: attempt Pi auth
+      let timedOut = false;
 
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => {
-      timedOut = true;
-      reject(new Error("Pi.authenticate timed out"));
-    }, 3000)
-  );
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => {
+          timedOut = true;
+          reject(new Error("Pi.authenticate timed out"));
+        }, 3000)
+      );
 
-  try {
-    await initPi(); // Only called if Pi is present
-
-    const auth = await Promise.race([
-      Pi.authenticate(['username'], onIncompletePaymentFound),
-      timeout
-    ]);
-
-    if (!timedOut && auth?.user?.username) {
-      // ✅ Pi authentication successful
-      piUsername = auth.user.username;
-      piToken = auth.accessToken;
-      useLocalHighScore = false;
-
-      usernameLabel.innerText = `@${piUsername}`;
-      loginBtn.style.display = 'none';
-      userInfo.classList.remove('guest');
-      userInfo.classList.add('logged-in');
-
-      // Fetch high score from backend API with debug
       try {
-        showDebug("Fetching high score from API...");
-        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
-          headers: { Authorization: `Bearer ${piToken}` }
-        });
-        const txt = await res.clone().text();
-        showDebug(`API status: ${res.status}\nRaw: ${txt}`);
-        if (res.ok) {
-          const data = JSON.parse(txt);
-          showDebug(`Parsed: highScore=${data.score}`);
-          highScore = data.score || 0;
+        await initPi();
+
+        const auth = await Promise.race([
+          Pi.authenticate(['username'], onIncompletePaymentFound),
+          timeout
+        ]);
+
+        if (!timedOut && auth?.user?.username) {
+          // Pi authentication successful
+          piUsername = auth.user.username;
+          piToken = auth.accessToken;
+          useLocalHighScore = false;
+
+          usernameLabel.innerText = `@${piUsername}`;
+          loginBtn.style.display = 'none';
+          userInfo.classList.remove('guest');
+          userInfo.classList.add('logged-in');
+
+          // Fetch high score from backend API
+          try {
+            showDebug("Fetching high score from API...");
+            const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+              headers: { Authorization: `Bearer ${piToken}` }
+            });
+            const txt = await res.clone().text();
+            showDebug(`API status: ${res.status}\nRaw: ${txt}`);
+            if (res.ok) {
+              const data = JSON.parse(txt);
+              showDebug(`Parsed: highScore=${data.score}`);
+              highScore = data.score || 0;
+            } else {
+              highScore = 0;
+              showDebug(`API error, status ${res.status}`);
+            }
+            updateBestScoreEverywhere();
+          } catch (err) {
+            showDebug("Fetch error: " + (err && err.message ? err.message : err));
+            highScore = 0;
+            updateBestScoreEverywhere();
+          }
+
         } else {
-          highScore = 0;
-          showDebug(`API error, status ${res.status}`);
+          // Pi auth failed
+          runGuestFlow();
+          return;
         }
-        updateBestScoreEverywhere();
-      } catch (err) {
-        showDebug("Fetch error: " + (err && err.message ? err.message : err));
-        highScore = 0;
-        updateBestScoreEverywhere();
+      } catch (e) {
+        // Auth error
+        runGuestFlow();
+        return;
       }
 
+      // --- Show UI for Pi user ---
+      authLoading.classList.add('hidden');
+      piLabel.classList.remove('hidden');
+      usernameLabel.classList.remove('hidden');
+      loginBtn.classList.add('hidden');
+      startScreen.classList.add('ready');
     } else {
-      // ❌ Pi auth failed: fallback to guest
-      piUsername = 'Guest';
-      piToken = null;
-      useLocalHighScore = true;
-
-      usernameLabel.innerText = 'Guest';
-      loginBtn.style.display = 'inline-block';
-      userInfo.classList.remove('logged-in');
-      userInfo.classList.add('guest');
-
-      highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
-      console.log(`[Local] Loaded guest high score: ${highScore}`);
-      updateBestScoreEverywhere();
-      showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
+      // Pi Browser but SDK not loaded? Fallback guest
+      runGuestFlow();
+      return;
     }
-  } catch (e) {
-    // ❌ Auth error: fallback to guest
-    piUsername = 'Guest';
-    piToken = null;
-    useLocalHighScore = true;
-
-    usernameLabel.innerText = 'Guest';
-    loginBtn.style.display = 'inline-block';
-    userInfo.classList.remove('logged-in');
-    userInfo.classList.add('guest');
-
-    highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
-    console.log(`[Local] Loaded guest high score: ${highScore}`);
-    updateBestScoreEverywhere();
-    showDebug(`Guest mode (auth error): loaded highScore=${highScore} from localStorage`);
-  }
-
-  // --- Show UI ---
-  authLoading.classList.add('hidden');
-  piLabel.classList.remove('hidden');
-  usernameLabel.classList.remove('hidden');
-  if (piUsername === 'Guest') {
-    loginBtn.classList.remove('hidden');
   } else {
-    loginBtn.classList.add('hidden');
+    // Not Pi Browser: always guest
+    runGuestFlow();
+    return;
   }
-  startScreen.classList.add('ready');
 }
+
 
 
 
