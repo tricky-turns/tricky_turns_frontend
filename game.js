@@ -39,7 +39,7 @@ const GAME_CONFIG = {
   FORCED_SPAWN_INTERVAL: 1000,
   // --- Orb movement ---
   ANGULAR_BASE: 0.05,
-  ANGULAR_SCALE: 0.009,
+  ANGULAR_SCALE: 0.005,
   // --- Obstacle/point speed ---
   SPEED_START: 3,
   SPEED_MAX: 15,
