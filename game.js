@@ -657,30 +657,30 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-this.input.on('pointerdown', (pointer, currentlyOver) => {
-  // Ignore only if pause/mute or a major overlay is actually visible
-  const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
-  const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
-                          !document.getElementById('start-screen')?.classList.contains('hidden');
+// this.input.on('pointerdown', (pointer, currentlyOver) => {
+//   // Ignore only if pause/mute or a major overlay is actually visible
+//   const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+//   const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+//                           !document.getElementById('start-screen')?.classList.contains('hidden');
 
-  if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
+//   if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
 
-  // Ignore pause/mute buttons if tapped directly
-  if (currentlyOver && currentlyOver.some(obj =>
-    obj === this.pauseIcon || obj === this.muteIcon
-  )) return;
+//   // Ignore pause/mute buttons if tapped directly
+//   if (currentlyOver && currentlyOver.some(obj =>
+//     obj === this.pauseIcon || obj === this.muteIcon
+//   )) return;
 
-  // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
-  if (gameStarted && !gameOver && !gamePaused) {
-    direction *= -1;
-    sfx.move.play();
-    this.tweens.add({
-      targets: [circle1, circle2],
-      scaleX: 1.15, scaleY: 1.15,
-      yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-    });
-  }
-});
+//   // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
+//   if (gameStarted && !gameOver && !gamePaused) {
+//     direction *= -1;
+//     sfx.move.play();
+//     this.tweens.add({
+//       targets: [circle1, circle2],
+//       scaleX: 1.15, scaleY: 1.15,
+//       yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+//     });
+//   }
+// });
 
 
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
@@ -1237,32 +1237,33 @@ window.addEventListener('DOMContentLoaded', () => {
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 
   // --- FULL SCREEN TOUCH OVERLAY ---
-  const touchOverlay = document.getElementById('touch-overlay');
-  if (touchOverlay) {
-    touchOverlay.addEventListener('pointerdown', function(e) {
-      // Only allow during active play
-      if (!gameStarted || gameOver || gamePaused) return;
+const touchOverlay = document.getElementById('touch-overlay');
+if (touchOverlay) {
+  touchOverlay.addEventListener('pointerdown', function(e) {
+    // Only allow during active play
+    if (!gameStarted || gameOver || gamePaused) return;
 
-      // Ignore if an overlay is open (start, game over, pause)
-      if (
-        !document.getElementById('start-screen').classList.contains('hidden') ||
-        !document.getElementById('game-over-screen').classList.contains('hidden') ||
-        !document.getElementById('pause-overlay').classList.contains('hidden')
-      ) return;
+    // Ignore if an overlay is open (start, game over, pause)
+    if (
+      !document.getElementById('start-screen').classList.contains('hidden') ||
+      !document.getElementById('game-over-screen').classList.contains('hidden') ||
+      !document.getElementById('pause-overlay').classList.contains('hidden')
+    ) return;
 
-      // Fire your rotate action!
-      direction *= -1;
-      if (sfx && sfx.move) sfx.move.play();
-      const scene = window.game.scene.keys.default;
-      if (scene && scene.tweens) {
-        scene.tweens.add({
-          targets: [circle1, circle2],
-          scaleX: 1.15, scaleY: 1.15,
-          yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-        });
-      }
-    });
-  }
-});
+    // Fire your rotate action!
+    direction *= -1;
+    if (sfx && sfx.move) sfx.move.play();
+    const scene = window.game.scene.keys.default;
+    if (scene && scene.tweens) {
+      scene.tweens.add({
+        targets: [circle1, circle2],
+        scaleX: 1.15, scaleY: 1.15,
+        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+      });
+    }
+  }, { passive: true });
+}
+
+  });
 
 
