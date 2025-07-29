@@ -650,14 +650,22 @@ function create() {
   });
 
 muteIcon.on('pointerdown', (pointer, localX, localY, event) => {
-  event?.stopPropagation();
-  pointer.event?.stopPropagation?.();
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+  if (pointer && pointer.event) {
+    pointer.event.stopPropagation?.();
+    pointer.event.preventDefault?.();
+    if (typeof pointer.event.stopImmediatePropagation === 'function') {
+      pointer.event.stopImmediatePropagation();
+    }
+  }
+
   isMuted = !isMuted;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   if (!isMuted) sfx.uiClick.play();
 });
+
 
 
 // this.input.on('pointerdown', (pointer, currentlyOver) => {
