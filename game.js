@@ -649,13 +649,15 @@ function create() {
     }
   });
 
-  muteIcon.on('pointerup', () => {
-    isMuted = !isMuted;
-    this.sound.mute = isMuted;
-    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
-    if (!isMuted) sfx.uiClick.play();
-  });
+muteIcon.on('pointerdown', (pointer, localX, localY, event) => {
+  event?.stopPropagation(); // Prevent touch from bubbling to overlay
+  isMuted = !isMuted;
+  this.sound.mute = isMuted;
+  muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+  if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+  if (!isMuted) sfx.uiClick.play();
+});
+
 
 // this.input.on('pointerdown', (pointer, currentlyOver) => {
 //   // Ignore only if pause/mute or a major overlay is actually visible
