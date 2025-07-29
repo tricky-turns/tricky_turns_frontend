@@ -1286,6 +1286,13 @@ if (touchOverlay) {
     }
   }, { passive: true });
 }
+document.getElementById('muteToggleHome')?.addEventListener('click', e => {
+  if (!document.getElementById('start-screen').classList.contains('hidden')) {
+    // If we are not on home screen, block this
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
+}, true); // capture phase
 
   });
 
