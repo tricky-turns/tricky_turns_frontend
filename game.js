@@ -9,6 +9,11 @@ let newBestJustSurpassed = false;
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
+function isPiBrowser() {
+    return window.location.hostname.includes('pi') || window.location.href.includes('pi://');
+}
+
+
 
 async function preloadLeaderboard() {
   try {
@@ -134,8 +139,6 @@ function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
 }
 async function initAuth() {
-  await initPi();
-
   // --- UI elements ---
   const userInfo = document.getElementById('user-info');
   const authLoading = document.getElementById('auth-loading');
@@ -153,15 +156,43 @@ async function initAuth() {
     setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
   }
 
-  // Show user info bar and loading spinner
+  // Reset UI for loading/auth state
   userInfo.classList.remove('hidden');
   userInfo.style.display = 'flex';
-
   authLoading.classList.remove('hidden');
   piLabel.classList.add('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
 
+  // --- Pi Browser check (use your isPiBrowser helper) ---
+  if (typeof isPiBrowser === "function" && (!isPiBrowser() || typeof Pi === 'undefined')) {
+    // --- Guest mode fallback ---
+    piUsername = 'Guest';
+    piToken = null;
+    useLocalHighScore = true;
+
+    usernameLabel.innerText = 'Guest';
+    loginBtn.style.display = 'inline-block';
+
+    userInfo.classList.remove('logged-in');
+    userInfo.classList.add('guest');
+
+    // Load guest high score from localStorage
+    highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+    console.log(`[Local] Loaded guest high score: ${highScore}`);
+    updateBestScoreEverywhere();
+    showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
+
+    // Show UI
+    authLoading.classList.add('hidden');
+    piLabel.classList.remove('hidden');
+    usernameLabel.classList.remove('hidden');
+    loginBtn.classList.remove('hidden');
+    startScreen.classList.add('ready');
+    return;
+  }
+
+  // --- Pi Browser: Try to auth ---
   let timedOut = false;
 
   const timeout = new Promise((_, reject) =>
@@ -172,24 +203,25 @@ async function initAuth() {
   );
 
   try {
+    await initPi(); // Only called if Pi is present
+
     const auth = await Promise.race([
       Pi.authenticate(['username'], onIncompletePaymentFound),
       timeout
     ]);
 
     if (!timedOut && auth?.user?.username) {
-      // ✅ Pi authentication
+      // ✅ Pi authentication successful
       piUsername = auth.user.username;
       piToken = auth.accessToken;
       useLocalHighScore = false;
 
       usernameLabel.innerText = `@${piUsername}`;
       loginBtn.style.display = 'none';
-
       userInfo.classList.remove('guest');
       userInfo.classList.add('logged-in');
 
-      // --- Fetch high score from backend API with debug ---
+      // Fetch high score from backend API with debug
       try {
         showDebug("Fetching high score from API...");
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
@@ -213,41 +245,39 @@ async function initAuth() {
       }
 
     } else {
-      // ❌ Fallback to guest
+      // ❌ Pi auth failed: fallback to guest
       piUsername = 'Guest';
       piToken = null;
       useLocalHighScore = true;
 
       usernameLabel.innerText = 'Guest';
       loginBtn.style.display = 'inline-block';
-
       userInfo.classList.remove('logged-in');
       userInfo.classList.add('guest');
 
-      // Load high score from localStorage
       highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+      console.log(`[Local] Loaded guest high score: ${highScore}`);
       updateBestScoreEverywhere();
       showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
     }
   } catch (e) {
-    // ❌ Catch branch: fallback to guest
+    // ❌ Auth error: fallback to guest
     piUsername = 'Guest';
     piToken = null;
     useLocalHighScore = true;
 
     usernameLabel.innerText = 'Guest';
     loginBtn.style.display = 'inline-block';
-
     userInfo.classList.remove('logged-in');
     userInfo.classList.add('guest');
 
-    // Load high score from localStorage
     highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+    console.log(`[Local] Loaded guest high score: ${highScore}`);
     updateBestScoreEverywhere();
     showDebug(`Guest mode (auth error): loaded highScore=${highScore} from localStorage`);
   }
 
-  // Hide loader, show info
+  // --- Show UI ---
   authLoading.classList.add('hidden');
   piLabel.classList.remove('hidden');
   usernameLabel.classList.remove('hidden');
@@ -256,9 +286,9 @@ async function initAuth() {
   } else {
     loginBtn.classList.add('hidden');
   }
-
   startScreen.classList.add('ready');
 }
+
 
 
 
