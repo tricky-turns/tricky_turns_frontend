@@ -552,3 +552,15 @@ html, body, button, .btn-primary, .btn-secondary, #start-screen, #touch-overlay,
   user-select: none !important;
   -webkit-touch-callout: none !important;
 }
+
+#muteToggleHome, .game-icon, .close-btn, img[role="button"] {
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+button:focus, .btn-primary:focus, .btn-secondary:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
