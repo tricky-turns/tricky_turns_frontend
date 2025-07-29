@@ -10,7 +10,7 @@ let newBestJustSurpassed = false;
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
 function isPiBrowser() {
-    return window.location.hostname.includes('pi') || window.location.href.includes('pi://');
+  return typeof window.Pi !== 'undefined';
 }
 
 
@@ -189,17 +189,6 @@ async function initAuth() {
 
   // --- Main detection ---
   if (typeof isPiBrowser === "function" && isPiBrowser()) {
-    if (typeof Pi !== "undefined") {
-      // In Pi Browser and Pi SDK loaded: attempt Pi auth
-      let timedOut = false;
-
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => {
-          timedOut = true;
-          reject(new Error("Pi.authenticate timed out"));
-        }, 3000)
-      );
-
       try {
         await initPi();
 
