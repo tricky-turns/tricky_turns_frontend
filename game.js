@@ -1187,7 +1187,11 @@ function handlePlayAgain() {
       if (el) el.classList.add('hidden');
       if (el) el.style.display = '';
     });
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
+    if (muteBtnHome) {
+  muteBtnHome.style.display = 'none';
+  muteBtnHome.style.pointerEvents = 'none';
+}
+
     const userInfo = document.getElementById('user-info');
     if (userInfo) userInfo.classList.add('hidden');
     const viewLb = document.getElementById('viewLeaderboardBtn');
