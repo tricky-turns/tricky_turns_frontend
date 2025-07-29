@@ -359,10 +359,16 @@ if (muteBtnHome) {
 const config = {
   type: Phaser.AUTO,
   transparent: true,
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: {
+    mode: Phaser.Scale.RESIZE,        // Was: Phaser.Scale.FIT
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: '100vw',
+    height: '100vh',
+  },
   physics: { default: 'arcade', arcade: { debug: false } },
   scene: { key: 'default', preload, create, update }
 };
+
 window.game = new Phaser.Game(config);
 
 function getConfigRamp(arr, val) {
