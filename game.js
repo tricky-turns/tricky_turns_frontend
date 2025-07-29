@@ -954,7 +954,11 @@ if (useLocalHighScore) {
       } catch (e) {}
     }
 
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
+if (muteBtnHome) {
+  muteBtnHome.style.display = 'none';
+  muteBtnHome.style.pointerEvents = 'none';
+}
+
     const gameOverScreen = document.getElementById('game-over-screen');
     gameOverScreen.classList.remove('hidden');
     gameOverScreen.style.display = 'flex';
@@ -1121,7 +1125,11 @@ function handleGoHome() {
     });
     document.getElementById('pause-overlay').classList.add('hidden');
     document.getElementById('pause-overlay').style.display = '';
-    if (muteBtnHome) muteBtnHome.style.display = 'block';
+    if (muteBtnHome) {
+  muteBtnHome.style.display = 'block';
+  muteBtnHome.style.pointerEvents = 'auto';
+}
+
     document.querySelector('canvas').style.visibility = 'hidden';
     window.scrollTo(0, 0);
 
