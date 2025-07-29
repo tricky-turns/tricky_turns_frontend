@@ -649,15 +649,13 @@ function create() {
     }
   });
 
-muteIcon.on('pointerdown', (pointer, localX, localY, event) => {
-  event?.stopPropagation(); // Prevent touch from bubbling to overlay
-  isMuted = !isMuted;
-  this.sound.mute = isMuted;
-  muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-  if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
-  if (!isMuted) sfx.uiClick.play();
-});
-
+  muteIcon.on('pointerdown', () => {
+    isMuted = !isMuted;
+    this.sound.mute = isMuted;
+    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    if (!isMuted) sfx.uiClick.play();
+  });
 
 // this.input.on('pointerdown', (pointer, currentlyOver) => {
 //   // Ignore only if pause/mute or a major overlay is actually visible
@@ -1212,7 +1210,6 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   // --- AUTH / USER INFO ---
   initAuth();
-
   // --- UI BUTTONS ---
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
@@ -1240,44 +1237,32 @@ window.addEventListener('DOMContentLoaded', () => {
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 
   // --- FULL SCREEN TOUCH OVERLAY ---
-  const touchOverlay = document.getElementById('touch-overlay');
-  if (touchOverlay) {
-    touchOverlay.addEventListener('pointerdown', function (e) {
-      const scene = window.game?.scene?.keys?.default;
-      
-      // Check if tap was on Phaser pause or mute icons
-      if (scene && scene.input && scene.input.manager) {
-        const hits = scene.input.manager.hitTestPointer(scene.input.activePointer);
-        if (hits?.some(h => h === scene.muteIcon || h === scene.pauseIcon)) return;
-      }
+const touchOverlay = document.getElementById('touch-overlay');
+if (touchOverlay) {
+  touchOverlay.addEventListener('pointerdown', function(e) {
+    // Only allow during active play
+    if (!gameStarted || gameOver || gamePaused) return;
 
-      // Also check DOM mute button
-      if (e.target?.id === 'muteToggleHome') return;
+    // Ignore if an overlay is open (start, game over, pause)
+    if (
+      !document.getElementById('start-screen').classList.contains('hidden') ||
+      !document.getElementById('game-over-screen').classList.contains('hidden') ||
+      !document.getElementById('pause-overlay').classList.contains('hidden')
+    ) return;
 
-      // Only allow during active play
-      if (!gameStarted || gameOver || gamePaused) return;
+    // Fire your rotate action!
+    direction *= -1;
+    if (sfx && sfx.move) sfx.move.play();
+    const scene = window.game.scene.keys.default;
+    if (scene && scene.tweens) {
+      scene.tweens.add({
+        targets: [circle1, circle2],
+        scaleX: 1.15, scaleY: 1.15,
+        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+      });
+    }
+  }, { passive: true });
+}
 
-      // Ignore if an overlay is open (start, game over, pause)
-      if (
-        !document.getElementById('start-screen').classList.contains('hidden') ||
-        !document.getElementById('game-over-screen').classList.contains('hidden') ||
-        !document.getElementById('pause-overlay').classList.contains('hidden')
-      ) return;
-
-      // Fire rotate action
-      direction *= -1;
-      if (sfx && sfx.move) sfx.move.play();
-      if (scene?.tweens) {
-        scene.tweens.add({
-          targets: [circle1, circle2],
-          scaleX: 1.15, scaleY: 1.15,
-          yoyo: true,
-          duration: 100,
-          ease: 'Quad.easeInOut'
-        });
-      }
-    }, { passive: true });
-  }
-});
-
+  });
 
