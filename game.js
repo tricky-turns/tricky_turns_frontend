@@ -649,13 +649,16 @@ function create() {
     }
   });
 
-  muteIcon.on('pointerdown', () => {
-    isMuted = !isMuted;
-    this.sound.mute = isMuted;
-    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
-    if (!isMuted) sfx.uiClick.play();
-  });
+muteIcon.on('pointerdown', (pointer, localX, localY, event) => {
+  event?.stopPropagation();
+  pointer.event?.stopPropagation?.();
+  isMuted = !isMuted;
+  this.sound.mute = isMuted;
+  muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+  if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+  if (!isMuted) sfx.uiClick.play();
+});
+
 
 // this.input.on('pointerdown', (pointer, currentlyOver) => {
 //   // Ignore only if pause/mute or a major overlay is actually visible
