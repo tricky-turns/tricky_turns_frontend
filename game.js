@@ -44,9 +44,9 @@ const GAME_CONFIG = {
   SPEED_START: 3,
   SPEED_MAX: 15,
   SPEED_RAMP: [
-    { until: 10,   perTick: 0.1 },
-    { until: 35,   perTick: 0.15 },
-    { until: 9999, perTick: 0.0 }
+    { until: 10,   perTick: 0.05 },
+    { until: 35,   perTick: 0.1 },
+    { until: 9999, perTick: 0.15 }
   ],
   // --- Point spawn probability ---
   POINT_CHANCE: [
