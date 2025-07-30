@@ -1269,7 +1269,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- FULL SCREEN TOUCH OVERLAY ---
   const touchOverlay = document.getElementById('touch-overlay');
   if (touchOverlay) {
-    touchOverlay.addEventListener('pointerdown', function (e) {
+touchOverlay.addEventListener('pointerdown', function (e) {
   if (!gameStarted || gameOver || gamePaused) return;
 
   if (
@@ -1282,9 +1282,10 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!scene || !scene.input || !scene.muteIcon || !scene.pauseIcon) return;
 
   const pointer = scene.input.activePointer;
-  const isOverMute = scene.muteIcon.getBounds().contains(pointer.worldX, pointer.worldY);
-  const isOverPause = scene.pauseIcon.getBounds().contains(pointer.worldX, pointer.worldY);
-  if (isOverMute || isOverPause) return; // ⛔ Don't rotate if over mute/pause
+
+  // ✅ Use Phaser's native hitTestPointer instead of manually comparing bounds
+  const targets = scene.input.hitTestPointer(pointer);
+  if (targets.includes(scene.muteIcon) || targets.includes(scene.pauseIcon)) return;
 
   // Proceed with rotation
   direction *= -1;
