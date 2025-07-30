@@ -48,14 +48,11 @@ const GAME_CONFIG = {
   // --- Obstacle/point speed ---
   SPEED_START: 3,
   SPEED_MAX: 15,
-SPEED_RAMP: [
-  { until: 5,    perTick: 0.04 },
-  { until: 20,   perTick: 0.07 },
-  { until: 40,   perTick: 0.11 },
-  { until: 70,   perTick: 0.14 },
-  { until: 9999, perTick: 0.17 }
-]
-,
+  SPEED_RAMP: [
+    { until: 10,   perTick: 0.05 },
+    { until: 35,   perTick: 0.1 },
+    { until: 9999, perTick: 0.15 }
+  ],
   // --- Point spawn probability ---
   POINT_CHANCE: [
     { until: 20,   percent: 65 },
@@ -92,13 +89,13 @@ SPEED_RAMP: [
 //
 // ==========================
 
-function getSpawnInterval() {
-  const { SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX, SPAWN_INTERVAL_BASE_SPEED } = GAME_CONFIG;
-  const accelFactor = Math.min((speed - SPAWN_INTERVAL_BASE_SPEED) / (maxSpeed - SPAWN_INTERVAL_BASE_SPEED), 1);
-  const interval = Phaser.Math.Interpolation.SmoothStep(accelFactor, SPAWN_INTERVAL_MAX, SPAWN_INTERVAL_MIN);
-  return interval + Phaser.Math.Between(-40, 40);  // slightly tighter randomness
-}
-
+  function getSpawnInterval() {
+    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
+    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
+    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+    return interval + Phaser.Math.Between(-50, 50);
+  }
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -462,11 +459,12 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
-  // --- Starfield setup ---
+  // --- Twinkling Starfield Parallax Setup ---
   if (starfieldLayers.length) {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
+  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -485,12 +483,12 @@ function create() {
     }
     starfieldLayers.push({ stars, layer });
   });
+  // --- End Starfield Parallax ---
 
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
   }
 
-  // --- Orb graphics + physics bodies ---
   if (this.textures.exists('orb')) this.textures.remove('orb');
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
@@ -511,73 +509,110 @@ function create() {
   circle1 = this.add.image(0, 0, 'orb').setScale(1);
   this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
-
   circle2 = this.add.image(0, 0, 'orb').setScale(1);
   this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
-  if (this.trail) this.trail.destroy();
+  if (this.trail) { this.trail.destroy(); this.trail = null; }
   this.trail = this.add.particles('orb');
   [circle1, circle2].forEach(c => this.trail.createEmitter({
     follow: c, lifespan: 300, speed: 0,
     scale: { start: 0.3, end: 0 }, alpha: { start: 0.4, end: 0 },
     frequency: 50, blendMode: 'ADD'
   }));
-  this.events.on('shutdown', () => { if (this.trail) this.trail.destroy(); });
+  this.events.on('shutdown', () => { if (this.trail) { this.trail.destroy(); this.trail = null; } });
 
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  // --- Score UI ---
+  // ==== SCORE TEXTS ====
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
-    color: '#ffffff', stroke: '#1a7ef2', strokeThickness: 3,
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#1a7ef2',
+    strokeThickness: 3,
     shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
   bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
-    color: '#ffffff', stroke: '#1a7ef2', strokeThickness: 3,
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#1a7ef2',
+    strokeThickness: 3,
     shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
+  // ==== NEW BEST TEXT (Initially Hidden) ====
   newBestText = this.newBestText = this.add.text(16, 16, '', {
-    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
-    color: '#ffe167', stroke: '#f89e2c', strokeThickness: 4,
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffe167',
+    stroke: '#f89e2c',
+    strokeThickness: 4,
     shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
   }).setDepth(11).setVisible(false);
-
   updateBestScoreEverywhere();
-
-  // --- Icons & SFX ---
-  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
-  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
+  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive({ useHandCursor: true }).setDepth(3).setVisible(false);
+  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive({ useHandCursor: true }).setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
-  // Countdown
+  // ======= HOVER EFFECTS FOR PAUSE & MUTE ICONS =======
+  pauseIcon
+    .on('pointerover', function () {
+      this.setScale(1.13); // Light blue
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+    });
+  muteIcon
+    .on('pointerover', function () {
+      this.setScale(1.13);
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+    });
+  // ====================================================
+
   countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins', fontSize: '96px', fontStyle: 'bold', color: '#ffffff',
-    stroke: '#25b7e6', strokeThickness: 2,
+    fontFamily: 'Poppins',
+    fontSize: '96px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#25b7e6',
+    strokeThickness: 2,
     shadow: { offsetX: 1.5, offsetY: 3, color: '#23b6e9cc', blur: 12, fill: true }
   }).setOrigin(0.5).setDepth(1000).setVisible(false);
 
   this.countdownText = countdownText;
+  this.scoreText = scoreText;
+  this.bestScoreText = bestScoreText;
+  this.newBestText = newBestText;
+  this.pauseIcon = pauseIcon;
+  this.muteIcon = muteIcon;
 
   this.startCountdown = function(callback) {
     let count = 3;
-    this.countdownText.setText(count).setVisible(true).setDepth(1000);
+    this.countdownText.setText(count).setVisible(true);
+    this.countdownText.setDepth(1000);
     const countdownEvent = this.time.addEvent({
       delay: 1000,
       repeat: 3,
       callback: () => {
         count--;
-        if (count > 0) this.countdownText.setText(count);
-        else if (count === 0) this.countdownText.setText('Go!');
-        else {
+        if (count > 0) {
+          this.countdownText.setText(count);
+        } else if (count === 0) {
+          this.countdownText.setText('Go!');
+        } else {
           this.countdownText.setVisible(false);
           countdownEvent.remove(false);
           if (typeof callback === "function") callback.call(this);
@@ -586,23 +621,22 @@ function create() {
     });
   };
 
-  // --- Speed scaling ---
+  // Speed ramp-up based on score and config
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        const ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
+        let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
         speed = Math.min(speed + ramp, maxSpeed);
       }
     }
   });
 
-  // --- Schedule spawns ---
   scheduleSpawnEvents(this);
 
-  // --- Failsafe spawn (just in case) ---
   this.time.addEvent({
-    delay: 250, loop: true,
+    delay: 250,
+    loop: true,
     callback: () => {
       if (!gameStarted || gameOver || gamePaused) return;
       if (this.time.now - lastSpawnTimestamp > GAME_CONFIG.FORCED_SPAWN_INTERVAL) {
@@ -612,55 +646,92 @@ function create() {
     }
   });
 
-  // ✅ Micro-waves every 15s
-  let spawnWaveCounter = 0;
-  this.time.addEvent({
-    delay: 5000, loop: true,
-    callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) {
-        spawnWaveCounter++;
-        GAME_CONFIG.SPAWN_BUFFER_X = (spawnWaveCounter % 3 === 0) ? 120 : 185;
-      }
-    }
-  });
-
-  // ✅ Input handler — click/tap to rotate
-  this.input.on('pointerdown', (pointer, currentlyOver) => {
-    const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
-    const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
-                            !document.getElementById('start-screen')?.classList.contains('hidden');
-    if (gameOverOpen || startScreenOpen) return;
-
-    if (currentlyOver && currentlyOver.some(obj =>
-      obj === this.pauseIcon || obj === this.muteIcon)) return;
-
-    if (gameStarted && !gameOver && !gamePaused) {
-      direction *= -1;
-      sfx.move.play();
-      this.tweens.add({
-        targets: [circle1, circle2],
-        scaleX: 1.15, scaleY: 1.15,
-        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-      });
-    }
-  });
-
-  // ✅ Collision handling
-  this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
-  this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
-  this.physics.add.overlap(circle1, points, collectPoint, null, this);
-  this.physics.add.overlap(circle2, points, collectPoint, null, this);
-
-  // ✅ Sound effects
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
   sfx.newBest = this.sound.add('newBest');
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
+
+  pauseIcon.on('pointerdown', (_, x, y, e) => {
+    if (pauseIconLocked) return;
+    pauseIconLocked = true;
+    e.stopPropagation();
+    if (!gameStarted || gameOver) {
+      pauseIconLocked = false;
+      return;
+    }
+    if (!gamePaused) {
+      gamePaused = true;
+      pauseIcon.setTexture('iconPlay');
+      sfx.pauseWhoosh.play();
+      this.physics.pause();
+      pauseOverlay.classList.remove('hidden');
+      pauseOverlay.style.display = 'flex';
+      setTimeout(() => { pauseIconLocked = false; }, 300);
+    } else {
+      sfx.pauseWhoosh.play();
+      pauseOverlay.classList.add('hidden');
+      pauseOverlay.style.display = '';
+      let count = 3;
+      countdownText.setText(count).setVisible(true).setDepth(1000);
+
+      const resumeEvent = this.time.addEvent({
+        delay: 1000, repeat: 2,
+        callback: () => {
+          count--;
+          if (count > 0) countdownText.setText(count);
+          else {
+            countdownText.setVisible(false);
+            gamePaused = false;
+            pauseIcon.setTexture('iconPause');
+            this.physics.resume();
+            pauseIconLocked = false;
+          }
+        }
+      });
+    }
+  });
+
+  muteIcon.on('pointerdown', () => {
+    isMuted = !isMuted;
+    this.sound.mute = isMuted;
+    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    if (!isMuted) sfx.uiClick.play();
+  });
+
+this.input.on('pointerdown', (pointer, currentlyOver) => {
+  // Ignore only if pause/mute or a major overlay is actually visible
+  const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+  const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+                          !document.getElementById('start-screen')?.classList.contains('hidden');
+
+  if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
+
+  // Ignore pause/mute buttons if tapped directly
+  if (currentlyOver && currentlyOver.some(obj =>
+    obj === this.pauseIcon || obj === this.muteIcon
+  )) return;
+
+  // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
+  if (gameStarted && !gameOver && !gamePaused) {
+    direction *= -1;
+    sfx.move.play();
+    this.tweens.add({
+      targets: [circle1, circle2],
+      scaleX: 1.15, scaleY: 1.15,
+      yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+    });
+  }
+});
+
+
+  this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle1, points, collectPoint, null, this);
+  this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
-
-
 
 
 
@@ -738,16 +809,8 @@ function update(time, delta) {
 }
 
 function getPointChance(score) {
-  let baseChance = getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
-
-  // Dynamically boost point spawn chance every 10 points
-  if (score >= 10 && score % 10 === 0) {
-    baseChance += 5;
-  }
-
-  return Math.min(baseChance, 85); // Cap to avoid overload
+  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
 }
-
 
 // --- Patch: Points and obstacles never overlap in the same lane ---
 function spawnObjects() {
@@ -1043,6 +1106,9 @@ newBestText.setAlpha(1);
     });
   }
 }
+
+
+
 
 
 function handleStartGame() {
