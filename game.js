@@ -25,6 +25,21 @@ async function preloadLeaderboard() {
   }
 }
 
+function showScreen(id, display = 'flex') {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove('hidden');
+    el.style.display = display;
+  }
+}
+
+function hideScreen(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('hidden');
+    el.style.display = 'none';
+  }
+}
 
 // ==========================
 //   TRICKY TURNS GAME CONFIG
@@ -347,11 +362,8 @@ function resetGameUIState(scene) {
   lastSpawnTimestamp = 0;
 
   // DOM UI reset
-  ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-    if (el) el.style.display = '';
-  });
+['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(hideScreen);
+
 
   // Reset result blocks
   const newHighScoreBlock = document.getElementById('newHighScoreBlock');
@@ -996,9 +1008,8 @@ if (useLocalHighScore) {
     }
 
     if (muteBtnHome) muteBtnHome.style.display = 'none';
-    const gameOverScreen = document.getElementById('game-over-screen');
-    gameOverScreen.classList.remove('hidden');
-    gameOverScreen.style.display = 'flex';
+  showScreen('game-over-screen', 'flex');
+
 
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
@@ -1140,19 +1151,17 @@ function handleGoHome() {
     if (muteBtnHome) muteBtnHome.style.display = 'block';
     document.querySelector('canvas').style.visibility = 'hidden';
 
-    ['user-info', 'viewLeaderboardBtn', 'start-screen'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.remove('hidden');
-      if (el) el.style.display = '';
-    });
+    showScreen('user-info');
+    showScreen('viewLeaderboardBtn');
+    showScreen('start-screen');
 
-    document.getElementById('pause-overlay').classList.add('hidden');
-    document.getElementById('pause-overlay').style.display = '';
+    hideScreen('pause-overlay');
     document.getElementById('user-info').classList.add('visible');
 
     fadeOut();
   });
 }
+
 
 
 
@@ -1192,12 +1201,11 @@ window.addEventListener('DOMContentLoaded', () => {
   leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
   leaderboardBtn.addEventListener('click', showHomeLeaderboard);
 
-  document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
-    const lb = document.getElementById('leaderboard-screen');
-    lb.classList.add('hidden');
-    lb.classList.remove('visible');
-    lb.style.display = '';
-  });
+document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+  hideScreen('leaderboard-screen');
+  document.getElementById('leaderboard-screen').classList.remove('visible');
+});
+
 
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
