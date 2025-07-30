@@ -1233,6 +1233,7 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   // --- AUTH / USER INFO ---
   initAuth();
+
   // --- UI BUTTONS ---
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
@@ -1252,47 +1253,61 @@ window.addEventListener('DOMContentLoaded', () => {
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 
-  // --- Login Button (for guest mode to Pi auth) ---
   document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-  // --- Debug logs (optional) ---
   console.log('🌐 Detected hostname:', window.location.hostname);
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 
-  // --- FULL SCREEN TOUCH OVERLAY ---
-const touchOverlay = document.getElementById('touch-overlay');
-if (touchOverlay) {
-  touchOverlay.addEventListener('pointerdown', function(e) {
-    // Only allow during active play
-    if (!gameStarted || gameOver || gamePaused) return;
-
-    // Ignore if an overlay is open (start, game over, pause)
-    if (
-      !document.getElementById('start-screen').classList.contains('hidden') ||
-      !document.getElementById('game-over-screen').classList.contains('hidden') ||
-      !document.getElementById('pause-overlay').classList.contains('hidden')
-    ) return;
-
-    // Fire your rotate action!
-    direction *= -1;
-    if (sfx && sfx.move) sfx.move.play();
-    const scene = window.game.scene.keys.default;
-    if (scene && scene.tweens) {
-      scene.tweens.add({
-        targets: [circle1, circle2],
-        scaleX: 1.15, scaleY: 1.15,
-        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-      });
+  // --- Defensive DOM mute handler guard ---
+  document.getElementById('muteToggleHome')?.addEventListener('click', e => {
+    if (!document.getElementById('start-screen').classList.contains('hidden')) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
     }
-  }, { passive: true });
-}
-document.getElementById('muteToggleHome')?.addEventListener('click', e => {
-  if (!document.getElementById('start-screen').classList.contains('hidden')) {
-    // If we are not on home screen, block this
-    e.stopImmediatePropagation();
-    e.preventDefault();
-  }
-}, true); // capture phase
+  }, true);
 
-  });
+  // --- FULL SCREEN TOUCH OVERLAY ---
+  const touchOverlay = document.getElementById('touch-overlay');
+  if (touchOverlay) {
+    touchOverlay.addEventListener('pointerdown', function (e) {
+      if (!gameStarted || gameOver || gamePaused) return;
+
+      if (
+        !document.getElementById('start-screen').classList.contains('hidden') ||
+        !document.getElementById('game-over-screen').classList.contains('hidden') ||
+        !document.getElementById('pause-overlay').classList.contains('hidden')
+      ) return;
+
+      const px = e.clientX;
+      const py = e.clientY;
+      const scene = window.game.scene.keys.default;
+
+      if (scene && scene.muteIcon && scene.pauseIcon) {
+        const muteBounds = scene.muteIcon.getBounds();
+        const pauseBounds = scene.pauseIcon.getBounds();
+        if (
+          (px >= muteBounds.x && px <= muteBounds.right && py >= muteBounds.y && py <= muteBounds.bottom) ||
+          (px >= pauseBounds.x && px <= pauseBounds.right && py >= pauseBounds.y && py <= pauseBounds.bottom)
+        ) {
+          return; // Don't trigger rotation on icon tap
+        }
+      }
+
+      // Proceed with rotation
+      direction *= -1;
+      if (sfx && sfx.move) sfx.move.play();
+      if (scene && scene.tweens) {
+        scene.tweens.add({
+          targets: [circle1, circle2],
+          scaleX: 1.15,
+          scaleY: 1.15,
+          yoyo: true,
+          duration: 100,
+          ease: 'Quad.easeInOut'
+        });
+      }
+    }, { passive: true });
+  }
+});
+
 
