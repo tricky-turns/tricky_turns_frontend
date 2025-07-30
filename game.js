@@ -462,12 +462,11 @@ function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
-  // --- Twinkling Starfield Parallax Setup ---
+  // --- Starfield setup ---
   if (starfieldLayers.length) {
     starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
   }
   starfieldLayers = [];
-  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -491,6 +490,7 @@ function create() {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
   }
 
+  // --- Orb graphics + physics bodies ---
   if (this.textures.exists('orb')) this.textures.remove('orb');
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
@@ -511,92 +511,73 @@ function create() {
   circle1 = this.add.image(0, 0, 'orb').setScale(1);
   this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
+
   circle2 = this.add.image(0, 0, 'orb').setScale(1);
   this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
 
-  if (this.trail) { this.trail.destroy(); this.trail = null; }
+  if (this.trail) this.trail.destroy();
   this.trail = this.add.particles('orb');
   [circle1, circle2].forEach(c => this.trail.createEmitter({
     follow: c, lifespan: 300, speed: 0,
     scale: { start: 0.3, end: 0 }, alpha: { start: 0.4, end: 0 },
     frequency: 50, blendMode: 'ADD'
   }));
-  this.events.on('shutdown', () => { if (this.trail) { this.trail.destroy(); this.trail = null; } });
+  this.events.on('shutdown', () => { if (this.trail) this.trail.destroy(); });
 
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
+  // --- Score UI ---
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#1a7ef2',
-    strokeThickness: 3,
+    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
+    color: '#ffffff', stroke: '#1a7ef2', strokeThickness: 3,
     shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
   bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#1a7ef2',
-    strokeThickness: 3,
+    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
+    color: '#ffffff', stroke: '#1a7ef2', strokeThickness: 3,
     shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
   newBestText = this.newBestText = this.add.text(16, 16, '', {
-    fontFamily: 'Poppins',
-    fontSize: '28px',
-    fontStyle: 'bold',
-    color: '#ffe167',
-    stroke: '#f89e2c',
-    strokeThickness: 4,
+    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
+    color: '#ffe167', stroke: '#f89e2c', strokeThickness: 4,
     shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
   }).setDepth(11).setVisible(false);
+
   updateBestScoreEverywhere();
 
-  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive({ useHandCursor: true }).setDepth(3).setVisible(false);
-  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive({ useHandCursor: true }).setDepth(4).setVisible(false);
+  // --- Icons & SFX ---
+  pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive().setDepth(3).setVisible(false);
+  muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive().setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
   this.sound.mute = isMuted;
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
+  // Countdown
   countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins',
-    fontSize: '96px',
-    fontStyle: 'bold',
-    color: '#ffffff',
-    stroke: '#25b7e6',
-    strokeThickness: 2,
+    fontFamily: 'Poppins', fontSize: '96px', fontStyle: 'bold', color: '#ffffff',
+    stroke: '#25b7e6', strokeThickness: 2,
     shadow: { offsetX: 1.5, offsetY: 3, color: '#23b6e9cc', blur: 12, fill: true }
   }).setOrigin(0.5).setDepth(1000).setVisible(false);
 
   this.countdownText = countdownText;
-  this.scoreText = scoreText;
-  this.bestScoreText = bestScoreText;
-  this.newBestText = newBestText;
-  this.pauseIcon = pauseIcon;
-  this.muteIcon = muteIcon;
 
   this.startCountdown = function(callback) {
     let count = 3;
-    this.countdownText.setText(count).setVisible(true);
-    this.countdownText.setDepth(1000);
+    this.countdownText.setText(count).setVisible(true).setDepth(1000);
     const countdownEvent = this.time.addEvent({
       delay: 1000,
       repeat: 3,
       callback: () => {
         count--;
-        if (count > 0) {
-          this.countdownText.setText(count);
-        } else if (count === 0) {
-          this.countdownText.setText('Go!');
-        } else {
+        if (count > 0) this.countdownText.setText(count);
+        else if (count === 0) this.countdownText.setText('Go!');
+        else {
           this.countdownText.setVisible(false);
           countdownEvent.remove(false);
           if (typeof callback === "function") callback.call(this);
@@ -605,24 +586,23 @@ function create() {
     });
   };
 
-  // ✅ SPEED RAMP
+  // --- Speed scaling ---
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
-        let ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
+        const ramp = getConfigRamp(GAME_CONFIG.SPEED_RAMP, score).perTick;
         speed = Math.min(speed + ramp, maxSpeed);
       }
     }
   });
 
-  // ✅ MAIN SPAWNER
+  // --- Schedule spawns ---
   scheduleSpawnEvents(this);
 
-  // ✅ FORCED EMERGENCY SPAWN
+  // --- Failsafe spawn (just in case) ---
   this.time.addEvent({
-    delay: 250,
-    loop: true,
+    delay: 250, loop: true,
     callback: () => {
       if (!gameStarted || gameOver || gamePaused) return;
       if (this.time.now - lastSpawnTimestamp > GAME_CONFIG.FORCED_SPAWN_INTERVAL) {
@@ -632,24 +612,46 @@ function create() {
     }
   });
 
-  // ✅ MICRO-WAVE TUNING
+  // ✅ Micro-waves every 15s
   let spawnWaveCounter = 0;
   this.time.addEvent({
-    delay: 5000,
-    loop: true,
+    delay: 5000, loop: true,
     callback: () => {
       if (gameStarted && !gameOver && !gamePaused) {
         spawnWaveCounter++;
-        if (spawnWaveCounter % 3 === 0) {
-          GAME_CONFIG.SPAWN_BUFFER_X = 120;
-        } else {
-          GAME_CONFIG.SPAWN_BUFFER_X = 185;
-        }
+        GAME_CONFIG.SPAWN_BUFFER_X = (spawnWaveCounter % 3 === 0) ? 120 : 185;
       }
     }
   });
 
-  // ✅ SFX LOAD
+  // ✅ Input handler — click/tap to rotate
+  this.input.on('pointerdown', (pointer, currentlyOver) => {
+    const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+    const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+                            !document.getElementById('start-screen')?.classList.contains('hidden');
+    if (gameOverOpen || startScreenOpen) return;
+
+    if (currentlyOver && currentlyOver.some(obj =>
+      obj === this.pauseIcon || obj === this.muteIcon)) return;
+
+    if (gameStarted && !gameOver && !gamePaused) {
+      direction *= -1;
+      sfx.move.play();
+      this.tweens.add({
+        targets: [circle1, circle2],
+        scaleX: 1.15, scaleY: 1.15,
+        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+      });
+    }
+  });
+
+  // ✅ Collision handling
+  this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle1, points, collectPoint, null, this);
+  this.physics.add.overlap(circle2, points, collectPoint, null, this);
+
+  // ✅ Sound effects
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
@@ -657,6 +659,7 @@ function create() {
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
 }
+
 
 
 
