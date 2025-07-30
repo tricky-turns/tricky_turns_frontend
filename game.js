@@ -649,49 +649,38 @@ function create() {
     }
   });
 
-muteIcon.on('pointerdown', (pointer, localX, localY, event) => {
-  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
-  if (pointer && pointer.event) {
-    pointer.event.stopPropagation?.();
-    pointer.event.preventDefault?.();
-    if (typeof pointer.event.stopImmediatePropagation === 'function') {
-      pointer.event.stopImmediatePropagation();
-    }
+  muteIcon.on('pointerdown', () => {
+    isMuted = !isMuted;
+    this.sound.mute = isMuted;
+    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    if (!isMuted) sfx.uiClick.play();
+  });
+
+this.input.on('pointerdown', (pointer, currentlyOver) => {
+  // Ignore only if pause/mute or a major overlay is actually visible
+  const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+  const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+                          !document.getElementById('start-screen')?.classList.contains('hidden');
+
+  if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
+
+  // Ignore pause/mute buttons if tapped directly
+  if (currentlyOver && currentlyOver.some(obj =>
+    obj === this.pauseIcon || obj === this.muteIcon
+  )) return;
+
+  // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
+  if (gameStarted && !gameOver && !gamePaused) {
+    direction *= -1;
+    sfx.move.play();
+    this.tweens.add({
+      targets: [circle1, circle2],
+      scaleX: 1.15, scaleY: 1.15,
+      yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+    });
   }
-
-  isMuted = !isMuted;
-  this.sound.mute = isMuted;
-  muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
-  if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
-  if (!isMuted) sfx.uiClick.play();
 });
-
-
-
-// this.input.on('pointerdown', (pointer, currentlyOver) => {
-//   // Ignore only if pause/mute or a major overlay is actually visible
-//   const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
-//   const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
-//                           !document.getElementById('start-screen')?.classList.contains('hidden');
-
-//   if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
-
-//   // Ignore pause/mute buttons if tapped directly
-//   if (currentlyOver && currentlyOver.some(obj =>
-//     obj === this.pauseIcon || obj === this.muteIcon
-//   )) return;
-
-//   // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
-//   if (gameStarted && !gameOver && !gamePaused) {
-//     direction *= -1;
-//     sfx.move.play();
-//     this.tweens.add({
-//       targets: [circle1, circle2],
-//       scaleX: 1.15, scaleY: 1.15,
-//       yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-//     });
-//   }
-// });
 
 
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
@@ -962,11 +951,7 @@ if (useLocalHighScore) {
       } catch (e) {}
     }
 
-if (muteBtnHome) {
-  muteBtnHome.style.display = 'none';
-  muteBtnHome.style.pointerEvents = 'none';
-}
-
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
     const gameOverScreen = document.getElementById('game-over-screen');
     gameOverScreen.classList.remove('hidden');
     gameOverScreen.style.display = 'flex';
@@ -1133,11 +1118,7 @@ function handleGoHome() {
     });
     document.getElementById('pause-overlay').classList.add('hidden');
     document.getElementById('pause-overlay').style.display = '';
-    if (muteBtnHome) {
-  muteBtnHome.style.display = 'block';
-  muteBtnHome.style.pointerEvents = 'auto';
-}
-
+    if (muteBtnHome) muteBtnHome.style.display = 'block';
     document.querySelector('canvas').style.visibility = 'hidden';
     window.scrollTo(0, 0);
 
@@ -1195,11 +1176,7 @@ function handlePlayAgain() {
       if (el) el.classList.add('hidden');
       if (el) el.style.display = '';
     });
-    if (muteBtnHome) {
-  muteBtnHome.style.display = 'none';
-  muteBtnHome.style.pointerEvents = 'none';
-}
-
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
     const userInfo = document.getElementById('user-info');
     if (userInfo) userInfo.classList.add('hidden');
     const viewLb = document.getElementById('viewLeaderboardBtn');
@@ -1233,7 +1210,6 @@ function handlePlayAgain() {
 window.addEventListener('DOMContentLoaded', () => {
   // --- AUTH / USER INFO ---
   initAuth();
-
   // --- UI BUTTONS ---
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
@@ -1253,53 +1229,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 
+  // --- Login Button (for guest mode to Pi auth) ---
   document.getElementById('loginBtn').addEventListener('click', initAuth);
 
+  // --- Debug logs (optional) ---
   console.log('🌐 Detected hostname:', window.location.hostname);
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
-
-  // --- Defensive DOM mute handler guard ---
-  document.getElementById('muteToggleHome')?.addEventListener('click', e => {
-    if (!document.getElementById('start-screen').classList.contains('hidden')) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-    }
-  }, true);
-
-  // --- FULL SCREEN TOUCH OVERLAY ---
-  const touchOverlay = document.getElementById('touch-overlay');
-  if (touchOverlay) {
-touchOverlay.addEventListener('pointerdown', function (e) {
-  if (!gameStarted || gameOver || gamePaused) return;
-
-  if (
-    !document.getElementById('start-screen').classList.contains('hidden') ||
-    !document.getElementById('game-over-screen').classList.contains('hidden') ||
-    !document.getElementById('pause-overlay').classList.contains('hidden')
-  ) return;
-
-  const scene = window.game.scene.keys.default;
-  if (!scene || !scene.input || !scene.muteIcon || !scene.pauseIcon) return;
-
-  const pointer = scene.input.activePointer;
-
-  // ✅ Use Phaser's native hitTestPointer instead of manually comparing bounds
-  const targets = scene.input.hitTestPointer(pointer);
-  if (targets.includes(scene.muteIcon) || targets.includes(scene.pauseIcon)) return;
-
-  // Proceed with rotation
-  direction *= -1;
-  if (sfx && sfx.move) sfx.move.play();
-  scene.tweens.add({
-    targets: [circle1, circle2],
-    scaleX: 1.15,
-    scaleY: 1.15,
-    yoyo: true,
-    duration: 100,
-    ease: 'Quad.easeInOut'
-  });
-}, { passive: true });
-  }
 });
-
-

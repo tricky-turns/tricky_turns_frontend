@@ -532,20 +532,6 @@ canvas {
 #muteToggleHome:hover {
   background: rgba(255, 255, 255, 0.15);
 }
-
-#touch-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  background: transparent;
-  touch-action: manipulation;
-}
-#start-screen:not(.hidden) ~ #touch-overlay,
-#game-over-screen:not(.hidden) ~ #touch-overlay,
-#pause-overlay:not(.hidden) ~ #touch-overlay {
-  pointer-events: none !important;
-}
-
 html, body, button, .btn-primary, .btn-secondary, #start-screen, #touch-overlay, #leaderboard-screen, #game-over-screen, #pause-overlay, #user-info, canvas {
   -webkit-tap-highlight-color: transparent !important;
   -webkit-user-select: none !important;
