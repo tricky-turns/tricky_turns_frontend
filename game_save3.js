@@ -48,14 +48,11 @@ const GAME_CONFIG = {
   // --- Obstacle/point speed ---
   SPEED_START: 3,
   SPEED_MAX: 15,
-SPEED_RAMP: [
-  { until: 5,    perTick: 0.04 },
-  { until: 20,   perTick: 0.07 },
-  { until: 40,   perTick: 0.11 },
-  { until: 70,   perTick: 0.14 },
-  { until: 9999, perTick: 0.17 }
-]
-,
+  SPEED_RAMP: [
+    { until: 10,   perTick: 0.05 },
+    { until: 35,   perTick: 0.1 },
+    { until: 9999, perTick: 0.15 }
+  ],
   // --- Point spawn probability ---
   POINT_CHANCE: [
     { until: 20,   percent: 65 },
@@ -92,13 +89,13 @@ SPEED_RAMP: [
 //
 // ==========================
 
-function getSpawnInterval() {
-  const { SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX, SPAWN_INTERVAL_BASE_SPEED } = GAME_CONFIG;
-  const accelFactor = Math.min((speed - SPAWN_INTERVAL_BASE_SPEED) / (maxSpeed - SPAWN_INTERVAL_BASE_SPEED), 1);
-  const interval = Phaser.Math.Interpolation.SmoothStep(accelFactor, SPAWN_INTERVAL_MAX, SPAWN_INTERVAL_MIN);
-  return interval + Phaser.Math.Between(-40, 40);  // slightly tighter randomness
-}
-
+  function getSpawnInterval() {
+    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
+    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
+    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+    return interval + Phaser.Math.Between(-50, 50);
+  }
 
 const muteBtnHome = document.getElementById('muteToggleHome');
 let isLeaderboardLoading = false;
@@ -486,6 +483,7 @@ function create() {
     }
     starfieldLayers.push({ stars, layer });
   });
+  // --- End Starfield Parallax ---
 
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
     LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
@@ -527,6 +525,7 @@ function create() {
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
+  // ==== SCORE TEXTS ====
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
     fontFamily: 'Poppins',
     fontSize: '28px',
@@ -547,6 +546,7 @@ function create() {
     shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
+  // ==== NEW BEST TEXT (Initially Hidden) ====
   newBestText = this.newBestText = this.add.text(16, 16, '', {
     fontFamily: 'Poppins',
     fontSize: '28px',
@@ -557,7 +557,6 @@ function create() {
     shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
   }).setDepth(11).setVisible(false);
   updateBestScoreEverywhere();
-
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive({ useHandCursor: true }).setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive({ useHandCursor: true }).setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
@@ -565,6 +564,23 @@ function create() {
   muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
+
+  // ======= HOVER EFFECTS FOR PAUSE & MUTE ICONS =======
+  pauseIcon
+    .on('pointerover', function () {
+      this.setScale(1.13); // Light blue
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+    });
+  muteIcon
+    .on('pointerover', function () {
+      this.setScale(1.13);
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+    });
+  // ====================================================
 
   countdownText = this.add.text(cx, cy, '', {
     fontFamily: 'Poppins',
@@ -605,7 +621,7 @@ function create() {
     });
   };
 
-  // ✅ SPEED RAMP
+  // Speed ramp-up based on score and config
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
@@ -616,10 +632,8 @@ function create() {
     }
   });
 
-  // ✅ MAIN SPAWNER
   scheduleSpawnEvents(this);
 
-  // ✅ FORCED EMERGENCY SPAWN
   this.time.addEvent({
     delay: 250,
     loop: true,
@@ -632,32 +646,92 @@ function create() {
     }
   });
 
-  // ✅ MICRO-WAVE TUNING
-  let spawnWaveCounter = 0;
-  this.time.addEvent({
-    delay: 5000,
-    loop: true,
-    callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) {
-        spawnWaveCounter++;
-        if (spawnWaveCounter % 3 === 0) {
-          GAME_CONFIG.SPAWN_BUFFER_X = 120;
-        } else {
-          GAME_CONFIG.SPAWN_BUFFER_X = 185;
-        }
-      }
-    }
-  });
-
-  // ✅ SFX LOAD
   sfx.explode = this.sound.add('explode');
   sfx.move = this.sound.add('move');
   sfx.point = this.sound.add('point');
   sfx.newBest = this.sound.add('newBest');
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
-}
 
+  pauseIcon.on('pointerdown', (_, x, y, e) => {
+    if (pauseIconLocked) return;
+    pauseIconLocked = true;
+    e.stopPropagation();
+    if (!gameStarted || gameOver) {
+      pauseIconLocked = false;
+      return;
+    }
+    if (!gamePaused) {
+      gamePaused = true;
+      pauseIcon.setTexture('iconPlay');
+      sfx.pauseWhoosh.play();
+      this.physics.pause();
+      pauseOverlay.classList.remove('hidden');
+      pauseOverlay.style.display = 'flex';
+      setTimeout(() => { pauseIconLocked = false; }, 300);
+    } else {
+      sfx.pauseWhoosh.play();
+      pauseOverlay.classList.add('hidden');
+      pauseOverlay.style.display = '';
+      let count = 3;
+      countdownText.setText(count).setVisible(true).setDepth(1000);
+
+      const resumeEvent = this.time.addEvent({
+        delay: 1000, repeat: 2,
+        callback: () => {
+          count--;
+          if (count > 0) countdownText.setText(count);
+          else {
+            countdownText.setVisible(false);
+            gamePaused = false;
+            pauseIcon.setTexture('iconPause');
+            this.physics.resume();
+            pauseIconLocked = false;
+          }
+        }
+      });
+    }
+  });
+
+  muteIcon.on('pointerdown', () => {
+    isMuted = !isMuted;
+    this.sound.mute = isMuted;
+    muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
+    if (!isMuted) sfx.uiClick.play();
+  });
+
+this.input.on('pointerdown', (pointer, currentlyOver) => {
+  // Ignore only if pause/mute or a major overlay is actually visible
+  const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+  const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+                          !document.getElementById('start-screen')?.classList.contains('hidden');
+
+  if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
+
+  // Ignore pause/mute buttons if tapped directly
+  if (currentlyOver && currentlyOver.some(obj =>
+    obj === this.pauseIcon || obj === this.muteIcon
+  )) return;
+
+  // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
+  if (gameStarted && !gameOver && !gamePaused) {
+    direction *= -1;
+    sfx.move.play();
+    this.tweens.add({
+      targets: [circle1, circle2],
+      scaleX: 1.15, scaleY: 1.15,
+      yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+    });
+  }
+});
+
+
+  this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
+  this.physics.add.overlap(circle1, points, collectPoint, null, this);
+  this.physics.add.overlap(circle2, points, collectPoint, null, this);
+}
 
 
 
@@ -735,16 +809,8 @@ function update(time, delta) {
 }
 
 function getPointChance(score) {
-  let baseChance = getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
-
-  // Dynamically boost point spawn chance every 10 points
-  if (score >= 10 && score % 10 === 0) {
-    baseChance += 5;
-  }
-
-  return Math.min(baseChance, 85); // Cap to avoid overload
+  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
 }
-
 
 // --- Patch: Points and obstacles never overlap in the same lane ---
 function spawnObjects() {
@@ -1040,6 +1106,9 @@ newBestText.setAlpha(1);
     });
   }
 }
+
+
+
 
 
 function handleStartGame() {
