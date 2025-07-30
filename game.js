@@ -334,6 +334,50 @@ function updateBestScoreEverywhere() {
   if (bestScoreDom) bestScoreDom.innerText = highScore;
 }
 
+function resetGameUIState(scene) {
+  newBestJustSurpassed = false;
+  score = 0;
+  speed = GAME_CONFIG.SPEED_START;
+  direction = 1;
+  gameStarted = false;
+  gameOver = false;
+  gamePaused = false;
+  laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+  laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+  lastSpawnTimestamp = 0;
+
+  // DOM UI reset
+  ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+    if (el) el.style.display = '';
+  });
+
+  // Reset result blocks
+  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
+  const bestBlock = document.getElementById('bestBlock');
+  const scoreBlock = document.getElementById('scoreBlock');
+  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+  if (bestBlock) bestBlock.style.display = '';
+  if (scoreBlock) scoreBlock.style.display = '';
+
+  // HUD state reset
+  surpassedBest = false;
+  if (scoreText) scoreText.setVisible(true);
+  if (bestScoreText) bestScoreText.setVisible(true);
+  if (newBestText) newBestText.setVisible(false);
+
+  if (scene?.scoreText) scene.scoreText.setVisible(true);
+  if (scene?.bestScoreText) scene.bestScoreText.setVisible(true);
+  if (scene?.newBestText) scene.newBestText.setVisible(false);
+
+  if (muteBtnHome) muteBtnHome.style.display = 'none';
+  const canvas = document.querySelector('canvas');
+  if (canvas) canvas.style.visibility = 'visible';
+  window.scrollTo(0, 0);
+}
+
+
 
 const LANES = [];
 let gameStarted = false, gameOver = false, gamePaused = false;
@@ -1091,51 +1135,25 @@ function handleGoHome() {
   fadeIn(() => {
     const scene = window.game.scene.keys.default;
     scene.scene.restart();
-    newBestJustSurpassed = false;
-    score = 0;
-    speed = GAME_CONFIG.SPEED_START;
-    direction = 1;
-    gameStarted = false;
-    gameOver = false;
-    gamePaused = false;
-    laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-    laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-    lastSpawnTimestamp = 0;
+    resetGameUIState(scene);
 
-    // --- PATCH: Always reset all result blocks to default state
-    const newHighScoreBlock = document.getElementById('newHighScoreBlock');
-    const bestBlock = document.getElementById('bestBlock');
-    const scoreBlock = document.getElementById('scoreBlock');
-    if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
-    if (bestBlock) bestBlock.style.display = '';
-    if (scoreBlock) scoreBlock.style.display = '';
+    if (muteBtnHome) muteBtnHome.style.display = 'block';
+    document.querySelector('canvas').style.visibility = 'hidden';
 
-    document.getElementById('game-over-screen').classList.add('hidden');
     ['user-info', 'viewLeaderboardBtn', 'start-screen'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.remove('hidden');
       if (el) el.style.display = '';
     });
+
     document.getElementById('pause-overlay').classList.add('hidden');
     document.getElementById('pause-overlay').style.display = '';
-    if (muteBtnHome) muteBtnHome.style.display = 'block';
-    document.querySelector('canvas').style.visibility = 'hidden';
-    window.scrollTo(0, 0);
+    document.getElementById('user-info').classList.add('visible');
 
     fadeOut();
-
-    // --- SCORE UI STATE RESET ---
-    surpassedBest = false;
-    if (scoreText) scoreText.setVisible(true);
-    if (bestScoreText) bestScoreText.setVisible(true);
-    if (newBestText) newBestText.setVisible(false);
-
-    if (scene.scoreText) scene.scoreText.setVisible(true);
-    if (scene.bestScoreText) scene.bestScoreText.setVisible(true);
-    if (scene.newBestText) scene.newBestText.setVisible(false);
   });
-  document.getElementById('user-info').classList.add('visible');
 }
+
 
 
 
@@ -1143,66 +1161,21 @@ function handlePlayAgain() {
   sfx.uiClick.play();
 
   const scene = window.game.scene.keys.default;
+
   if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
 
-  // --- PATCH: Always reset all result blocks to default state
-  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
-  const bestBlock = document.getElementById('bestBlock');
-  const scoreBlock = document.getElementById('scoreBlock');
-  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
-  if (bestBlock) bestBlock.style.display = '';
-  if (scoreBlock) scoreBlock.style.display = '';
-
   scene.scene.restart();
-
   scene.events.once('create', () => {
-    newBestJustSurpassed = false;
-    score = 0;
-    speed = GAME_CONFIG.SPEED_START;
-    direction = 1;
-    gameStarted = false;
-    gameOver = false;
-    gamePaused = false;
-    laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-    laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-    lastSpawnTimestamp = 0;
-
-    [
-      'game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'
-    ].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('hidden');
-      if (el) el.style.display = '';
-    });
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
-    const userInfo = document.getElementById('user-info');
-    if (userInfo) userInfo.classList.add('hidden');
-    const viewLb = document.getElementById('viewLeaderboardBtn');
-    if (viewLb) viewLb.classList.add('hidden');
-
-    const canvas = document.querySelector('canvas');
-    if (canvas) canvas.style.visibility = 'visible';
-    window.scrollTo(0, 0);
-
-    // --- SCORE UI STATE RESET ---
-    surpassedBest = false;
-    if (scoreText) scoreText.setVisible(true);
-    if (bestScoreText) bestScoreText.setVisible(true);
-    if (newBestText) newBestText.setVisible(false);
-
+    resetGameUIState(scene);
     scheduleSpawnEvents(scene);
-    scene.scoreText.setVisible(true);
-    scene.bestScoreText.setVisible(true);
-    scene.newBestText.setVisible(false);
     scene.pauseIcon.setVisible(true);
     scene.muteIcon.setVisible(true);
-    scene.startCountdown(function () {
-      gameStarted = true;
-    });
+    scene.startCountdown(() => { gameStarted = true; });
   });
 }
+
 
 
 
