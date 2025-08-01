@@ -142,7 +142,7 @@ function isPiBrowser() {
 
 async function preloadLeaderboard() {
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`)
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${selectedModeId}`)
     cachedLeaderboard = await res.json();
     leaderboardFetched = true;
   } catch (err) {
