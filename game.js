@@ -363,89 +363,6 @@ function runGuestFlow() {
 }
 
 
-
-  // --- Main detection ---
-  if (typeof isPiBrowser === "function" && isPiBrowser()) {
-    // Pi Browser detected! Use Pi authentication
-    let timedOut = false;
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => {
-        timedOut = true;
-        reject(new Error("Pi.authenticate timed out"));
-      }, 3000)
-    );
-
-    try {
-      await initPi();
-
-      const auth = await Promise.race([
-        Pi.authenticate(['username'], onIncompletePaymentFound),
-        timeout
-      ]);
-
-      if (!timedOut && auth?.user?.username) {
-        // Pi authentication successful
-        piUsername = auth.user.username;
-        piToken = auth.accessToken;
-        useLocalHighScore = false;
-
-        usernameLabel.innerText = `@${piUsername}`;
-        loginBtn.style.display = 'none';
-        userInfo.classList.remove('guest');
-        userInfo.classList.add('logged-in');
-
-        // Fetch high score from backend API
-        try {
-          showDebug("Fetching high score from API...");
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
-            headers: { Authorization: `Bearer ${piToken}` }
-          });
-          const txt = await res.clone().text();
-          showDebug(`API status: ${res.status}\nRaw: ${txt}`);
-          if (res.ok) {
-            const data = JSON.parse(txt);
-            showDebug(`Parsed: highScore=${data.score}`);
-            highScore = data.score || 0;
-          } else {
-            highScore = 0;
-            showDebug(`API error, status ${res.status}`);
-          }
-          updateBestScoreEverywhere();
-        } catch (err) {
-          showDebug("Fetch error: " + (err && err.message ? err.message : err));
-          highScore = 0;
-          updateBestScoreEverywhere();
-        }
-
-      } else {
-        // Pi auth failed
-        runGuestFlow();
-        return;
-      }
-    } catch (e) {
-      // Auth error
-      runGuestFlow();
-      return;
-    }
-
-    // --- Show UI for Pi user ---
-    authLoading.classList.add('hidden');
-    piLabel.classList.remove('hidden');
-    usernameLabel.classList.remove('hidden');
-    loginBtn.classList.add('hidden');
-    startScreen.classList.add('ready');
-  } else {
-    // Not Pi Browser: always guest
-    runGuestFlow();
-    return;
-  }
-}
-
-
-await fetchAllBestScores();
-
-
-initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 function fadeInElement(el, duration = 500, displayType = 'flex') {
@@ -1171,9 +1088,10 @@ if (highScore > storedScore) {
   })
 });
 
-        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
-          headers: { Authorization: `Bearer ${piToken}` }
-        });
+const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
+  headers: { Authorization: `Bearer ${piToken}` }
+});
+
         if (res.ok) {
           const data = await res.json();
           highScore = data.score || highScore;
@@ -1298,6 +1216,9 @@ newBestText.setAlpha(1);
 
 
 function handleStartGame() {
+  highScore = allBestScores[selectedModeId] || 0;
+  updateBestScoreEverywhere();
+
   sfx.uiClick.play();
   document.getElementById('user-info').classList.add('hidden');
   document.getElementById('viewLeaderboardBtn').classList.add('hidden');
