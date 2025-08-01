@@ -550,3 +550,10 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
   outline: none !important;
   box-shadow: none !important;
 }
+
+
+.active-mode {
+  background: #3EAFF6 !important;
+  color: #fff !important;
+  border: 2px solid #fff !important;
+}

@@ -9,6 +9,44 @@ let newBestJustSurpassed = false;
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
+let availableModes = [{id: 1, name: "Classic"}]; // Default fallback
+
+async function fetchGameModes() {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/game_modes`);
+    if (res.ok) {
+      availableModes = await res.json();
+    }
+  } catch (e) {
+    // fallback remains
+  }
+}
+
+
+let selectedModeId = null;
+
+function populateModeButtons() {
+  const container = document.getElementById("modesPicker");
+  if (!container) return;
+  container.innerHTML = '';
+  availableModes.forEach(mode => {
+    const btn = document.createElement("button");
+    btn.textContent = mode.name;
+    btn.className = "btn-secondary";
+    btn.onclick = () => {
+      selectedModeId = mode.id;
+      Array.from(container.children).forEach(b => b.classList.remove('active-mode'));
+      btn.classList.add('active-mode');
+    };
+    container.appendChild(btn);
+    if (selectedModeId === null) {
+      selectedModeId = mode.id;
+      btn.classList.add('active-mode');
+    }
+  });
+}
+
+
 function isPiBrowser() {
   return typeof window.Pi !== 'undefined';
 }
@@ -1212,6 +1250,8 @@ document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
 
   // --- Login Button (for guest mode to Pi auth) ---
   document.getElementById('loginBtn').addEventListener('click', initAuth);
+
+  fetchGameModes().then(populateModeButtons);
 
   // --- Debug logs (optional) ---
   console.log('🌐 Detected hostname:', window.location.hostname);
