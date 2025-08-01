@@ -16,6 +16,27 @@ const userInfo      = document.getElementById('user-info');
 const startScreen   = document.getElementById('start-screen');
 
 
+function waitForPiSDK(timeout = 4000) {
+  return new Promise(resolve => {
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
+      resolve();
+      return;
+    }
+    let waited = 0;
+    const check = () => {
+      if (window.Pi && typeof window.Pi.authenticate === "function") {
+        resolve();
+      } else if ((waited += 100) >= timeout) {
+        resolve(); // Timeout, continue as guest
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
+
 function getLocalBestScore(modeId) {
   return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
 }
@@ -264,11 +285,11 @@ async function initAuth() {
   // Always fetch available modes first!
   await fetchGameModes();
 
-  // See if we're in Pi browser (or logged in)
+  // Wait for Pi SDK (max 4s), then try to login
+  await waitForPiSDK();
   let loginSuccess = false;
   try {
-    if (window.Pi && window.Pi.authenticate) {
-      // Try Pi browser login
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
       const piAuthRes = await window.Pi.authenticate(['username']);
       if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
         piUsername = piAuthRes.user.username;
@@ -338,6 +359,7 @@ async function initAuth() {
       : `Logged in as @${piUsername}: loaded highScores from API`)
   );
 }
+
 
 
   // --- Helper for guest mode ---
