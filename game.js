@@ -7,6 +7,14 @@ let newBestJustSurpassed = false;
 
 let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
 
+// UI elements for login/auth flow
+const authLoading   = document.getElementById('authLoading');
+const piLabel       = document.getElementById('piLabel');
+const usernameLabel = document.getElementById('usernameLabel');
+const loginBtn      = document.getElementById('loginBtn');
+const userInfo      = document.getElementById('userInfo');
+const startScreen   = document.getElementById('startScreen');
+
 function getLocalBestScore(modeId) {
   return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
 }
