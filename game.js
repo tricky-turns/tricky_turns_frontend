@@ -296,11 +296,16 @@ async function initAuth() {
         piToken = piAuthRes.accessToken;
         useLocalHighScore = false;
         loginSuccess = true;
+        // --- CRITICAL: expose globally ---
+        window.piUsername = piUsername;
+        window.piToken = piToken;
       }
     }
   } catch (err) {
     console.log('Pi Auth error:', err);
     loginSuccess = false;
+    window.piUsername = null;
+    window.piToken = null;
   }
 
   // Load all best scores (mode-aware)
@@ -310,7 +315,7 @@ async function initAuth() {
     for (const mode of availableModes) {
       try {
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
-          credentials: "include"
+          headers: { Authorization: `Bearer ${piToken}` }
         });
         if (res.ok) {
           const data = await res.json();
@@ -329,6 +334,8 @@ async function initAuth() {
     }
     piUsername = 'Guest';
     useLocalHighScore = true;
+    window.piUsername = null;
+    window.piToken = null;
   }
 
   // Set selectedModeId to Classic (or first mode) if not set
