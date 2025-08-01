@@ -33,13 +33,19 @@ function populateModeButtons() {
     const btn = document.createElement("button");
     btn.textContent = mode.name;
     btn.className = "btn-secondary";
+    // Only Classic launches the game, others do nothing for now
     btn.onclick = () => {
       selectedModeId = mode.id;
       Array.from(container.children).forEach(b => b.classList.remove('active-mode'));
       btn.classList.add('active-mode');
+      if (mode.name.toLowerCase() === "classic") {
+        handleStartGame();
+      }
+      // You can add logic for other modes later!
     };
     container.appendChild(btn);
-    if (selectedModeId === null) {
+    // Set Classic as default selected
+    if (selectedModeId === null && mode.name.toLowerCase() === "classic") {
       selectedModeId = mode.id;
       btn.classList.add('active-mode');
     }
@@ -1231,7 +1237,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- AUTH / USER INFO ---
   initAuth();
   // --- UI BUTTONS ---
-  document.getElementById('startBtn').onclick = handleStartGame;
+  // document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
 
   const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
