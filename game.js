@@ -351,132 +351,14 @@ async function initAuth() {
   );
 }
 
+
 const scopes = ['username'];
 
 function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
 }
 // Full drop-in for initAuth in game.js
-
-async function initAuth() {
-  authLoading.classList.remove('hidden');
-  usernameLabel.classList.add('hidden');
-  loginBtn.classList.add('hidden');
-
-  piUsername = '';
-  piToken = null;
-  useLocalHighScore = true;
-
-  // Always fetch available modes first!
-  await fetchGameModes();
-
-  // Wait for Pi SDK (max 4s), then try to login
-  await waitForPiSDK();
-  let loginSuccess = false;
-  try {
-    if (window.Pi && typeof window.Pi.authenticate === "function") {
-      const piAuthRes = await window.Pi.authenticate(['username']);
-      if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
-        piUsername = piAuthRes.user.username;
-        piToken = piAuthRes.accessToken;
-        useLocalHighScore = false;
-        loginSuccess = true;
-      }
-    }
-  } catch (err) {
-    console.log('Pi Auth error:', err);
-    loginSuccess = false;
-  }
-
-  // Load all best scores (mode-aware)
-  allBestScores = {};
-  if (loginSuccess && piToken) {
-    // Authenticated: fetch all bests from API
-    for (const mode of availableModes) {
-      try {
-        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
-          credentials: "include"
-        });
-        if (res.ok) {
-          const data = await res.json();
-          allBestScores[mode.id] = data.score || 0;
-        } else {
-          allBestScores[mode.id] = 0;
-        }
-      } catch {
-        allBestScores[mode.id] = 0;
-      }
-    }
-  } else {
-    // Guest: fetch all bests from localStorage
-    for (const mode of availableModes) {
-      allBestScores[mode.id] = getLocalBestScore(mode.id);
-    }
-    piUsername = 'Guest';
-    useLocalHighScore = true;
-  }
-
-  // Set selectedModeId to Classic (or first mode) if not set
-  if (!selectedModeId) {
-    selectedModeId =
-      availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
-      availableModes[0]?.id ||
-      1;
-  }
-
-  // Set initial highScore to best for selected mode
-  highScore = allBestScores[selectedModeId] || 0;
-  updateBestScoreEverywhere();
-
-  // Show UI
-  usernameLabel.innerText = piUsername || 'Guest';
-  userInfo.classList.toggle('logged-in', !useLocalHighScore);
-  userInfo.classList.toggle('guest', useLocalHighScore);
-  authLoading.classList.add('hidden');
-  usernameLabel.classList.remove('hidden');
-  loginBtn.classList.remove('hidden');
-  startScreen.classList.add('ready');
-
-  // Log/debug
-  showDebug(
-    (useLocalHighScore
-      ? `Guest mode: loaded highScores from localStorage`
-      : `Logged in as @${piUsername}: loaded highScores from API`)
-  );
-}
-
-
-
   // --- Helper for guest mode ---
-function runGuestFlow() {
-  piUsername = 'Guest';
-  piToken = null;
-  useLocalHighScore = true;
-
-  usernameLabel.innerText = 'Guest';
-  loginBtn.style.display = 'inline-block';
-
-  userInfo.classList.remove('logged-in');
-  userInfo.classList.add('guest');
-
-  // Fetch all bests for every mode
-  allBestScores = {};
-  for (const mode of availableModes) {
-    allBestScores[mode.id] = getLocalBestScore(mode.id);
-  }
-  highScore = allBestScores[selectedModeId] || 0;
-  updateBestScoreEverywhere();
-
-  showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
-
-  authLoading.classList.add('hidden');
-  usernameLabel.classList.remove('hidden');
-  loginBtn.classList.remove('hidden');
-  startScreen.classList.add('ready');
-}
-
-
-document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 function fadeInElement(el, duration = 500, displayType = 'flex') {
   el.style.opacity = 0;
