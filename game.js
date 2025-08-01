@@ -13,7 +13,7 @@ let availableModes = [{id: 1, name: "Classic"}]; // Default fallback
 
 async function fetchGameModes() {
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/game_modes`);
+    const res = await fetch(`${BACKEND_BASE}/api/modes`);
     if (res.ok) {
       availableModes = await res.json();
     }
