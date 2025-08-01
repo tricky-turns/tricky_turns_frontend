@@ -1076,21 +1076,47 @@ if (highScore > storedScore) {
     }
     updateBestScoreEverywhere();
 }
- else if (piToken) {
-      // POST score, then re-fetch to sync
-      try {
-await fetch(`${BACKEND_BASE}/api/score/submit`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${piToken}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    score: highScore,
-    mode_id: selectedModeId,
-    session_id: getSessionId()
-  })
-});
+else if (piToken) {
+  // POST score, then re-fetch to sync
+  try {
+    // Ensure mode_id is an integer, not a string
+    const postBody = {
+      score: Number.parseInt(highScore, 10),
+      mode_id: Number.parseInt(selectedModeId, 10),
+      session_id: getSessionId()
+    };
+    const postRes = await fetch(`${BACKEND_BASE}/api/score/submit`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${piToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(postBody)
+    });
+
+    // Optional: Check POST status
+    if (!postRes.ok) {
+      const errorText = await postRes.text();
+      showDebug(`Score submit failed: [${postRes.status}] ${errorText}`);
+      // Don't proceed further if failed
+      throw new Error(`Score submit failed: ${errorText}`);
+    }
+
+    // Fetch new high score from backend
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${Number.parseInt(selectedModeId, 10)}`, {
+      headers: { Authorization: `Bearer ${piToken}` }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      highScore = data.score || highScore;
+      updateBestScoreEverywhere();
+    }
+  } catch (e) {
+    showDebug('Error submitting/fetching score: ' + (e && e.message ? e.message : e));
+  }
+}
+
 
 
 const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
