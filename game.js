@@ -254,7 +254,6 @@ function onIncompletePaymentFound(payment) {
 
 async function initAuth() {
   authLoading.classList.remove('hidden');
-  piLabel.classList.add('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
 
@@ -328,7 +327,6 @@ async function initAuth() {
   userInfo.classList.toggle('logged-in', !useLocalHighScore);
   userInfo.classList.toggle('guest', useLocalHighScore);
   authLoading.classList.add('hidden');
-  piLabel.classList.remove('hidden');
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
@@ -365,7 +363,6 @@ function runGuestFlow() {
   showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
 
   authLoading.classList.add('hidden');
-  piLabel.classList.remove('hidden');
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
