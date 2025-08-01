@@ -5,25 +5,15 @@ let surpassedBest = false;
 let newBestText; // For "NEW BEST" animated UI
 let newBestJustSurpassed = false;
 
+let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
+
 // UI elements for login/auth flow
 // --- UI Elements (put at the top of your game.js) ---
-// UI Elements (make sure these IDs match your index.html)
 const authLoading   = document.getElementById('auth-loading');
 const usernameLabel = document.getElementById('username');
 const loginBtn      = document.getElementById('loginBtn');
 const userInfo      = document.getElementById('user-info');
 const startScreen   = document.getElementById('start-screen');
-
-// Globals
-let piUsername = '';
-let piToken = null;
-let useLocalHighScore = true;
-let allBestScores = {};
-let selectedModeId = null;
-let highScore = 0;
-let availableModes = [];
-
-
 
 
 function waitForPiSDK(timeout = 4000) {
@@ -57,6 +47,8 @@ function setLocalBestScore(modeId, score) {
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
+let availableModes = [{id: 1, name: "Classic"}]; // Default fallback
+
 async function fetchGameModes() {
   try {
     const res = await fetch(`${BACKEND_BASE}/api/modes`);
@@ -69,6 +61,7 @@ async function fetchGameModes() {
 }
 
 
+let selectedModeId = null;
 
 function populateModeButtons() {
   const container = document.getElementById("modesPicker");
@@ -261,8 +254,26 @@ function showDebug(msg) {
 }
 
 
+function initPi() {
+  if (!piInitPromise) {
+   const isPiBrowser = window.location.hostname.includes('pi') || window.location.href.includes('pi://');
+   piInitPromise = Pi.init({ version: "2.0", sandbox: !isPiBrowser });
+
+  }
+  return piInitPromise;
+}
+const scopes = ['username'];
+let piUsername = 'Guest';
+let piToken = null; // ⬅️ new: store Pi auth token
+let highScore = 0;
+let useLocalHighScore = true;
+
+function onIncompletePaymentFound(payment) {
+  console.log('Incomplete payment found:', payment);
+}
+// Full drop-in for initAuth in game.js
+
 async function initAuth() {
-  // Show loading UI
   authLoading.classList.remove('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
@@ -271,33 +282,31 @@ async function initAuth() {
   piToken = null;
   useLocalHighScore = true;
 
-  // Always fetch modes first (they are needed for everything else)
+  // Always fetch available modes first!
   await fetchGameModes();
 
-  // Default: Guest flow (will overwrite if Pi auth succeeds)
+  // Wait for Pi SDK (max 4s), then try to login
+  await waitForPiSDK();
   let loginSuccess = false;
-
   try {
-    // --- Pi Browser Auth Flow ---
-    if (typeof Pi !== "undefined" && Pi.init && Pi.authenticate) {
-      await Pi.init({ version: "2.0", sandbox: true });
-      const auth = await Pi.authenticate(['username']);
-      if (auth && auth.user && auth.accessToken) {
-        piUsername = auth.user.username;
-        piToken = auth.accessToken;
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
+      const piAuthRes = await window.Pi.authenticate(['username']);
+      if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
+        piUsername = piAuthRes.user.username;
+        piToken = piAuthRes.accessToken;
         useLocalHighScore = false;
         loginSuccess = true;
       }
     }
   } catch (err) {
-    // Pi Browser, but auth failed or cancelled (stay as guest)
+    console.log('Pi Auth error:', err);
     loginSuccess = false;
   }
 
-  // --- Load best scores for all modes ---
+  // Load all best scores (mode-aware)
   allBestScores = {};
   if (loginSuccess && piToken) {
-    // Authenticated: fetch from API
+    // Authenticated: fetch all bests from API
     for (const mode of availableModes) {
       try {
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
@@ -322,7 +331,7 @@ async function initAuth() {
     useLocalHighScore = true;
   }
 
-  // Pick default mode if not set
+  // Set selectedModeId to Classic (or first mode) if not set
   if (!selectedModeId) {
     selectedModeId =
       availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
@@ -330,7 +339,7 @@ async function initAuth() {
       1;
   }
 
-  // Set initial best for selected mode
+  // Set initial highScore to best for selected mode
   highScore = allBestScores[selectedModeId] || 0;
   updateBestScoreEverywhere();
 
@@ -343,7 +352,7 @@ async function initAuth() {
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
 
-  // Optional: debug window/log
+  // Log/debug
   showDebug(
     (useLocalHighScore
       ? `Guest mode: loaded highScores from localStorage`
@@ -352,13 +361,37 @@ async function initAuth() {
 }
 
 
-const scopes = ['username'];
 
-function onIncompletePaymentFound(payment) {
-  console.log('Incomplete payment found:', payment);
-}
-// Full drop-in for initAuth in game.js
   // --- Helper for guest mode ---
+function runGuestFlow() {
+  piUsername = 'Guest';
+  piToken = null;
+  useLocalHighScore = true;
+
+  usernameLabel.innerText = 'Guest';
+  loginBtn.style.display = 'inline-block';
+
+  userInfo.classList.remove('logged-in');
+  userInfo.classList.add('guest');
+
+  // Fetch all bests for every mode
+  allBestScores = {};
+  for (const mode of availableModes) {
+    allBestScores[mode.id] = getLocalBestScore(mode.id);
+  }
+  highScore = allBestScores[selectedModeId] || 0;
+  updateBestScoreEverywhere();
+
+  showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
+
+  authLoading.classList.add('hidden');
+  usernameLabel.classList.remove('hidden');
+  loginBtn.classList.remove('hidden');
+  startScreen.classList.add('ready');
+}
+
+
+document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 function fadeInElement(el, duration = 500, displayType = 'flex') {
   el.style.opacity = 0;
