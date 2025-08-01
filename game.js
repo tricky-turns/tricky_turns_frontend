@@ -994,183 +994,90 @@ function spawnObjects() {
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
-function triggerGameOver() {
-  if (spawnEvent) spawnEvent.remove(false);
-  if (gameOver) return;
-  gameOver = true;
+async function triggerGameover(finalScore) {
+    try {
+        // Always set mode ID, defaulting to Classic if not set
+        const modeId = typeof window.selectedModeId === 'number' ? window.selectedModeId : 1;
+        // You should set this on Pi login, or null if guest
+        const token = window.piAuthToken;
 
-  // --- Camera shake & particle burst on crash ---
-  let fx = GAME_CONFIG.PARTICLES.crash;
-  let camShake = GAME_CONFIG.CAMERA_SHAKE.crash;
-  let cam = window.game.scene.keys.default.cameras.main;
-  if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
-
-  [circle1, circle2].forEach(c => {
-    const px = c.x, py = c.y; c.destroy();
-    const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
-      x: px, y: py,
-      speed: { min: fx.speedMin, max: fx.speedMax },
-      angle: { min: 0, max: 360 },
-      scale: { start: fx.scaleStart, end: fx.scaleEnd },
-      lifespan: fx.lifespan, blendMode: 'ADD',
-      quantity: fx.quantity
-    });
-    window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
-  });
-  sfx.explode.play();
-
-  // -- DOM references for all result UI blocks --
-  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
-  const newHighScoreValue = document.getElementById('newHighScoreValue');
-  const bestBlock = document.getElementById('bestBlock');
-  const scoreBlock = document.getElementById('scoreBlock');
-
-  // --- Reset state (both class and display) ---
-  if (newHighScoreBlock) {
-    newHighScoreBlock.classList.add('hidden');
-    newHighScoreBlock.style.display = 'none';
-  }
-  if (bestBlock) bestBlock.style.display = '';
-  if (scoreBlock) scoreBlock.style.display = '';
-
-  window.game.scene.keys.default.time.delayedCall(700, async () => {
-    window.game.scene.keys.default.physics.pause();
-    document.querySelector('canvas').style.visibility = 'hidden';
-
-    const isNewHigh = score > highScore;
-
-    if (isNewHigh) {
-      if (newHighScoreBlock) {
-        newHighScoreBlock.classList.remove('hidden');
-        newHighScoreBlock.style.display = 'flex';
-      }
-      if (newHighScoreValue) newHighScoreValue.innerText = score;
-      if (bestBlock) bestBlock.style.display = 'none';
-      if (scoreBlock) scoreBlock.style.display = 'none';
-      highScore = score;
-      sfx.newBest.play();
-      updateBestScoreEverywhere();
-    } else {
-      if (newHighScoreBlock) {
-        newHighScoreBlock.classList.add('hidden');
-        newHighScoreBlock.style.display = 'none';
-      }
-      if (bestBlock) bestBlock.style.display = '';
-      if (scoreBlock) scoreBlock.style.display = '';
-    }
-
-    document.getElementById('finalScore').innerText = score;
-    document.getElementById('bestScore').innerText = highScore;
-    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
-
-if (useLocalHighScore) {
-    // Ensure we only ever overwrite with a higher score
-let storedScore = getLocalBestScore(selectedModeId);
-if (highScore > storedScore) {
-    setLocalBestScore(selectedModeId, highScore);
-    allBestScores[selectedModeId] = highScore;  // Keep JS object up to date
-    console.log(`[Local] New high score saved for mode ${selectedModeId}: ${highScore}`);
-}
- else {
-        console.log(`[Local] Current session high score (${highScore}) did not beat stored (${storedScore}), not saved.`);
-    }
-    updateBestScoreEverywhere();
-}
-else if (piToken) {
-  // POST score, then re-fetch to sync
-  try {
-    // Ensure mode_id is an integer, not a string
-    const postBody = {
-      score: Number.parseInt(highScore, 10),
-      mode_id: Number.parseInt(selectedModeId, 10),
-      session_id: getSessionId()
-    };
-    const postRes = await fetch(`${BACKEND_BASE}/api/score/submit`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${piToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(postBody)
-    });
-
-    // Optional: Check POST status
-    if (!postRes.ok) {
-      const errorText = await postRes.text();
-      showDebug(`Score submit failed: [${postRes.status}] ${errorText}`);
-      // Don't proceed further if failed
-      throw new Error(`Score submit failed: ${errorText}`);
-    }
-
-    // Fetch new high score from backend
-    const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${Number.parseInt(selectedModeId, 10)}`, {
-      headers: { Authorization: `Bearer ${piToken}` }
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      highScore = data.score || highScore;
-      updateBestScoreEverywhere();
-    }
-  } catch (e) {
-    showDebug('Error submitting/fetching score: ' + (e && e.message ? e.message : e));
-  }
-}
-
-
-
-const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
-  headers: { Authorization: `Bearer ${piToken}` }
-});
-
-        if (res.ok) {
-          const data = await res.json();
-          highScore = data.score || highScore;
-          updateBestScoreEverywhere();
+        // If not logged in, show game over for guest
+        if (!token) {
+            showGameOverScreen(finalScore, null); // Implement this to show the game over UI
+            return;
         }
-      } catch (e) {}
-    }
 
-    if (muteBtnHome) muteBtnHome.style.display = 'none';
-  showScreen('game-over-screen', 'flex');
-
-
-    const rankMessage = document.getElementById('rankMessage');
-    if (rankMessage) rankMessage.innerText = "";
-
-    // --- Leaderboard/rank logic (unchanged) ---
-    (async () => {
-      if (!useLocalHighScore && piToken) {
-        try {
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${selectedModeId}`, {
-            headers: { Authorization: `Bearer ${piToken}` }
-          });
-          if (res.ok) {
-            const { rank } = await res.json();
-            if (rankMessage) {
-              rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
-              rankMessage.classList.remove('dimmed');
+        // Use or create sessionId for the current run
+        let sessionId = window.currentSessionId;
+        if (!sessionId) {
+            // Start a new session
+            const sessionResp = await fetch('/api/session/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    mode_id: modeId,
+                    device_id: navigator.userAgent,
+                    platform: /android/i.test(navigator.userAgent)
+                        ? 'android'
+                        : /iphone|ipad/i.test(navigator.userAgent)
+                            ? 'ios'
+                            : 'web',
+                    client_version: '1.0.0'
+                })
+            });
+            if (!sessionResp.ok) {
+                console.error('Failed to start session', await sessionResp.text());
+                showGameOverScreen(finalScore, null);
+                return;
             }
-          } else {
-            if (rankMessage) {
-              rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-            }
-          }
-        } catch (e) {
-          if (rankMessage) {
-            rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
-          }
+            const sessionData = await sessionResp.json();
+            sessionId = sessionData.session_id;
+            window.currentSessionId = sessionId;
         }
-      } else {
-        if (rankMessage) {
-          rankMessage.innerText = `🔓 Sign in to track your global rank`;
-          rankMessage.classList.add('dimmed');
+
+        // Post score
+        const scoreResp = await fetch('/api/score/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                mode_id: modeId,
+                score: finalScore,
+                session_id: sessionId
+            })
+        });
+        if (!scoreResp.ok) {
+            const errorDetail = await scoreResp.text();
+            console.error('Failed to submit score', errorDetail);
+            showGameOverScreen(finalScore, sessionId);
+            return;
         }
-      }
-    })();
-    // --- End leaderboard logic ---
-  });
+
+        // You might want to fetch updated best/rank here
+
+        // Call your game over UI logic
+        showGameOverScreen(finalScore, sessionId);
+
+        // Optionally, end session (not strictly required)
+        // await fetch('/api/session/end', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         'Authorization': `Bearer ${token}`
+        //     },
+        //     body: JSON.stringify({ session_id: sessionId, final_score: finalScore })
+        // });
+    } catch (err) {
+        console.error('Error during triggerGameover:', err);
+        showGameOverScreen(finalScore, null);
+    }
 }
+
 
 
 
