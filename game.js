@@ -1079,7 +1079,7 @@ if (highScore > storedScore) {
  else if (piToken) {
       // POST score, then re-fetch to sync
       try {
-await fetch(`${BACKEND_BASE}/api/score/submit`, {
+        await fetch(`${BACKEND_BASE}/api/score/submit`, {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${piToken}`,
@@ -1087,11 +1087,10 @@ await fetch(`${BACKEND_BASE}/api/score/submit`, {
   },
   body: JSON.stringify({
     score: highScore,
-    mode_id: selectedModeId,
-    session_id: getSessionId()
+    username: piUsername,
+    mode_id: selectedModeId      // <--- Add this!
   })
 });
-
 
 const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
   headers: { Authorization: `Bearer ${piToken}` }
