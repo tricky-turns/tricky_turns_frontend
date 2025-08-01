@@ -54,17 +54,6 @@ function setLocalBestScore(modeId, score) {
   localStorage.setItem(`tricky_high_score_${modeId}`, score);
 }
 
-function getSessionId() {
-  // For now, just use a static string, or you could generate a UUID.
-  let sessionId = localStorage.getItem('tricky_session_id');
-  if (!sessionId) {
-    sessionId = Math.random().toString(36).substr(2, 10) + Date.now();
-    localStorage.setItem('tricky_session_id', sessionId);
-  }
-  return sessionId;
-}
-
-
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
@@ -153,7 +142,7 @@ function isPiBrowser() {
 
 async function preloadLeaderboard() {
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${selectedModeId}`)
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`)
     cachedLeaderboard = await res.json();
     leaderboardFetched = true;
   } catch (err) {
@@ -273,7 +262,7 @@ function showDebug(msg) {
 
 
 async function initAuth() {
-  // Show the auth loading spinner
+  // Show loading UI
   authLoading.classList.remove('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
@@ -282,12 +271,14 @@ async function initAuth() {
   piToken = null;
   useLocalHighScore = true;
 
-  // Always fetch available modes first!
+  // Always fetch modes first (they are needed for everything else)
   await fetchGameModes();
 
-  // Try Pi authentication
+  // Default: Guest flow (will overwrite if Pi auth succeeds)
   let loginSuccess = false;
+
   try {
+    // --- Pi Browser Auth Flow ---
     if (typeof Pi !== "undefined" && Pi.init && Pi.authenticate) {
       await Pi.init({ version: "2.0", sandbox: true });
       const auth = await Pi.authenticate(['username']);
@@ -299,7 +290,7 @@ async function initAuth() {
       }
     }
   } catch (err) {
-    // Pi Browser, but auth failed or cancelled (fallback to guest)
+    // Pi Browser, but auth failed or cancelled (stay as guest)
     loginSuccess = false;
   }
 
@@ -310,7 +301,7 @@ async function initAuth() {
     for (const mode of availableModes) {
       try {
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
-          headers: { Authorization: `Bearer ${piToken}` }
+          credentials: "include"
         });
         if (res.ok) {
           const data = await res.json();
@@ -331,7 +322,7 @@ async function initAuth() {
     useLocalHighScore = true;
   }
 
-  // Set selectedModeId to Classic (or first mode) if not set
+  // Pick default mode if not set
   if (!selectedModeId) {
     selectedModeId =
       availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
@@ -339,26 +330,26 @@ async function initAuth() {
       1;
   }
 
-  // Set initial highScore for selected mode
+  // Set initial best for selected mode
   highScore = allBestScores[selectedModeId] || 0;
   updateBestScoreEverywhere();
 
-  // ---- SHOW UI: This is the CRITICAL part! ----
-  userInfo.classList.remove('hidden');              // Make sure user info is visible!
-  authLoading.classList.add('hidden');              // Hide spinner
-  usernameLabel.innerText = piUsername || 'Guest';  // Show name
+  // Show UI
+  usernameLabel.innerText = piUsername || 'Guest';
+  userInfo.classList.toggle('logged-in', !useLocalHighScore);
+  userInfo.classList.toggle('guest', useLocalHighScore);
+  authLoading.classList.add('hidden');
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
 
-  // (Optional) Debug message
+  // Optional: debug window/log
   showDebug(
-    useLocalHighScore
-      ? "Guest mode: loaded highScores from localStorage"
-      : `Logged in as @${piUsername}: loaded highScores from API`
+    (useLocalHighScore
+      ? `Guest mode: loaded highScores from localStorage`
+      : `Logged in as @${piUsername}: loaded highScores from API`)
   );
 }
-
 
 
 const scopes = ['username'];
@@ -1079,7 +1070,7 @@ if (highScore > storedScore) {
  else if (piToken) {
       // POST score, then re-fetch to sync
       try {
-await fetch(`${BACKEND_BASE}/api/score/submit`, {
+        await fetch(`${BACKEND_BASE}/api/leaderboard`, {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${piToken}`,
@@ -1087,11 +1078,10 @@ await fetch(`${BACKEND_BASE}/api/score/submit`, {
   },
   body: JSON.stringify({
     score: highScore,
-    mode_id: selectedModeId,
-    session_id: getSessionId()
+    username: piUsername,
+    mode_id: selectedModeId      // <--- Add this!
   })
 });
-
 
 const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
   headers: { Authorization: `Bearer ${piToken}` }
@@ -1116,7 +1106,7 @@ const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedMo
     (async () => {
       if (!useLocalHighScore && piToken) {
         try {
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${selectedModeId}`, {
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
             headers: { Authorization: `Bearer ${piToken}` }
           });
           if (res.ok) {
