@@ -262,7 +262,7 @@ function showDebug(msg) {
 
 
 async function initAuth() {
-  // Show loading UI
+  // Show the auth loading spinner
   authLoading.classList.remove('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
@@ -271,14 +271,12 @@ async function initAuth() {
   piToken = null;
   useLocalHighScore = true;
 
-  // Always fetch modes first (they are needed for everything else)
+  // Always fetch available modes first!
   await fetchGameModes();
 
-  // Default: Guest flow (will overwrite if Pi auth succeeds)
+  // Try Pi authentication
   let loginSuccess = false;
-
   try {
-    // --- Pi Browser Auth Flow ---
     if (typeof Pi !== "undefined" && Pi.init && Pi.authenticate) {
       await Pi.init({ version: "2.0", sandbox: true });
       const auth = await Pi.authenticate(['username']);
@@ -290,7 +288,7 @@ async function initAuth() {
       }
     }
   } catch (err) {
-    // Pi Browser, but auth failed or cancelled (stay as guest)
+    // Pi Browser, but auth failed or cancelled (fallback to guest)
     loginSuccess = false;
   }
 
@@ -301,7 +299,7 @@ async function initAuth() {
     for (const mode of availableModes) {
       try {
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
-          credentials: "include"
+          headers: { Authorization: `Bearer ${piToken}` }
         });
         if (res.ok) {
           const data = await res.json();
@@ -322,7 +320,7 @@ async function initAuth() {
     useLocalHighScore = true;
   }
 
-  // Pick default mode if not set
+  // Set selectedModeId to Classic (or first mode) if not set
   if (!selectedModeId) {
     selectedModeId =
       availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
@@ -330,26 +328,26 @@ async function initAuth() {
       1;
   }
 
-  // Set initial best for selected mode
+  // Set initial highScore for selected mode
   highScore = allBestScores[selectedModeId] || 0;
   updateBestScoreEverywhere();
 
-  // Show UI
-  usernameLabel.innerText = piUsername || 'Guest';
-  userInfo.classList.toggle('logged-in', !useLocalHighScore);
-  userInfo.classList.toggle('guest', useLocalHighScore);
-  authLoading.classList.add('hidden');
+  // ---- SHOW UI: This is the CRITICAL part! ----
+  userInfo.classList.remove('hidden');              // Make sure user info is visible!
+  authLoading.classList.add('hidden');              // Hide spinner
+  usernameLabel.innerText = piUsername || 'Guest';  // Show name
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
 
-  // Optional: debug window/log
+  // (Optional) Debug message
   showDebug(
-    (useLocalHighScore
-      ? `Guest mode: loaded highScores from localStorage`
-      : `Logged in as @${piUsername}: loaded highScores from API`)
+    useLocalHighScore
+      ? "Guest mode: loaded highScores from localStorage"
+      : `Logged in as @${piUsername}: loaded highScores from API`
   );
 }
+
 
 
 const scopes = ['username'];
