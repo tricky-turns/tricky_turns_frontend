@@ -5,15 +5,25 @@ let surpassedBest = false;
 let newBestText; // For "NEW BEST" animated UI
 let newBestJustSurpassed = false;
 
-let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
-
 // UI elements for login/auth flow
 // --- UI Elements (put at the top of your game.js) ---
+// UI Elements (make sure these IDs match your index.html)
 const authLoading   = document.getElementById('auth-loading');
 const usernameLabel = document.getElementById('username');
 const loginBtn      = document.getElementById('loginBtn');
 const userInfo      = document.getElementById('user-info');
 const startScreen   = document.getElementById('start-screen');
+
+// Globals
+let piUsername = '';
+let piToken = null;
+let useLocalHighScore = true;
+let allBestScores = {};
+let selectedModeId = null;
+let highScore = 0;
+let availableModes = [];
+
+
 
 
 function waitForPiSDK(timeout = 4000) {
@@ -47,8 +57,6 @@ function setLocalBestScore(modeId, score) {
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
-let availableModes = [{id: 1, name: "Classic"}]; // Default fallback
-
 async function fetchGameModes() {
   try {
     const res = await fetch(`${BACKEND_BASE}/api/modes`);
@@ -61,7 +69,6 @@ async function fetchGameModes() {
 }
 
 
-let selectedModeId = null;
 
 function populateModeButtons() {
   const container = document.getElementById("modesPicker");
@@ -254,19 +261,97 @@ function showDebug(msg) {
 }
 
 
-function initPi() {
-  if (!piInitPromise) {
-   const isPiBrowser = window.location.hostname.includes('pi') || window.location.href.includes('pi://');
-   piInitPromise = Pi.init({ version: "2.0", sandbox: !isPiBrowser });
+async function initAuth() {
+  // Show loading UI
+  authLoading.classList.remove('hidden');
+  usernameLabel.classList.add('hidden');
+  loginBtn.classList.add('hidden');
 
+  piUsername = '';
+  piToken = null;
+  useLocalHighScore = true;
+
+  // Always fetch modes first (they are needed for everything else)
+  await fetchGameModes();
+
+  // Default: Guest flow (will overwrite if Pi auth succeeds)
+  let loginSuccess = false;
+
+  try {
+    // --- Pi Browser Auth Flow ---
+    if (typeof Pi !== "undefined" && Pi.init && Pi.authenticate) {
+      await Pi.init({ version: "2.0", sandbox: true });
+      const auth = await Pi.authenticate(['username']);
+      if (auth && auth.user && auth.accessToken) {
+        piUsername = auth.user.username;
+        piToken = auth.accessToken;
+        useLocalHighScore = false;
+        loginSuccess = true;
+      }
+    }
+  } catch (err) {
+    // Pi Browser, but auth failed or cancelled (stay as guest)
+    loginSuccess = false;
   }
-  return piInitPromise;
+
+  // --- Load best scores for all modes ---
+  allBestScores = {};
+  if (loginSuccess && piToken) {
+    // Authenticated: fetch from API
+    for (const mode of availableModes) {
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
+          credentials: "include"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          allBestScores[mode.id] = data.score || 0;
+        } else {
+          allBestScores[mode.id] = 0;
+        }
+      } catch {
+        allBestScores[mode.id] = 0;
+      }
+    }
+  } else {
+    // Guest: fetch all bests from localStorage
+    for (const mode of availableModes) {
+      allBestScores[mode.id] = getLocalBestScore(mode.id);
+    }
+    piUsername = 'Guest';
+    useLocalHighScore = true;
+  }
+
+  // Pick default mode if not set
+  if (!selectedModeId) {
+    selectedModeId =
+      availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
+      availableModes[0]?.id ||
+      1;
+  }
+
+  // Set initial best for selected mode
+  highScore = allBestScores[selectedModeId] || 0;
+  updateBestScoreEverywhere();
+
+  // Show UI
+  usernameLabel.innerText = piUsername || 'Guest';
+  userInfo.classList.toggle('logged-in', !useLocalHighScore);
+  userInfo.classList.toggle('guest', useLocalHighScore);
+  authLoading.classList.add('hidden');
+  usernameLabel.classList.remove('hidden');
+  loginBtn.classList.remove('hidden');
+  startScreen.classList.add('ready');
+
+  // Optional: debug window/log
+  showDebug(
+    (useLocalHighScore
+      ? `Guest mode: loaded highScores from localStorage`
+      : `Logged in as @${piUsername}: loaded highScores from API`)
+  );
 }
+
 const scopes = ['username'];
-let piUsername = 'Guest';
-let piToken = null; // ⬅️ new: store Pi auth token
-let highScore = 0;
-let useLocalHighScore = true;
 
 function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
