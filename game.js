@@ -5,127 +5,9 @@ let surpassedBest = false;
 let newBestText; // For "NEW BEST" animated UI
 let newBestJustSurpassed = false;
 
-let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
-
-// UI elements for login/auth flow
-// --- UI Elements (put at the top of your game.js) ---
-const authLoading   = document.getElementById('auth-loading');
-const usernameLabel = document.getElementById('username');
-const loginBtn      = document.getElementById('loginBtn');
-const userInfo      = document.getElementById('user-info');
-const startScreen   = document.getElementById('start-screen');
-
-
-function waitForPiSDK(timeout = 4000) {
-  return new Promise(resolve => {
-    if (window.Pi && typeof window.Pi.authenticate === "function") {
-      resolve();
-      return;
-    }
-    let waited = 0;
-    const check = () => {
-      if (window.Pi && typeof window.Pi.authenticate === "function") {
-        resolve();
-      } else if ((waited += 100) >= timeout) {
-        resolve(); // Timeout, continue as guest
-      } else {
-        setTimeout(check, 100);
-      }
-    };
-    check();
-  });
-}
-
-
-function getLocalBestScore(modeId) {
-  return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
-}
-function setLocalBestScore(modeId, score) {
-  localStorage.setItem(`tricky_high_score_${modeId}`, score);
-}
 
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
-
-let availableModes = [{id: 1, name: "Classic"}]; // Default fallback
-
-async function fetchGameModes() {
-  try {
-    const res = await fetch(`${BACKEND_BASE}/api/modes`);
-    if (res.ok) {
-      availableModes = await res.json();
-    }
-  } catch (e) {
-    // fallback remains
-  }
-}
-
-
-let selectedModeId = null;
-
-function populateModeButtons() {
-  const container = document.getElementById("modesPicker");
-  if (!container) return;
-  container.innerHTML = '';
-  availableModes.forEach(mode => {
-    const btn = document.createElement("button");
-    btn.textContent = mode.name;
-    btn.className = "btn-primary";
-    // Only Classic launches the game, others do nothing for now
-btn.onclick = () => {
-  selectedModeId = mode.id;
-  Array.from(container.children).forEach(b => b.classList.remove('active-mode'));
-  btn.classList.add('active-mode');
-  highScore = allBestScores[selectedModeId] || 0;  // <-- ADD THIS
-  updateBestScoreEverywhere();
-  if (mode.name.toLowerCase() === "classic") {
-    handleStartGame();
-  }
-};
-
-    container.appendChild(btn);
-    // Set Classic as default selected
-    if (selectedModeId === null && mode.name.toLowerCase() === "classic") {
-      selectedModeId = mode.id;
-      btn.classList.add('active-mode');
-    }
-  });
-}
-
-async function fetchAllBestScores() {
-  allBestScores = {};
-  if (window.piToken) {
-    // Authenticated user: fetch from backend per mode
-    for (const mode of availableModes) {
-      try {
-        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
-          credentials: "include"
-        });
-        if (res.ok) {
-          const data = await res.json();
-          allBestScores[mode.id] = data.score || 0;
-        } else {
-          allBestScores[mode.id] = 0;
-        }
-      } catch {
-        allBestScores[mode.id] = 0;
-      }
-    }
-  } else {
-    // Guest: fetch from localStorage per mode
-    for (const mode of availableModes) {
-      allBestScores[mode.id] = getLocalBestScore(mode.id);
-    }
-  }
-}
-
-
-function getLocalBestScore(modeId) {
-  return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
-}
-function setLocalBestScore(modeId, score) {
-  localStorage.setItem(`tricky_high_score_${modeId}`, score);
-}
 
 function isPiBrowser() {
   return typeof window.Pi !== 'undefined';
@@ -271,169 +153,134 @@ let useLocalHighScore = true;
 function onIncompletePaymentFound(payment) {
   console.log('Incomplete payment found:', payment);
 }
-// Full drop-in for initAuth in game.js
-
 async function initAuth() {
-  function showDebugLog(msg) {
-    const box = document.getElementById('debugBox');
-    if (!box) return;
-    box.style.display = 'block';
-    box.innerText = '[DEBUG] ' + msg;
+  // --- UI elements ---
+  const userInfo = document.getElementById('user-info');
+  const authLoading = document.getElementById('auth-loading');
+  const usernameLabel = document.getElementById('username');
+  const piLabel = userInfo.querySelector('.label:not(#auth-loading)');
+  const loginBtn = document.getElementById('loginBtn');
+  const startScreen = document.getElementById('start-screen');
+  const debugBox = document.getElementById('debugBox');
+
+  function showDebug(msg) {
+    if (!debugBox) return;
+    debugBox.style.display = 'block';
+    debugBox.innerText = '[DEBUG] ' + msg;
+    setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
   }
 
+  // --- Common UI reset ---
+  userInfo.classList.remove('hidden');
+  userInfo.style.display = 'flex';
   authLoading.classList.remove('hidden');
+  piLabel.classList.add('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
 
-  piUsername = '';
-  piToken = null;
-  useLocalHighScore = true;
-
-  await fetchGameModes();
-
-  // Wait for Pi SDK
-  await waitForPiSDK();
-
-  let loginSuccess = false;
-  try {
-    // --- 1. INIT IS REQUIRED! ---
-    if (window.Pi && typeof window.Pi.init === "function") {
-      // Use real environment if hostname contains ".minepi.com" or "pi"
-      const isSandbox = !(window.location.hostname.includes('.minepi.com') || window.location.hostname.includes('pi'));
-      await window.Pi.init({ version: "2.0", sandbox: isSandbox });
-      showDebugLog('Called Pi.init, sandbox=' + isSandbox);
-    } else {
-      showDebugLog('NO window.Pi.init!');
-    }
-    // --- 2. THEN AUTH (with robust timeout/fallback) ---
-    if (window.Pi && typeof window.Pi.authenticate === "function") {
-      showDebugLog('About to call Pi.authenticate...');
-      let timedOut = false;
-      let timeout;
-      // Race authenticate and a timeout fallback (1500ms)
-      const authPromise = window.Pi.authenticate(['username']);
-      const timeoutPromise = new Promise(resolve => {
-        timeout = setTimeout(() => {
-          timedOut = true;
-          resolve(null);
-        }, 1500);
-      });
-      const piAuthRes = await Promise.race([authPromise, timeoutPromise]);
-      clearTimeout(timeout);
-
-      showDebugLog('Pi.authenticate response: ' + JSON.stringify(piAuthRes));
-      if (timedOut) {
-        showDebugLog('Timed out waiting for Pi.authenticate: assuming not in Pi Browser, falling back to guest');
-      }
-
-      if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
-        piUsername = piAuthRes.user.username;
-        piToken = piAuthRes.accessToken;
-        useLocalHighScore = false;
-        loginSuccess = true;
-        window.piUsername = piUsername;
-        window.piToken = piToken;
-        showDebugLog('SUCCESS: ' + piUsername + ', token=' + piToken.substring(0, 10));
-      } else if (!timedOut) {
-        showDebugLog('FAILED: No user or accessToken');
-      }
-    } else {
-      showDebugLog('NO window.Pi.authenticate!');
-    }
-  } catch (err) {
-    showDebugLog('Pi Auth error: ' + (err && err.message ? err.message : JSON.stringify(err)));
-    loginSuccess = false;
-    window.piUsername = null;
-    window.piToken = null;
-  }
-
-  // Load all best scores (mode-aware)
-  allBestScores = {};
-  if (loginSuccess && piToken) {
-    for (const mode of availableModes) {
-      try {
-        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
-          headers: { Authorization: `Bearer ${piToken}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          allBestScores[mode.id] = data.score || 0;
-        } else {
-          allBestScores[mode.id] = 0;
-        }
-      } catch {
-        allBestScores[mode.id] = 0;
-      }
-    }
-  } else {
-    for (const mode of availableModes) {
-      allBestScores[mode.id] = getLocalBestScore(mode.id);
-    }
-    piUsername = 'Guest';
-    useLocalHighScore = true;
-    window.piUsername = null;
-    window.piToken = null;
-  }
-
-  if (!selectedModeId) {
-    selectedModeId =
-      availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
-      availableModes[0]?.id ||
-      1;
-  }
-  highScore = allBestScores[selectedModeId] || 0;
-  updateBestScoreEverywhere();
-
-  usernameLabel.innerText = piUsername || 'Guest';
-  userInfo.classList.toggle('logged-in', !useLocalHighScore);
-  userInfo.classList.toggle('guest', useLocalHighScore);
-  authLoading.classList.add('hidden');
-  usernameLabel.classList.remove('hidden');
-  loginBtn.classList.remove('hidden');
-  startScreen.classList.add('ready');
-
-  // Log/debug
-  showDebugLog(
-    (useLocalHighScore
-      ? `Guest mode: loaded highScores from localStorage`
-      : `Logged in as @${piUsername}: loaded highScores from API`)
-  );
-}
-
-
-
-
-
-
   // --- Helper for guest mode ---
-function runGuestFlow() {
-  piUsername = 'Guest';
-  piToken = null;
-  useLocalHighScore = true;
+  function runGuestFlow() {
+    piUsername = 'Guest';
+    piToken = null;
+    useLocalHighScore = true;
 
-  usernameLabel.innerText = 'Guest';
-  loginBtn.style.display = 'inline-block';
+    usernameLabel.innerText = 'Guest';
+    loginBtn.style.display = 'inline-block';
 
-  userInfo.classList.remove('logged-in');
-  userInfo.classList.add('guest');
+    userInfo.classList.remove('logged-in');
+    userInfo.classList.add('guest');
 
-  // Fetch all bests for every mode
-  allBestScores = {};
-  for (const mode of availableModes) {
-    allBestScores[mode.id] = getLocalBestScore(mode.id);
+    highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+    console.log(`[Local] Loaded guest high score: ${highScore}`);
+    updateBestScoreEverywhere();
+    showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
+
+    authLoading.classList.add('hidden');
+    piLabel.classList.remove('hidden');
+    usernameLabel.classList.remove('hidden');
+    loginBtn.classList.remove('hidden');
+    startScreen.classList.add('ready');
   }
-  highScore = allBestScores[selectedModeId] || 0;
-  updateBestScoreEverywhere();
 
-  showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
+  // --- Main detection ---
+  if (typeof isPiBrowser === "function" && isPiBrowser()) {
+    // Pi Browser detected! Use Pi authentication
+    let timedOut = false;
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => {
+        timedOut = true;
+        reject(new Error("Pi.authenticate timed out"));
+      }, 3000)
+    );
 
-  authLoading.classList.add('hidden');
-  usernameLabel.classList.remove('hidden');
-  loginBtn.classList.remove('hidden');
-  startScreen.classList.add('ready');
+    try {
+      await initPi();
+
+      const auth = await Promise.race([
+        Pi.authenticate(['username'], onIncompletePaymentFound),
+        timeout
+      ]);
+
+      if (!timedOut && auth?.user?.username) {
+        // Pi authentication successful
+        piUsername = auth.user.username;
+        piToken = auth.accessToken;
+        useLocalHighScore = false;
+
+        usernameLabel.innerText = `@${piUsername}`;
+        loginBtn.style.display = 'none';
+        userInfo.classList.remove('guest');
+        userInfo.classList.add('logged-in');
+
+        // Fetch high score from backend API
+        try {
+          showDebug("Fetching high score from API...");
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+            headers: { Authorization: `Bearer ${piToken}` }
+          });
+          const txt = await res.clone().text();
+          showDebug(`API status: ${res.status}\nRaw: ${txt}`);
+          if (res.ok) {
+            const data = JSON.parse(txt);
+            showDebug(`Parsed: highScore=${data.score}`);
+            highScore = data.score || 0;
+          } else {
+            highScore = 0;
+            showDebug(`API error, status ${res.status}`);
+          }
+          updateBestScoreEverywhere();
+        } catch (err) {
+          showDebug("Fetch error: " + (err && err.message ? err.message : err));
+          highScore = 0;
+          updateBestScoreEverywhere();
+        }
+
+      } else {
+        // Pi auth failed
+        runGuestFlow();
+        return;
+      }
+    } catch (e) {
+      // Auth error
+      runGuestFlow();
+      return;
+    }
+
+    // --- Show UI for Pi user ---
+    authLoading.classList.add('hidden');
+    piLabel.classList.remove('hidden');
+    usernameLabel.classList.remove('hidden');
+    loginBtn.classList.add('hidden');
+    startScreen.classList.add('ready');
+  } else {
+    // Not Pi Browser: always guest
+    runGuestFlow();
+    return;
+  }
 }
 
 
+initAuth();
 document.getElementById('loginBtn').addEventListener('click', initAuth);
 
 function fadeInElement(el, duration = 500, displayType = 'flex') {
@@ -475,9 +322,9 @@ async function showHomeLeaderboard() {
   const list = document.getElementById('leaderboardEntriesHome');
   list.innerHTML = '';
 
-  // Use selectedModeId (fallback to Classic if null)
-  let modeId = selectedModeId || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id);
-  const data = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${modeId}`).then(r => r.json());
+  const data = leaderboardFetched
+    ? cachedLeaderboard
+    : await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`).then(r => r.json());
 
   data.forEach((e, i) => {
     const li = document.createElement('li');
@@ -489,13 +336,7 @@ async function showHomeLeaderboard() {
     li.classList.add('animated-entry');
     list.appendChild(li);
   });
-
-  // Show the mode in the header!
-  const header = document.getElementById('leaderboardHeader');
-  const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
-  header.textContent = `Top 100 Leaderboard (${modeName})`;
 }
-
 
 function updateBestScoreEverywhere() {
   // Phaser HUD
@@ -1132,13 +973,11 @@ function triggerGameOver() {
 
 if (useLocalHighScore) {
     // Ensure we only ever overwrite with a higher score
-let storedScore = getLocalBestScore(selectedModeId);
-if (highScore > storedScore) {
-    setLocalBestScore(selectedModeId, highScore);
-    allBestScores[selectedModeId] = highScore;  // Keep JS object up to date
-    console.log(`[Local] New high score saved for mode ${selectedModeId}: ${highScore}`);
-}
- else {
+    let storedScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+    if (highScore > storedScore) {
+        localStorage.setItem('tricky_high_score', highScore);
+        console.log(`[Local] New high score saved: ${highScore}`);
+    } else {
         console.log(`[Local] Current session high score (${highScore}) did not beat stored (${storedScore}), not saved.`);
     }
     updateBestScoreEverywhere();
@@ -1147,22 +986,19 @@ if (highScore > storedScore) {
       // POST score, then re-fetch to sync
       try {
         await fetch(`${BACKEND_BASE}/api/leaderboard`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${piToken}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    score: highScore,
-    username: piUsername,
-    mode_id: selectedModeId      // <--- Add this!
-  })
-});
-
-const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
-  headers: { Authorization: `Bearer ${piToken}` }
-});
-
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${piToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            score: highScore,
+            username: piUsername
+          })
+        });
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
+          headers: { Authorization: `Bearer ${piToken}` }
+        });
         if (res.ok) {
           const data = await res.json();
           highScore = data.score || highScore;
@@ -1287,9 +1123,6 @@ newBestText.setAlpha(1);
 
 
 function handleStartGame() {
-  highScore = allBestScores[selectedModeId] || 0;
-  updateBestScoreEverywhere();
-
   sfx.uiClick.play();
   document.getElementById('user-info').classList.add('hidden');
   document.getElementById('viewLeaderboardBtn').classList.add('hidden');
@@ -1355,14 +1188,12 @@ function handlePlayAgain() {
 
 
 
-window.addEventListener('DOMContentLoaded', async () => {
+
+window.addEventListener('DOMContentLoaded', () => {
   // --- AUTH / USER INFO ---
-  await initAuth();
-
-  // --- Load Modes, THEN all best scores, THEN build mode picker --
-  populateModeButtons();
-
+  initAuth();
   // --- UI BUTTONS ---
+  document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
 
   const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
@@ -1370,14 +1201,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
   leaderboardBtn.addEventListener('click', showHomeLeaderboard);
 
-  document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
-    hideScreen('leaderboard-screen');
-    document.getElementById('leaderboard-screen').classList.remove('visible');
-  });
+document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+  hideScreen('leaderboard-screen');
+  document.getElementById('leaderboard-screen').classList.remove('visible');
+});
+
 
   const playAgainBtn = document.getElementById('playAgainBtn');
   if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
 
+  // --- Login Button (for guest mode to Pi auth) ---
   document.getElementById('loginBtn').addEventListener('click', initAuth);
 
   // --- Debug logs (optional) ---
