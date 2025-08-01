@@ -569,3 +569,43 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
   display: block;
   text-align: center;
 }
+
+/* --- Leaderboard-inspired Mode Buttons --- */
+#modesPicker .mode-card-btn {
+  width: 100%;
+  max-width: 420px;
+  min-width: 250px;
+  margin: 0.7em 0;
+  padding: 1.35em 0.2em;
+  border: none;
+  border-radius: 1.2em;
+  font-size: 1.29rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  color: #e0f2ff;
+  background: rgba(18, 39, 62, 0.92);
+  box-shadow: 0 1px 12px #1da5f933, 0 8px 28px #3199e433, 0 2px 9px #21d6f41a;
+  backdrop-filter: blur(9px) saturate(145%);
+  transition: background 0.17s, color 0.14s, box-shadow 0.22s, transform 0.15s;
+  text-shadow: 0 1px 2px #002a4acc, 0 1px 9px #1da5f955;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.04em;
+}
+
+#modesPicker .mode-card-btn:hover,
+#modesPicker .mode-card-btn.active-mode {
+  background: linear-gradient(93deg, #3EAFF6 70%, #3091E0 110%);
+  color: #fff;
+  box-shadow: 0 6px 20px #37b5f6d4, 0 12px 38px #0a223b21;
+  transform: translateY(-2px) scale(1.025);
+}
+
+#modesPicker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
