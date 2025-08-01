@@ -8,12 +8,34 @@ let newBestJustSurpassed = false;
 let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
 
 // UI elements for login/auth flow
-const authLoading   = document.getElementById('authLoading');
-const piLabel       = document.getElementById('piLabel');
-const usernameLabel = document.getElementById('usernameLabel');
+// --- UI Elements (put at the top of your game.js) ---
+const authLoading   = document.getElementById('auth-loading');
+const usernameLabel = document.getElementById('username');
 const loginBtn      = document.getElementById('loginBtn');
-const userInfo      = document.getElementById('userInfo');
-const startScreen   = document.getElementById('startScreen');
+const userInfo      = document.getElementById('user-info');
+const startScreen   = document.getElementById('start-screen');
+
+
+function waitForPiSDK(timeout = 4000) {
+  return new Promise(resolve => {
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
+      resolve();
+      return;
+    }
+    let waited = 0;
+    const check = () => {
+      if (window.Pi && typeof window.Pi.authenticate === "function") {
+        resolve();
+      } else if ((waited += 100) >= timeout) {
+        resolve(); // Timeout, continue as guest
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
 
 function getLocalBestScore(modeId) {
   return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
@@ -253,7 +275,6 @@ function onIncompletePaymentFound(payment) {
 
 async function initAuth() {
   authLoading.classList.remove('hidden');
-  piLabel.classList.add('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
 
@@ -264,11 +285,11 @@ async function initAuth() {
   // Always fetch available modes first!
   await fetchGameModes();
 
-  // See if we're in Pi browser (or logged in)
+  // Wait for Pi SDK (max 4s), then try to login
+  await waitForPiSDK();
   let loginSuccess = false;
   try {
-    if (window.Pi && window.Pi.authenticate) {
-      // Try Pi browser login
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
       const piAuthRes = await window.Pi.authenticate(['username']);
       if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
         piUsername = piAuthRes.user.username;
@@ -327,7 +348,6 @@ async function initAuth() {
   userInfo.classList.toggle('logged-in', !useLocalHighScore);
   userInfo.classList.toggle('guest', useLocalHighScore);
   authLoading.classList.add('hidden');
-  piLabel.classList.remove('hidden');
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
@@ -339,6 +359,7 @@ async function initAuth() {
       : `Logged in as @${piUsername}: loaded highScores from API`)
   );
 }
+
 
 
   // --- Helper for guest mode ---
@@ -364,7 +385,6 @@ function runGuestFlow() {
   showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
 
   authLoading.classList.add('hidden');
-  piLabel.classList.remove('hidden');
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
