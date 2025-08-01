@@ -54,6 +54,17 @@ function setLocalBestScore(modeId, score) {
   localStorage.setItem(`tricky_high_score_${modeId}`, score);
 }
 
+function getSessionId() {
+  // For now, just use a static string, or you could generate a UUID.
+  let sessionId = localStorage.getItem('tricky_session_id');
+  if (!sessionId) {
+    sessionId = Math.random().toString(36).substr(2, 10) + Date.now();
+    localStorage.setItem('tricky_session_id', sessionId);
+  }
+  return sessionId;
+}
+
+
 
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
@@ -142,7 +153,7 @@ function isPiBrowser() {
 
 async function preloadLeaderboard() {
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`)
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${selectedModeId}`)
     cachedLeaderboard = await res.json();
     leaderboardFetched = true;
   } catch (err) {
@@ -1068,7 +1079,7 @@ if (highScore > storedScore) {
  else if (piToken) {
       // POST score, then re-fetch to sync
       try {
-        await fetch(`${BACKEND_BASE}/api/leaderboard`, {
+await fetch(`${BACKEND_BASE}/api/score/submit`, {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${piToken}`,
@@ -1076,10 +1087,11 @@ if (highScore > storedScore) {
   },
   body: JSON.stringify({
     score: highScore,
-    username: piUsername,
-    mode_id: selectedModeId      // <--- Add this!
+    mode_id: selectedModeId,
+    session_id: getSessionId()
   })
 });
+
 
 const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
   headers: { Authorization: `Bearer ${piToken}` }
@@ -1104,7 +1116,7 @@ const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedMo
     (async () => {
       if (!useLocalHighScore && piToken) {
         try {
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${selectedModeId}`, {
             headers: { Authorization: `Bearer ${piToken}` }
           });
           if (res.ok) {
