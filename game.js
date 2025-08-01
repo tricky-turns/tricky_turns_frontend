@@ -274,6 +274,13 @@ function onIncompletePaymentFound(payment) {
 // Full drop-in for initAuth in game.js
 
 async function initAuth() {
+  function showDebugLog(msg) {
+    const box = document.getElementById('debugBox');
+    if (!box) return;
+    box.style.display = 'block';
+    box.innerText = '[DEBUG] ' + msg;
+  }
+
   authLoading.classList.remove('hidden');
   usernameLabel.classList.add('hidden');
   loginBtn.classList.add('hidden');
@@ -282,27 +289,43 @@ async function initAuth() {
   piToken = null;
   useLocalHighScore = true;
 
-  // Always fetch available modes first!
   await fetchGameModes();
 
-  // Wait for Pi SDK (max 4s), then try to login
+  // Wait for Pi SDK
   await waitForPiSDK();
+
   let loginSuccess = false;
   try {
+    // --- 1. INIT IS REQUIRED! ---
+    if (window.Pi && typeof window.Pi.init === "function") {
+      // Use real environment if hostname contains ".minepi.com" or "pi"
+      const isSandbox = !(window.location.hostname.includes('.minepi.com') || window.location.hostname.includes('pi'));
+      await window.Pi.init({ version: "2.0", sandbox: isSandbox });
+      showDebugLog('Called Pi.init, sandbox=' + isSandbox);
+    } else {
+      showDebugLog('NO window.Pi.init!');
+    }
+    // --- 2. THEN AUTH ---
     if (window.Pi && typeof window.Pi.authenticate === "function") {
+      showDebugLog('About to call Pi.authenticate...');
       const piAuthRes = await window.Pi.authenticate(['username']);
+      showDebugLog('Pi.authenticate response: ' + JSON.stringify(piAuthRes));
       if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
         piUsername = piAuthRes.user.username;
         piToken = piAuthRes.accessToken;
         useLocalHighScore = false;
         loginSuccess = true;
-        // --- CRITICAL: expose globally ---
         window.piUsername = piUsername;
         window.piToken = piToken;
+        showDebugLog('SUCCESS: ' + piUsername + ', token=' + piToken.substring(0, 10));
+      } else {
+        showDebugLog('FAILED: No user or accessToken');
       }
+    } else {
+      showDebugLog('NO window.Pi.authenticate!');
     }
   } catch (err) {
-    console.log('Pi Auth error:', err);
+    showDebugLog('Pi Auth error: ' + (err && err.message ? err.message : JSON.stringify(err)));
     loginSuccess = false;
     window.piUsername = null;
     window.piToken = null;
@@ -311,7 +334,6 @@ async function initAuth() {
   // Load all best scores (mode-aware)
   allBestScores = {};
   if (loginSuccess && piToken) {
-    // Authenticated: fetch all bests from API
     for (const mode of availableModes) {
       try {
         const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
@@ -328,7 +350,6 @@ async function initAuth() {
       }
     }
   } else {
-    // Guest: fetch all bests from localStorage
     for (const mode of availableModes) {
       allBestScores[mode.id] = getLocalBestScore(mode.id);
     }
@@ -338,19 +359,15 @@ async function initAuth() {
     window.piToken = null;
   }
 
-  // Set selectedModeId to Classic (or first mode) if not set
   if (!selectedModeId) {
     selectedModeId =
       availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
       availableModes[0]?.id ||
       1;
   }
-
-  // Set initial highScore to best for selected mode
   highScore = allBestScores[selectedModeId] || 0;
   updateBestScoreEverywhere();
 
-  // Show UI
   usernameLabel.innerText = piUsername || 'Guest';
   userInfo.classList.toggle('logged-in', !useLocalHighScore);
   userInfo.classList.toggle('guest', useLocalHighScore);
@@ -360,12 +377,13 @@ async function initAuth() {
   startScreen.classList.add('ready');
 
   // Log/debug
-  showDebug(
+  showDebugLog(
     (useLocalHighScore
       ? `Guest mode: loaded highScores from localStorage`
       : `Logged in as @${piUsername}: loaded highScores from API`)
   );
 }
+
 
 
 
