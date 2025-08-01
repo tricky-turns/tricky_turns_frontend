@@ -994,90 +994,157 @@ function spawnObjects() {
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
 }
 
-async function triggerGameover(finalScore) {
-    try {
-        // Always set mode ID, defaulting to Classic if not set
-        const modeId = typeof window.selectedModeId === 'number' ? window.selectedModeId : 1;
-        // You should set this on Pi login, or null if guest
-        const token = window.piAuthToken;
+function triggerGameOver() {
+  if (spawnEvent) spawnEvent.remove(false);
+  if (gameOver) return;
+  gameOver = true;
 
-        // If not logged in, show game over for guest
-        if (!token) {
-            showGameOverScreen(finalScore, null); // Implement this to show the game over UI
-            return;
-        }
+  // --- Camera shake & particle burst on crash ---
+  let fx = GAME_CONFIG.PARTICLES.crash;
+  let camShake = GAME_CONFIG.CAMERA_SHAKE.crash;
+  let cam = window.game.scene.keys.default.cameras.main;
+  if (cam && camShake.intensity > 0) cam.shake(camShake.duration, camShake.intensity);
 
-        // Use or create sessionId for the current run
-        let sessionId = window.currentSessionId;
-        if (!sessionId) {
-            // Start a new session
-            const sessionResp = await fetch('/api/session/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    mode_id: modeId,
-                    device_id: navigator.userAgent,
-                    platform: /android/i.test(navigator.userAgent)
-                        ? 'android'
-                        : /iphone|ipad/i.test(navigator.userAgent)
-                            ? 'ios'
-                            : 'web',
-                    client_version: '1.0.0'
-                })
-            });
-            if (!sessionResp.ok) {
-                console.error('Failed to start session', await sessionResp.text());
-                showGameOverScreen(finalScore, null);
-                return;
-            }
-            const sessionData = await sessionResp.json();
-            sessionId = sessionData.session_id;
-            window.currentSessionId = sessionId;
-        }
+  [circle1, circle2].forEach(c => {
+    const px = c.x, py = c.y; c.destroy();
+    const emitter = window.game.scene.keys.default.add.particles('orb').createEmitter({
+      x: px, y: py,
+      speed: { min: fx.speedMin, max: fx.speedMax },
+      angle: { min: 0, max: 360 },
+      scale: { start: fx.scaleStart, end: fx.scaleEnd },
+      lifespan: fx.lifespan, blendMode: 'ADD',
+      quantity: fx.quantity
+    });
+    window.game.scene.keys.default.time.delayedCall(1000, () => emitter.manager.destroy());
+  });
+  sfx.explode.play();
 
-        // Post score
-        const scoreResp = await fetch('/api/score/submit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                mode_id: modeId,
-                score: finalScore,
-                session_id: sessionId
-            })
-        });
-        if (!scoreResp.ok) {
-            const errorDetail = await scoreResp.text();
-            console.error('Failed to submit score', errorDetail);
-            showGameOverScreen(finalScore, sessionId);
-            return;
-        }
+  // -- DOM references for all result UI blocks --
+  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
+  const newHighScoreValue = document.getElementById('newHighScoreValue');
+  const bestBlock = document.getElementById('bestBlock');
+  const scoreBlock = document.getElementById('scoreBlock');
 
-        // You might want to fetch updated best/rank here
+  // --- Reset state (both class and display) ---
+  if (newHighScoreBlock) {
+    newHighScoreBlock.classList.add('hidden');
+    newHighScoreBlock.style.display = 'none';
+  }
+  if (bestBlock) bestBlock.style.display = '';
+  if (scoreBlock) scoreBlock.style.display = '';
 
-        // Call your game over UI logic
-        showGameOverScreen(finalScore, sessionId);
+  window.game.scene.keys.default.time.delayedCall(700, async () => {
+    window.game.scene.keys.default.physics.pause();
+    document.querySelector('canvas').style.visibility = 'hidden';
 
-        // Optionally, end session (not strictly required)
-        // await fetch('/api/session/end', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //         'Authorization': `Bearer ${token}`
-        //     },
-        //     body: JSON.stringify({ session_id: sessionId, final_score: finalScore })
-        // });
-    } catch (err) {
-        console.error('Error during triggerGameover:', err);
-        showGameOverScreen(finalScore, null);
+    const isNewHigh = score > highScore;
+
+    if (isNewHigh) {
+      if (newHighScoreBlock) {
+        newHighScoreBlock.classList.remove('hidden');
+        newHighScoreBlock.style.display = 'flex';
+      }
+      if (newHighScoreValue) newHighScoreValue.innerText = score;
+      if (bestBlock) bestBlock.style.display = 'none';
+      if (scoreBlock) scoreBlock.style.display = 'none';
+      highScore = score;
+      sfx.newBest.play();
+      updateBestScoreEverywhere();
+    } else {
+      if (newHighScoreBlock) {
+        newHighScoreBlock.classList.add('hidden');
+        newHighScoreBlock.style.display = 'none';
+      }
+      if (bestBlock) bestBlock.style.display = '';
+      if (scoreBlock) scoreBlock.style.display = '';
     }
-}
 
+    document.getElementById('finalScore').innerText = score;
+    document.getElementById('bestScore').innerText = highScore;
+    if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
+
+if (useLocalHighScore) {
+    // Ensure we only ever overwrite with a higher score
+let storedScore = getLocalBestScore(selectedModeId);
+if (highScore > storedScore) {
+    setLocalBestScore(selectedModeId, highScore);
+    allBestScores[selectedModeId] = highScore;  // Keep JS object up to date
+    console.log(`[Local] New high score saved for mode ${selectedModeId}: ${highScore}`);
+}
+ else {
+        console.log(`[Local] Current session high score (${highScore}) did not beat stored (${storedScore}), not saved.`);
+    }
+    updateBestScoreEverywhere();
+}
+ else if (piToken) {
+      // POST score, then re-fetch to sync
+      try {
+await fetch(`${BACKEND_BASE}/api/score/submit`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${piToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    score: highScore,
+    mode_id: selectedModeId,
+    session_id: getSessionId()
+  })
+});
+
+
+const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
+  headers: { Authorization: `Bearer ${piToken}` }
+});
+
+        if (res.ok) {
+          const data = await res.json();
+          highScore = data.score || highScore;
+          updateBestScoreEverywhere();
+        }
+      } catch (e) {}
+    }
+
+    if (muteBtnHome) muteBtnHome.style.display = 'none';
+  showScreen('game-over-screen', 'flex');
+
+
+    const rankMessage = document.getElementById('rankMessage');
+    if (rankMessage) rankMessage.innerText = "";
+
+    // --- Leaderboard/rank logic (unchanged) ---
+    (async () => {
+      if (!useLocalHighScore && piToken) {
+        try {
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${selectedModeId}`, {
+            headers: { Authorization: `Bearer ${piToken}` }
+          });
+          if (res.ok) {
+            const { rank } = await res.json();
+            if (rankMessage) {
+              rankMessage.innerText = `🏅 Your Global Rank: #${rank}`;
+              rankMessage.classList.remove('dimmed');
+            }
+          } else {
+            if (rankMessage) {
+              rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+            }
+          }
+        } catch (e) {
+          if (rankMessage) {
+            rankMessage.innerText = `💡 You're currently unranked — keep playing!`;
+          }
+        }
+      } else {
+        if (rankMessage) {
+          rankMessage.innerText = `🔓 Sign in to track your global rank`;
+          rankMessage.classList.add('dimmed');
+        }
+      }
+    })();
+    // --- End leaderboard logic ---
+  });
+}
 
 
 
