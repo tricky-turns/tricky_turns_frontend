@@ -557,3 +557,15 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
   color: #fff !important;
   border: 2px solid #fff !important;
 }
+
+
+#modesPicker .btn-secondary {
+  width: 240px;
+  font-size: 1.35rem;
+  padding: 1em 0;
+  margin: 0.2em 0;
+  border-radius: 1.3em;
+  font-weight: 700;
+  display: block;
+  text-align: center;
+}
