@@ -1068,7 +1068,7 @@ if (highScore > storedScore) {
  else if (piToken) {
       // POST score, then re-fetch to sync
       try {
-        await fetch(`${BACKEND_BASE}/api/leaderboard`, {
+        await fetch(`${BACKEND_BASE}/api/score/submit`, {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${piToken}`,
@@ -1104,7 +1104,7 @@ const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedMo
     (async () => {
       if (!useLocalHighScore && piToken) {
         try {
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${selectedModeId}`, {
             headers: { Authorization: `Bearer ${piToken}` }
           });
           if (res.ok) {
