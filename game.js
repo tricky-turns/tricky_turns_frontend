@@ -32,7 +32,7 @@ function populateModeButtons() {
   availableModes.forEach(mode => {
     const btn = document.createElement("button");
     btn.textContent = mode.name;
-    btn.className = "mode-card-btn";
+    btn.className = "btn-primary";
     // Only Classic launches the game, others do nothing for now
     btn.onclick = () => {
       selectedModeId = mode.id;

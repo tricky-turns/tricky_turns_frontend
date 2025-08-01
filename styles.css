@@ -609,3 +609,17 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
   align-items: center;
   gap: 0.5em;
 }
+
+#modesPicker .btn-primary {
+  width: 320px;
+  margin: 0.25em 0;
+  display: block;
+}
+
+#modesPicker .btn-primary.active-mode {
+  filter: brightness(1.13) drop-shadow(0 0 12px #42b5f9c2);
+  border: 3.5px solid #fff;
+  color: #242e49;
+  font-weight: 800;
+  /* or tweak to your taste */
+}
