@@ -1180,6 +1180,9 @@ function handlePlayAgain() {
 // 8. UI & EVENT HANDLERS (DOMContentLoaded)
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
+
+  let userInfo, authLoading, usernameLabel, loginBtn, startScreen, debugBox, muteBtnHome;
+  let leaderboardModesTabs, leaderboardScreen, leaderboardHeader, leaderboardEntriesHome, myRankBar;
   // DOM refs (MUST assign after DOM ready!)
   userInfo = document.getElementById('user-info');
   authLoading = document.getElementById('auth-loading');
