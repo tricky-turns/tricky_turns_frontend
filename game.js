@@ -13,6 +13,17 @@ let piToken = null;
 let highScore = 0;
 let useLocalHighScore = true;
 
+
+// === Globals & DOM references ===
+const userInfo = document.getElementById('user-info');
+const authLoading = document.getElementById('auth-loading');
+const usernameLabel = document.getElementById('username');
+const loginBtn = document.getElementById('loginBtn');
+const startScreen = document.getElementById('start-screen');
+const debugBox = document.getElementById('debugBox');
+// ... rest of your globals ...
+
+
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
 let isLeaderboardLoading = false;
@@ -194,10 +205,6 @@ function runGuestFlow() {
   piUsername = 'Guest';
   piToken = null;
   useLocalHighScore = true;
-  usernameLabel.innerText = 'Guest';
-  loginBtn.style.display = 'inline-block';
-  userInfo.classList.remove('logged-in');
-  userInfo.classList.add('guest');
   highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
   updateBestScoreEverywhere();
   showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
