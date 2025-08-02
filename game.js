@@ -1,10 +1,9 @@
 // ==========================================
-// 1. GLOBALS & STATE
+// 1. GLOBALS & DOM REFERENCES (set after DOMContentLoaded)
 // ==========================================
-
 const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
 
-let availableModes = [{ id: 1, name: "Classic" }];
+let availableModes = [];
 let selectedModeId = null;
 let allBestScores = {};
 let currentSessionId = null;
@@ -12,47 +11,33 @@ let piUsername = 'Guest';
 let piToken = null;
 let highScore = 0;
 let useLocalHighScore = true;
-
-
-// === Globals & DOM references ===
-const userInfo = document.getElementById('user-info');
-const authLoading = document.getElementById('auth-loading');
-const usernameLabel = document.getElementById('username');
-const loginBtn = document.getElementById('loginBtn');
-const startScreen = document.getElementById('start-screen');
-const debugBox = document.getElementById('debugBox');
-// ... rest of your globals ...
-
-
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
 let isLeaderboardLoading = false;
-
 let surpassedBest = false;
 let newBestText;
 let newBestJustSurpassed = false;
-
 let spawnIntervalUpdater = null;
 let spawnEvent = null;
 let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0;
-let score = 0;
-let speed, maxSpeed, radius;
+let direction = 1, angle = 0, score = 0, speed, maxSpeed, radius;
 let laneLastObstacleXs, laneLastPointXs, lastSpawnTimestamp;
 let starfieldLayers = [];
 let piInitPromise = null;
-let muteBtnHome = document.getElementById('muteToggleHome'), isMuted = false;
-
+let muteBtnHome, isMuted = false;
 const LANES = [];
 let circle1, circle2, obstacles, points;
 let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
 let sfx = {};
 let pauseIconLocked = false;
 
+// DOM references (assigned after DOMContentLoaded)
+let userInfo, authLoading, usernameLabel, loginBtn, startScreen, debugBox;
+let leaderboardModesTabs, leaderboardScreen, leaderboardHeader, leaderboardEntriesHome, myRankBar;
+
 // ==========================================
 // 2. GAME CONFIG & HELPERS
 // ==========================================
-
 const GAME_CONFIG = {
   NUM_LANES: 3,
   RADIUS: 100,
@@ -96,7 +81,6 @@ const GAME_CONFIG = {
     { speed: 0.53, count: 8,   color: 0xffffff, alpha: 0.40, sizeMin: 2.2, sizeMax: 4.5, twinkle: 0.33 }
   ]
 };
-
 function getConfigRamp(arr, val) {
   for (let i = 0; i < arr.length; i++) {
     if (val < arr[i].until) return arr[i];
@@ -117,7 +101,6 @@ function getPointChance(score) {
 // ==========================================
 // 3. UI ELEMENTS & SCREEN HELPERS
 // ==========================================
-
 function showScreen(id, display = 'flex') {
   const el = document.getElementById(id);
   if (el) {
@@ -132,39 +115,12 @@ function hideScreen(id) {
     el.style.display = 'none';
   }
 }
-function fadeInElement(el, duration = 500, displayType = 'flex') {
-  el.style.opacity = 0;
-  el.style.display = displayType;
-  requestAnimationFrame(() => {
-    el.style.transition = `opacity ${duration}ms ease`;
-    el.style.opacity = 1;
-  });
-}
-function fadeOutElement(el, duration = 500) {
-  el.style.transition = `opacity ${duration}ms ease`;
-  el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, duration);
-}
-function fadeIn(callback, duration = 600) {
-  const fade = document.getElementById('fade-screen');
-  fade.classList.add('fade-in');
-  setTimeout(() => { callback?.(); }, duration);
-}
-function fadeOut(callback, duration = 600) {
-  const fade = document.getElementById('fade-screen');
-  fade.classList.remove('fade-in');
-  setTimeout(() => { callback?.(); }, duration);
-}
 function showDebug(msg) {
-  const box = document.getElementById('debugBox');
-  if (!box) return;
-  box.style.display = 'block';
-  box.innerText = '[DEBUG] ' + msg;
-  setTimeout(() => { box.style.display = 'none'; }, 8000);
+  if (!debugBox) return;
+  debugBox.style.display = 'block';
+  debugBox.innerText = '[DEBUG] ' + msg;
+  setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
 }
-
 function currentMuteIcon() {
   return isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
 }
@@ -172,11 +128,9 @@ function currentMuteIcon() {
 // ==========================================
 // 4. UTILITY FUNCTIONS
 // ==========================================
-
 function isPiBrowser() {
   return typeof window.Pi !== 'undefined';
 }
-
 function updateBestScoreEverywhere() {
   if (window.game && window.game.scene && window.game.scene.keys.default) {
     const scene = window.game.scene.keys.default;
@@ -185,7 +139,6 @@ function updateBestScoreEverywhere() {
   const bestScoreDom = document.getElementById('bestScore');
   if (bestScoreDom) bestScoreDom.innerText = highScore;
 }
-
 function preloadLeaderboard() {
   if (leaderboardFetched) return;
   fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${selectedModeId || 1}`)
@@ -198,13 +151,16 @@ function preloadLeaderboard() {
 }
 
 // ==========================================
-// 5. AUTH & SESSION LOGIC (Insert as before)
+// 5. AUTH & SESSION LOGIC
 // ==========================================
-// ... (initAuth, runGuestFlow, startNewSession, etc.)
 function runGuestFlow() {
   piUsername = 'Guest';
   piToken = null;
   useLocalHighScore = true;
+  usernameLabel.innerText = 'Guest';
+  loginBtn.style.display = 'inline-block';
+  userInfo.classList.remove('logged-in');
+  userInfo.classList.add('guest');
   highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
   updateBestScoreEverywhere();
   showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
@@ -213,10 +169,9 @@ function runGuestFlow() {
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
 }
-
 async function startNewSession() {
   currentSessionId = null;
-  if (!piToken) return; // guest, no session required
+  if (!piToken) return;
   try {
     const res = await fetch(`${BACKEND_BASE}/api/session/start`, {
       method: 'POST',
@@ -240,9 +195,7 @@ async function startNewSession() {
     console.warn("Failed to start session:", e);
   }
 }
-
 async function initAuth() {
-  // UI elements
   userInfo.classList.remove('hidden');
   userInfo.style.display = 'flex';
   authLoading.classList.remove('hidden');
@@ -270,7 +223,6 @@ async function initAuth() {
         loginBtn.style.display = 'none';
         userInfo.classList.remove('guest');
         userInfo.classList.add('logged-in');
-        // Fetch high score from backend
         try {
           showDebug("Fetching high score from API...");
           const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=1`, {
@@ -313,26 +265,19 @@ async function initAuth() {
 // ==========================================
 // 6. LEADERBOARD: MODES, UI, AND FETCHING
 // ==========================================
-// ... (buildLeaderboardModeTabs, showHomeLeaderboard, etc.)
-
-
 function buildLeaderboardModeTabs(activeModeId, onChange) {
-  const container = document.getElementById('leaderboardModesTabs');
-  if (!container) return;
-  container.innerHTML = '';
-  // Tabs for desktop/tablet
+  leaderboardModesTabs.innerHTML = '';
   availableModes.forEach(mode => {
     const tab = document.createElement('button');
     tab.className = 'leaderboard-mode-tab' + (mode.id === activeModeId ? ' active' : '');
     tab.textContent = mode.name;
     tab.onclick = () => onChange(mode.id);
     tab.style.display = 'inline-block';
-    container.appendChild(tab);
+    leaderboardModesTabs.appendChild(tab);
   });
-  // Dropdown for mobile
   const dropdown = document.createElement('select');
   dropdown.className = 'leaderboard-mode-dropdown';
-  dropdown.style.display = 'none'; // Only visible via CSS on mobile
+  dropdown.style.display = 'none';
   availableModes.forEach(mode => {
     const opt = document.createElement('option');
     opt.value = mode.id;
@@ -341,29 +286,22 @@ function buildLeaderboardModeTabs(activeModeId, onChange) {
     dropdown.appendChild(opt);
   });
   dropdown.onchange = (e) => onChange(Number(e.target.value));
-  container.appendChild(dropdown);
+  leaderboardModesTabs.appendChild(dropdown);
 }
-
-
 async function showHomeLeaderboard(initialModeId) {
   let modeId = initialModeId 
     || selectedModeId 
     || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id)
     || availableModes[0]?.id;
-  currentLeaderboardModeId = modeId;
+  selectedModeId = modeId;
   buildLeaderboardModeTabs(modeId, async (newModeId) => {
     await showHomeLeaderboard(newModeId);
   });
-  const lb = document.getElementById('leaderboard-screen');
-  lb.classList.remove('hidden');
-  lb.style.display = 'flex';
-  requestAnimationFrame(() => lb.classList.add('visible'));
-  const header = document.getElementById('leaderboardHeader');
-  const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
-  header.textContent = `Top 100 Leaderboard (${modeName})`;
-  const list = document.getElementById('leaderboardEntriesHome');
-  list.innerHTML = `<li class="loading-indicator">Loading...</li>`;
-  const myRankBar = document.getElementById('myRankBar');
+  leaderboardScreen.classList.remove('hidden');
+  leaderboardScreen.style.display = 'flex';
+  requestAnimationFrame(() => leaderboardScreen.classList.add('visible'));
+  leaderboardHeader.textContent = `Top 100 Leaderboard (${availableModes.find(m => m.id === modeId)?.name || "Classic"})`;
+  leaderboardEntriesHome.innerHTML = `<li class="loading-indicator">Loading...</li>`;
   myRankBar.style.display = 'none';
   myRankBar.innerHTML = '';
   let data = [];
@@ -388,7 +326,6 @@ async function showHomeLeaderboard(initialModeId) {
       }
     } catch {}
   }
-  // Show "My Rank" Bar if available
   if (
     myUsername && typeof myRank === 'number' && myRank > 0 &&
     !(myRank === 1 && data.length === 1 && data[0].username === myUsername)
@@ -406,10 +343,9 @@ async function showHomeLeaderboard(initialModeId) {
   } else {
     myRankBar.style.display = 'none';
   }
-  // Render leaderboard entries
-  list.innerHTML = '';
+  leaderboardEntriesHome.innerHTML = '';
   if (!data.length) {
-    list.innerHTML = `<li style="text-align:center;opacity:.6;">No entries yet. Be the first!</li>`;
+    leaderboardEntriesHome.innerHTML = `<li style="text-align:center;opacity:.6;">No entries yet. Be the first!</li>`;
     return;
   }
   data.forEach((e, i) => {
@@ -427,45 +363,23 @@ async function showHomeLeaderboard(initialModeId) {
       li.querySelector('.entry-username').style.fontWeight = '900';
       li.querySelector('.entry-username').textContent += ' (You)';
     }
-    list.appendChild(li);
+    leaderboardEntriesHome.appendChild(li);
   });
 }
+
 // ==========================================
-// 7. PHASER GAME LOGIC
+// 7. PHASER GAME LOGIC (unchanged)
 // ==========================================
-
-const config = {
-  type: Phaser.AUTO,
-  transparent: true,
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: { default: 'arcade', arcade: { debug: false } },
-  scene: { key: 'default', preload, create, update }
-};
-window.game = new Phaser.Game(config);
-
-// (Use your refactored `preload`, `create`, `update` functions from earlier messages!)
-
-function preload() {
-  this.load.audio('explode', 'assets/explode.wav');
-  this.load.audio('move', 'assets/move.wav');
-  this.load.audio('point', 'assets/point.wav');
-  this.load.audio('newBest', 'assets/new_best.wav');
-  this.load.audio('uiClick', 'assets/ui_click_subtle.wav');
-  this.load.audio('pauseWhoosh', 'assets/pause_whoosh_subtle.wav');
-  this.load.image('iconPause', 'assets/icon-pause.svg');
-  this.load.image('iconPlay', 'assets/icon-play.svg');
-  this.load.image('iconMute', 'assets/icon-mute.svg');
-  this.load.image('iconUnmute', 'assets/icon-unmute.svg');
-}
-
-
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
 
-  // Starfield setup
-  if (starfieldLayers.length) starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
+  // --- Twinkling Starfield Parallax Setup ---
+  if (starfieldLayers.length) {
+    starfieldLayers.forEach(layer => layer.stars.forEach(s => s.g.destroy()));
+  }
   starfieldLayers = [];
+  let t0 = performance.now() / 1000;
   GAME_CONFIG.STARFIELD_LAYERS.forEach((layer, i) => {
     let stars = [];
     for (let n = 0; n < layer.count; n++) {
@@ -484,15 +398,12 @@ function create() {
     }
     starfieldLayers.push({ stars, layer });
   });
+  // --- End Starfield Parallax ---
 
-  // Setup lanes and obstacles/points tracking
   for (let i = 0; i < GAME_CONFIG.NUM_LANES; i++) {
-    LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * GAME_CONFIG.RADIUS;
+    LANES[i] = cy + (i - Math.floor(GAME_CONFIG.NUM_LANES / 2)) * radius;
   }
-  laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-  laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
 
-  // Generate orb, obstacles, and points
   if (this.textures.exists('orb')) this.textures.remove('orb');
   this.make.graphics({ add: false })
     .fillStyle(0xffffff, 0.04).fillCircle(50, 50, 30)
@@ -513,7 +424,6 @@ function create() {
   circle1 = this.add.image(0, 0, 'orb').setScale(1);
   this.physics.add.existing(circle1);
   circle1.body.setCircle(22.5, 27.5, 27.5);
-
   circle2 = this.add.image(0, 0, 'orb').setScale(1);
   this.physics.add.existing(circle2);
   circle2.body.setCircle(22.5, 27.5, 27.5);
@@ -525,34 +435,43 @@ function create() {
     scale: { start: 0.3, end: 0 }, alpha: { start: 0.4, end: 0 },
     frequency: 50, blendMode: 'ADD'
   }));
-
   this.events.on('shutdown', () => { if (this.trail) { this.trail.destroy(); this.trail = null; } });
 
   obstacles = this.physics.add.group();
   points = this.physics.add.group();
 
-  // HUD text
+  // ==== SCORE TEXTS ====
   scoreText = this.scoreText = this.add.text(16, 16, 'Score: 0', {
-    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
-    color: '#ffffff', stroke: '#1a7ef2', strokeThickness: 3,
-    shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1, fill: true }
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#1a7ef2',
+    strokeThickness: 3,
+    shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
   bestScoreText = this.bestScoreText = this.add.text(16, 56, 'Best: ' + highScore, {
-    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
-    color: '#ffffff', stroke: '#1a7ef2', strokeThickness: 3,
-    shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1, fill: true }
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#1a7ef2',
+    strokeThickness: 3,
+    shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 1, fill: true }
   }).setDepth(10).setVisible(true);
 
+  // ==== NEW BEST TEXT (Initially Hidden) ====
   newBestText = this.newBestText = this.add.text(16, 16, '', {
-    fontFamily: 'Poppins', fontSize: '28px', fontStyle: 'bold',
-    color: '#ffe167', stroke: '#f89e2c', strokeThickness: 4,
+    fontFamily: 'Poppins',
+    fontSize: '28px',
+    fontStyle: 'bold',
+    color: '#ffe167',
+    stroke: '#f89e2c',
+    strokeThickness: 4,
     shadow: { offsetX: 1, offsetY: 2, color: '#ffae00a0', blur: 12, fill: true }
   }).setDepth(11).setVisible(false);
-
   updateBestScoreEverywhere();
-
-  // Pause/mute controls
   pauseIcon = this.add.image(cam.width - 40, 40, 'iconPause').setInteractive({ useHandCursor: true }).setDepth(3).setVisible(false);
   muteIcon = this.add.image(cam.width - 100, 40, 'iconUnmute').setInteractive({ useHandCursor: true }).setDepth(4).setVisible(false);
   window.muteIcon = muteIcon;
@@ -561,15 +480,30 @@ function create() {
   if (muteBtnHome) muteBtnHome.src = currentMuteIcon();
   pauseOverlay = document.getElementById('pause-overlay');
 
-  // Pause/mute hover and click
-  pauseIcon.on('pointerover', function () { this.setScale(1.13); });
-  pauseIcon.on('pointerout', function () { this.setScale(1); });
-  muteIcon.on('pointerover', function () { this.setScale(1.13); });
-  muteIcon.on('pointerout', function () { this.setScale(1); });
+  // ======= HOVER EFFECTS FOR PAUSE & MUTE ICONS =======
+  pauseIcon
+    .on('pointerover', function () {
+      this.setScale(1.13); // Light blue
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+    });
+  muteIcon
+    .on('pointerover', function () {
+      this.setScale(1.13);
+    })
+    .on('pointerout', function () {
+      this.setScale(1);
+    });
+  // ====================================================
 
   countdownText = this.add.text(cx, cy, '', {
-    fontFamily: 'Poppins', fontSize: '96px', fontStyle: 'bold',
-    color: '#ffffff', stroke: '#25b7e6', strokeThickness: 2,
+    fontFamily: 'Poppins',
+    fontSize: '96px',
+    fontStyle: 'bold',
+    color: '#ffffff',
+    stroke: '#25b7e6',
+    strokeThickness: 2,
     shadow: { offsetX: 1.5, offsetY: 3, color: '#23b6e9cc', blur: 12, fill: true }
   }).setOrigin(0.5).setDepth(1000).setVisible(false);
 
@@ -580,7 +514,6 @@ function create() {
   this.pauseIcon = pauseIcon;
   this.muteIcon = muteIcon;
 
-  // Countdown helper
   this.startCountdown = function(callback) {
     let count = 3;
     this.countdownText.setText(count).setVisible(true);
@@ -603,7 +536,7 @@ function create() {
     });
   };
 
-  // Speed ramp-up based on score/config
+  // Speed ramp-up based on score and config
   this.time.addEvent({
     delay: 1000, loop: true,
     callback: () => {
@@ -635,7 +568,6 @@ function create() {
   sfx.uiClick = this.sound.add('uiClick');
   sfx.pauseWhoosh = this.sound.add('pauseWhoosh');
 
-  // Pause icon click
   pauseIcon.on('pointerdown', (_, x, y, e) => {
     if (pauseIconLocked) return;
     pauseIconLocked = true;
@@ -676,7 +608,6 @@ function create() {
     }
   });
 
-  // Mute icon click
   muteIcon.on('pointerdown', () => {
     isMuted = !isMuted;
     this.sound.mute = isMuted;
@@ -685,25 +616,31 @@ function create() {
     if (!isMuted) sfx.uiClick.play();
   });
 
-  // Tap/rotate handler
-  this.input.on('pointerdown', (pointer, currentlyOver) => {
-    const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
-    const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
-                            !document.getElementById('start-screen')?.classList.contains('hidden');
-    if (gameOverOpen || startScreenOpen) return;
-    if (currentlyOver && currentlyOver.some(obj =>
-      obj === this.pauseIcon || obj === this.muteIcon
-    )) return;
-    if (gameStarted && !gameOver && !gamePaused) {
-      direction *= -1;
-      sfx.move.play();
-      this.tweens.add({
-        targets: [circle1, circle2],
-        scaleX: 1.15, scaleY: 1.15,
-        yoyo: true, duration: 100, ease: 'Quad.easeInOut'
-      });
-    }
-  });
+this.input.on('pointerdown', (pointer, currentlyOver) => {
+  // Ignore only if pause/mute or a major overlay is actually visible
+  const gameOverOpen = document.getElementById('game-over-screen')?.style.display === 'flex';
+  const startScreenOpen = document.getElementById('start-screen')?.style.display !== 'none' &&
+                          !document.getElementById('start-screen')?.classList.contains('hidden');
+
+  if (gameOverOpen || startScreenOpen) return; // Prevent input if overlay is open
+
+  // Ignore pause/mute buttons if tapped directly
+  if (currentlyOver && currentlyOver.some(obj =>
+    obj === this.pauseIcon || obj === this.muteIcon
+  )) return;
+
+  // --- FULL SCREEN: Always allow touch anywhere to rotate! ---
+  if (gameStarted && !gameOver && !gamePaused) {
+    direction *= -1;
+    sfx.move.play();
+    this.tweens.add({
+      targets: [circle1, circle2],
+      scaleX: 1.15, scaleY: 1.15,
+      yoyo: true, duration: 100, ease: 'Quad.easeInOut'
+    });
+  }
+});
+
 
   this.physics.add.overlap(circle1, obstacles, triggerGameOver, null, this);
   this.physics.add.overlap(circle2, obstacles, triggerGameOver, null, this);
@@ -711,36 +648,53 @@ function create() {
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
 
+function preload() {
+  this.load.audio('explode', 'assets/explode.wav');
+  this.load.audio('move', 'assets/move.wav');
+  this.load.audio('point', 'assets/point.wav');
+  this.load.audio('newBest', 'assets/new_best.wav');
+  this.load.audio('uiClick', 'assets/ui_click_subtle.wav');
+  this.load.audio('pauseWhoosh', 'assets/pause_whoosh_subtle.wav');
+  this.load.image('iconPause', 'assets/icon-pause.svg');
+  this.load.image('iconPlay', 'assets/icon-play.svg');
+  this.load.image('iconMute', 'assets/icon-mute.svg');
+  this.load.image('iconUnmute', 'assets/icon-unmute.svg');
+}
+
 function update(time, delta) {
-  // Starfield parallax
+  // --- Twinkling Starfield Update (always moves, even paused/gameOver) ---
   if (starfieldLayers.length) {
     const t = performance.now() / 1000;
     const camWidth = this.cameras.main.width;
     const camHeight = this.cameras.main.height;
     starfieldLayers.forEach(({ stars, layer }) => {
       stars.forEach(s => {
+        // Move star
         s.x -= layer.speed * (delta ? (delta / (1000 / 60)) : 1);
         if (s.x < -s.size) {
           s.x += camWidth + s.size * 2;
           s.y = Math.random() * camHeight;
-          s.tw = Math.random() * Math.PI * 2;
+          s.tw = Math.random() * Math.PI * 2; // new twinkle phase
         }
         s.g.x = s.x;
         s.g.y = s.y;
+        // Twinkle: oscillate alpha using unique phase
         const tw = Math.sin(t * (0.7 + 0.6 * layer.twinkle) + s.tw);
         s.g.alpha = Math.max(0, Math.min(1, s.baseAlpha + layer.twinkle * tw));
       });
     });
   }
+
   if (gameOver) return;
   let ANGULAR_BASE = GAME_CONFIG.ANGULAR_BASE;
   let ANGULAR_SCALE = GAME_CONFIG.ANGULAR_SCALE;
   let dt = (gameStarted && !gamePaused)
     ? (ANGULAR_BASE + ANGULAR_SCALE * (speed - GAME_CONFIG.SPEED_START)) * direction
     : 0;
+
   angle += dt;
-  const o1 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(GAME_CONFIG.RADIUS);
-  const o2 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle + Math.PI).scale(GAME_CONFIG.RADIUS);
+  const o1 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(radius);
+  const o2 = Phaser.Math.Vector2.RIGHT.clone().rotate(angle + Math.PI).scale(radius);
 
   circle1.setPosition(this.cameras.main.centerX + o1.x, this.cameras.main.centerY + o1.y);
   circle2.setPosition(this.cameras.main.centerX + o2.x, this.cameras.main.centerY + o2.y);
@@ -777,9 +731,6 @@ function update(time, delta) {
     });
   }
 }
-// ==========================================
-// 8. GAMEPLAY LOGIC HELPERS (FULL, NO PLACEHOLDERS)
-// ==========================================
 
 function scheduleSpawnEvents(scene) {
   if (spawnEvent) spawnEvent.remove(false);
@@ -793,9 +744,11 @@ function scheduleSpawnEvents(scene) {
       }
     }
   });
+
+  // Periodically (every 5s) update the spawn interval for smooth ramping
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
   spawnIntervalUpdater = scene.time.addEvent({
-    delay: 5000,
+    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
     loop: true,
     callback: () => {
       if (spawnEvent) {
@@ -910,26 +863,39 @@ function collectPoint(_, pt) {
   score++;
   sfx.point.play();
 
+  // ==== PREMIUM SCORE HANDLING ====
   if (!surpassedBest && score > highScore) {
+    // First time surpassing best: switch to NEW BEST
     surpassedBest = true;
     scoreText.setVisible(false);
     bestScoreText.setVisible(false);
+
+    // Place NEW BEST in the same spot as Score was
     newBestText.setVisible(true);
     newBestText.setText('NEW BEST: ' + score);
-    scene.tweens.add({
-      targets: newBestText,
-      scaleX: 1.27, scaleY: 1.27,
-      yoyo: true, duration: 340, ease: 'Back.easeOut'
-    });
-    newBestText.setAlpha(1);
+
+    // One-time flourish animation & sound
+scene.tweens.add({
+  targets: newBestText,
+  scaleX: 1.27, scaleY: 1.27,
+  yoyo: true, duration: 340, ease: 'Back.easeOut'
+});
+// Always ensure the text is visible!
+newBestText.setAlpha(1);
+
     sfx.newBest.play();
+
   } else if (surpassedBest) {
-    newBestText.setVisible(true);
+    // Already surpassed: just keep updating NEW BEST with no animation
+    newBestText.setVisible(true); // Ensure always visible
     newBestText.setText('NEW BEST: ' + score);
+    // NO animation or flicker—just update number!
   } else {
+    // Standard: show Score and Best as usual
     scoreText.setVisible(true);
     bestScoreText.setVisible(true);
     scoreText.setText('Score: ' + score);
+
     scene.tweens.add({
       targets: scoreText,
       scaleX: 1.1, scaleY: 1.1,
@@ -943,6 +909,7 @@ function triggerGameOver() {
   if (gameOver) return;
   gameOver = true;
 
+  // --- Camera shake & particle burst on crash ---
   let fx = GAME_CONFIG.PARTICLES.crash;
   let camShake = GAME_CONFIG.CAMERA_SHAKE.crash;
   let cam = window.game.scene.keys.default.cameras.main;
@@ -962,11 +929,13 @@ function triggerGameOver() {
   });
   sfx.explode.play();
 
+  // -- DOM references for all result UI blocks --
   const newHighScoreBlock = document.getElementById('newHighScoreBlock');
   const newHighScoreValue = document.getElementById('newHighScoreValue');
   const bestBlock = document.getElementById('bestBlock');
   const scoreBlock = document.getElementById('scoreBlock');
 
+  // --- Reset state (both class and display) ---
   if (newHighScoreBlock) {
     newHighScoreBlock.classList.add('hidden');
     newHighScoreBlock.style.display = 'none';
@@ -979,6 +948,7 @@ function triggerGameOver() {
     document.querySelector('canvas').style.visibility = 'hidden';
 
     const isNewHigh = score > highScore;
+
     if (isNewHigh) {
       if (newHighScoreBlock) {
         newHighScoreBlock.classList.remove('hidden');
@@ -1003,29 +973,53 @@ function triggerGameOver() {
     document.getElementById('bestScore').innerText = highScore;
     if (typeof bestScoreText !== 'undefined') bestScoreText.setText('Best: ' + highScore);
 
-    if (useLocalHighScore) {
-      let storedScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
-      if (highScore > storedScore) {
-        localStorage.setItem('tricky_high_score', highScore);
-        console.log(`[Local] New high score saved: ${highScore}`);
-      }
-      updateBestScoreEverywhere();
-    } else if (piToken) {
+if (useLocalHighScore) {
+    // Ensure we only ever overwrite with a higher score
+let storedScore = getLocalBestScore(selectedModeId);
+if (highScore > storedScore) {
+    setLocalBestScore(selectedModeId, highScore);
+    allBestScores[selectedModeId] = highScore;  // Keep JS object up to date
+    console.log(`[Local] New high score saved for mode ${selectedModeId}: ${highScore}`);
+}
+ else {
+        console.log(`[Local] Current session high score (${highScore}) did not beat stored (${storedScore}), not saved.`);
+    }
+    updateBestScoreEverywhere();
+}
+ else if (piToken && currentSessionId) {
+      // POST score, then re-fetch to sync
       try {
-        await fetch(`${BACKEND_BASE}/api/leaderboard`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${piToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            score: highScore,
-            username: piUsername
-          })
-        });
-        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me`, {
-          headers: { Authorization: `Bearer ${piToken}` }
-        });
+await fetch(`${BACKEND_BASE}/api/score/submit`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${piToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    score: highScore,
+    mode_id: selectedModeId,
+    session_id: currentSessionId
+  })
+});
+
+if (piToken && currentSessionId) {
+  await fetch(`${BACKEND_BASE}/api/session/end`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${piToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      session_id: currentSessionId,
+      final_score: highScore
+    })
+  });
+}
+
+const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
+  headers: { Authorization: `Bearer ${piToken}` }
+});
+
         if (res.ok) {
           const data = await res.json();
           highScore = data.score || highScore;
@@ -1035,13 +1029,17 @@ function triggerGameOver() {
     }
 
     if (muteBtnHome) muteBtnHome.style.display = 'none';
-    showScreen('game-over-screen', 'flex');
+  showScreen('game-over-screen', 'flex');
+
+
     const rankMessage = document.getElementById('rankMessage');
     if (rankMessage) rankMessage.innerText = "";
+
+    // --- Leaderboard/rank logic (unchanged) ---
     (async () => {
       if (!useLocalHighScore && piToken) {
         try {
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank`, {
+          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${selectedModeId}`, {
             headers: { Authorization: `Bearer ${piToken}` }
           });
           if (res.ok) {
@@ -1067,6 +1065,7 @@ function triggerGameOver() {
         }
       }
     })();
+    // --- End leaderboard logic ---
   });
 }
 
@@ -1082,8 +1081,11 @@ function resetGameUIState(scene) {
   laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
   lastSpawnTimestamp = 0;
 
-  ['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(hideScreen);
+  // DOM UI reset
+['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(hideScreen);
 
+
+  // Reset result blocks
   const newHighScoreBlock = document.getElementById('newHighScoreBlock');
   const bestBlock = document.getElementById('bestBlock');
   const scoreBlock = document.getElementById('scoreBlock');
@@ -1091,6 +1093,7 @@ function resetGameUIState(scene) {
   if (bestBlock) bestBlock.style.display = '';
   if (scoreBlock) scoreBlock.style.display = '';
 
+  // HUD state reset
   surpassedBest = false;
   if (scoreText) scoreText.setVisible(true);
   if (bestScoreText) bestScoreText.setVisible(true);
@@ -1106,7 +1109,16 @@ function resetGameUIState(scene) {
   window.scrollTo(0, 0);
 }
 
-function handleStartGame() {
+async function handleStartGame() {
+  highScore = allBestScores[selectedModeId] || 0;
+  updateBestScoreEverywhere();
+
+    if (piToken) {
+    await startNewSession();
+  } else {
+    currentSessionId = null; // Not needed for guests
+  }
+
   sfx.uiClick.play();
   document.getElementById('user-info').classList.add('hidden');
   document.getElementById('viewLeaderboardBtn').classList.add('hidden');
@@ -1130,23 +1142,30 @@ function handleGoHome() {
     const scene = window.game.scene.keys.default;
     scene.scene.restart();
     resetGameUIState(scene);
+
     if (muteBtnHome) muteBtnHome.style.display = 'block';
     document.querySelector('canvas').style.visibility = 'hidden';
+
     showScreen('user-info');
     showScreen('viewLeaderboardBtn');
     showScreen('start-screen');
+
     hideScreen('pause-overlay');
     document.getElementById('user-info').classList.add('visible');
+
     fadeOut();
   });
 }
 
 function handlePlayAgain() {
   sfx.uiClick.play();
+
   const scene = window.game.scene.keys.default;
+
   if (scene.trail) { scene.trail.destroy(); scene.trail = null; }
   if (spawnEvent) spawnEvent.remove(false);
   if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
+
   scene.scene.restart();
   scene.events.once('create', () => {
     resetGameUIState(scene);
@@ -1158,26 +1177,49 @@ function handlePlayAgain() {
 }
 
 // ==========================================
-// 9. UI & EVENT HANDLERS
+// 8. UI & EVENT HANDLERS (DOMContentLoaded)
 // ==========================================
-
 window.addEventListener('DOMContentLoaded', () => {
+  // DOM refs (MUST assign after DOM ready!)
+  userInfo = document.getElementById('user-info');
+  authLoading = document.getElementById('auth-loading');
+  usernameLabel = document.getElementById('username');
+  loginBtn = document.getElementById('loginBtn');
+  startScreen = document.getElementById('start-screen');
+  debugBox = document.getElementById('debugBox');
+  muteBtnHome = document.getElementById('muteToggleHome');
+  leaderboardModesTabs = document.getElementById('leaderboardModesTabs');
+  leaderboardScreen = document.getElementById('leaderboard-screen');
+  leaderboardHeader = document.getElementById('leaderboardHeader');
+  leaderboardEntriesHome = document.getElementById('leaderboardEntriesHome');
+  myRankBar = document.getElementById('myRankBar');
+
+  // Default to Classic if not set
+  selectedModeId = null;
+
+  // Fetch modes
+  fetch(`${BACKEND_BASE}/api/modes`).then(r => r.json()).then(modes => {
+    availableModes = modes.filter(m => m.is_active);
+    // Default mode selection
+    selectedModeId = (availableModes.find(m => m.name.toLowerCase() === "classic")?.id) || availableModes[0]?.id;
+    showHomeLeaderboard(selectedModeId);
+  });
+
+  // Auth, UI, game event wiring
   initAuth();
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
-  const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
-  leaderboardBtn.addEventListener('mouseenter', preloadLeaderboard);
-  leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
-  leaderboardBtn.addEventListener('click', () => {
-    showHomeLeaderboard(selectedModeId);
-  });
+  document.getElementById('viewLeaderboardBtn').addEventListener('mouseenter', preloadLeaderboard);
+  document.getElementById('viewLeaderboardBtn').addEventListener('touchstart', preloadLeaderboard);
+  document.getElementById('viewLeaderboardBtn').addEventListener('click', () => showHomeLeaderboard(selectedModeId));
   document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
     hideScreen('leaderboard-screen');
-    document.getElementById('leaderboard-screen').classList.remove('visible');
+    leaderboardScreen.classList.remove('visible');
   });
-  const playAgainBtn = document.getElementById('playAgainBtn');
-  if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
+  document.getElementById('playAgainBtn').onclick = handlePlayAgain;
   document.getElementById('loginBtn').addEventListener('click', initAuth);
   console.log('🌐 Detected hostname:', window.location.hostname);
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 });
+
+// ===== END OF FILE =====
