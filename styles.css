@@ -838,3 +838,32 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
   }
 }
 
+.leaderboard-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  width: 100%;
+  margin-bottom: 0.15em;
+}
+#userRankMiniBadge {
+  font-family: inherit;
+  font-size: 1.08em;
+  font-weight: 800;
+  background: linear-gradient(90deg,#ffe167 65%,#e7bc35 100%);
+  color: #1a2b38;
+  border-radius: 2em;
+  padding: 0.22em 0.86em 0.21em 0.7em;
+  margin-left: 0.7em;
+  box-shadow: 0 2px 10px #ffe1671a;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+}
+#userRankMiniBadge .crown {
+  color: #ffd700;
+  font-size: 1.08em;
+  margin-right: 0.25em;
+  vertical-align: middle;
+}

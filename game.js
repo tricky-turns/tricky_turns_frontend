@@ -568,6 +568,31 @@ async function showHomeLeaderboard(initialModeId) {
   const header = document.getElementById('leaderboardHeader');
   const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
   header.textContent = `Top 100 Leaderboard (${modeName})`;
+// --- Mini Rank Badge in Header
+const miniBadge = document.getElementById('userRankMiniBadge');
+if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex !== -1) {
+  // User is in top 100 — show badge with crown if #1, else number
+  miniBadge.style.display = 'inline-flex';
+  miniBadge.innerHTML = (myRank === 1
+    ? `<span class="crown">👑</span> #1`
+    : `#${myRank}`);
+  // Optionally show score in badge:
+  // miniBadge.innerHTML += ` <span style="margin-left:0.5em;color:#3780d6;">${myScore}</span>`;
+} else {
+  miniBadge.style.display = 'none';
+}
+if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex === -1) {
+  // Not in top 100 — show sticky rank bar
+  myRankBar.innerHTML = `
+    <span class="my-rank-chip">Your Rank</span>
+    <span class="rank-badge">#${myRank}</span>
+    <span class="entry-username">@${myUsername}</span>
+    <span class="entry-score">${myScore}</span>
+  `;
+  myRankBar.style.display = 'flex';
+} else {
+  myRankBar.style.display = 'none';
+}
 
   // --- Loading & Rank Bar
   const list = document.getElementById('leaderboardEntriesHome');
