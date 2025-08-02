@@ -243,18 +243,6 @@ async function startNewSession() {
 
 async function initAuth() {
   // UI elements
-  const userInfo = document.getElementById('user-info');
-  const authLoading = document.getElementById('auth-loading');
-  const usernameLabel = document.getElementById('username');
-  const loginBtn = document.getElementById('loginBtn');
-  const startScreen = document.getElementById('start-screen');
-  const debugBox = document.getElementById('debugBox');
-  function showDebug(msg) {
-    if (!debugBox) return;
-    debugBox.style.display = 'block';
-    debugBox.innerText = '[DEBUG] ' + msg;
-    setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
-  }
   userInfo.classList.remove('hidden');
   userInfo.style.display = 'flex';
   authLoading.classList.remove('hidden');
