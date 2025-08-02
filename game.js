@@ -4,6 +4,8 @@ let spawnIntervalUpdater = null; // Add this global with other timers
 let surpassedBest = false;
 let newBestText; // For "NEW BEST" animated UI
 let newBestJustSurpassed = false;
+let currentSessionId = null;
+
 
 let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
 
@@ -106,6 +108,35 @@ async function fetchGameModes() {
 
 
 let selectedModeId = null;
+
+
+async function startNewSession() {
+  currentSessionId = null;
+  if (!piToken) return; // guest, no session required
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/session/start`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${piToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        mode_id: selectedModeId,
+        device_id: window.navigator.userAgent,
+        platform: 'web', // or 'android', 'ios', detect as you wish
+        client_version: '1.0.0'
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      currentSessionId = data.session_id;
+      console.log("Started new session:", currentSessionId);
+    }
+  } catch (e) {
+    console.warn("Failed to start session:", e);
+  }
+}
+
 
 function populateModeButtons() {
   const container = document.getElementById("modesPicker");
@@ -1154,7 +1185,7 @@ if (highScore > storedScore) {
     }
     updateBestScoreEverywhere();
 }
- else if (piToken) {
+ else if (piToken && currentSessionId) {
       // POST score, then re-fetch to sync
       try {
 await fetch(`${BACKEND_BASE}/api/score/submit`, {
@@ -1165,10 +1196,24 @@ await fetch(`${BACKEND_BASE}/api/score/submit`, {
   },
   body: JSON.stringify({
     score: highScore,
-    mode_id: selectedModeId
+    mode_id: selectedModeId,
+    session_id: currentSessionId
   })
 });
 
+if (piToken && currentSessionId) {
+  await fetch(`${BACKEND_BASE}/api/session/end`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${piToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      session_id: currentSessionId,
+      final_score: highScore
+    })
+  });
+}
 
 const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedModeId}`, {
   headers: { Authorization: `Bearer ${piToken}` }
@@ -1297,9 +1342,15 @@ newBestText.setAlpha(1);
 
 
 
-function handleStartGame() {
+async function handleStartGame() {
   highScore = allBestScores[selectedModeId] || 0;
   updateBestScoreEverywhere();
+
+    if (piToken) {
+    await startNewSession();
+  } else {
+    currentSessionId = null; // Not needed for guests
+  }
 
   sfx.uiClick.play();
   document.getElementById('user-info').classList.add('hidden');
