@@ -546,14 +546,15 @@ let currentLeaderboardModeId = null; // Track which mode is shown in modal
 
 async function showHomeLeaderboard(initialModeId) {
   // --- Determine mode to show
-  let modeId = initialModeId 
-    || selectedModeId 
-    || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id)
-    || availableModes[0]?.id;
+  let modeId =
+    initialModeId ||
+    selectedModeId ||
+    (availableModes.find(m => m.name.toLowerCase() === "classic")?.id) ||
+    availableModes[0]?.id;
 
   currentLeaderboardModeId = modeId;
 
-  // --- Build mode tabs
+  // --- Build mode tabs/dropdown
   buildLeaderboardModeTabs(modeId, async (newModeId) => {
     await showHomeLeaderboard(newModeId);
   });
@@ -568,47 +569,22 @@ async function showHomeLeaderboard(initialModeId) {
   const header = document.getElementById('leaderboardHeader');
   const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
   header.textContent = `Top 100 Leaderboard (${modeName})`;
-// --- Mini Rank Badge in Header
-const miniBadge = document.getElementById('userRankMiniBadge');
-if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex !== -1) {
-  // User is in top 100 — show badge with crown if #1, else number
-  miniBadge.style.display = 'inline-flex';
-  miniBadge.innerHTML = (myRank === 1
-    ? `<span class="crown">👑</span> #1`
-    : `#${myRank}`);
-  // Optionally show score in badge:
-  // miniBadge.innerHTML += ` <span style="margin-left:0.5em;color:#3780d6;">${myScore}</span>`;
-} else {
-  miniBadge.style.display = 'none';
-}
-if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex === -1) {
-  // Not in top 100 — show sticky rank bar
-  myRankBar.innerHTML = `
-    <span class="my-rank-chip">Your Rank</span>
-    <span class="rank-badge">#${myRank}</span>
-    <span class="entry-username">@${myUsername}</span>
-    <span class="entry-score">${myScore}</span>
-  `;
-  myRankBar.style.display = 'flex';
-} else {
-  myRankBar.style.display = 'none';
-}
 
-  // --- Loading & Rank Bar
+  // --- Loading state
   const list = document.getElementById('leaderboardEntriesHome');
   list.innerHTML = `<li class="loading-indicator">Loading...</li>`;
   const myRankBar = document.getElementById('myRankBar');
   myRankBar.style.display = 'none';
   myRankBar.innerHTML = '';
 
-  // --- Fetch leaderboard data
+  // --- Fetch leaderboard data for selected mode
   let data = [];
   try {
     const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${modeId}`);
     if (res.ok) data = await res.json();
   } catch {}
 
-  // --- Figure out user info
+  // --- Figure out user info (after data loaded!)
   let myUsername = (piToken && piUsername) ? piUsername : null;
   let myEntryIndex = -1;
   let myRank = null, myScore = null;
@@ -616,7 +592,7 @@ if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex === -
     myEntryIndex = data.findIndex(e => e.username === myUsername);
   }
 
-  // --- Always fetch the user's real rank/score, even if in top 100
+  // --- Always fetch user's real rank/score, even if in top 100
   if (myUsername) {
     try {
       const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${modeId}`, {
@@ -630,24 +606,29 @@ if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex === -
     } catch {}
   }
 
-  // --- Show "My Rank" Bar if available
-// --- Show "My Rank" Bar if available
-if (myUsername && typeof myRank === 'number' && myRank > 0) {
-  myRankBar.innerHTML = `
-    <span class="my-rank-chip">Your Rank</span>
-    <span class="rank-badge">#${myRank}</span>
-    <span class="entry-username">@${myUsername}</span>
-    <span class="entry-score">${myScore}</span>
-    ${myEntryIndex !== -1
-      ? `<span style="margin-left:1em;color:#ffe167;font-weight:900;font-size:1.01em;opacity:.85;">⬇️ In Top 100</span>`
-      : ''}
-  `;
-  myRankBar.style.display = 'flex';
-} else {
-  myRankBar.style.display = 'none';
-}
+  // --- Mini Rank Badge in Header
+  const miniBadge = document.getElementById('userRankMiniBadge');
+  if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex !== -1) {
+    miniBadge.style.display = 'inline-flex';
+    miniBadge.innerHTML = (myRank === 1
+      ? `<span class="crown">👑</span> #1`
+      : `#${myRank}`);
+  } else {
+    miniBadge.style.display = 'none';
+  }
 
-
+  // --- Show "My Rank" Bar only if NOT in top 100
+  if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex === -1) {
+    myRankBar.innerHTML = `
+      <span class="my-rank-chip">Your Rank</span>
+      <span class="rank-badge">#${myRank}</span>
+      <span class="entry-username">@${myUsername}</span>
+      <span class="entry-score">${myScore}</span>
+    `;
+    myRankBar.style.display = 'flex';
+  } else {
+    myRankBar.style.display = 'none';
+  }
 
   // --- Render leaderboard entries
   list.innerHTML = '';
@@ -674,6 +655,7 @@ if (myUsername && typeof myRank === 'number' && myRank > 0) {
     list.appendChild(li);
   });
 }
+
 
 
 
