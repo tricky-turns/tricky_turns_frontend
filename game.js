@@ -114,14 +114,32 @@ function buildLeaderboardModeTabs(activeModeId, onChange) {
   const container = document.getElementById('leaderboardModesTabs');
   if (!container) return;
   container.innerHTML = '';
+
+  // Desktop/Tablet: Tabs
   availableModes.forEach(mode => {
     const tab = document.createElement('button');
     tab.className = 'leaderboard-mode-tab' + (mode.id === activeModeId ? ' active' : '');
     tab.textContent = mode.name;
     tab.onclick = () => onChange(mode.id);
+    tab.style.display = 'inline-block';
     container.appendChild(tab);
   });
+
+  // Mobile: Dropdown (shown via CSS, hidden on desktop)
+  const dropdown = document.createElement('select');
+  dropdown.className = 'leaderboard-mode-dropdown';
+  dropdown.style.display = 'none'; // Only visible via CSS on mobile
+  availableModes.forEach(mode => {
+    const opt = document.createElement('option');
+    opt.value = mode.id;
+    opt.textContent = mode.name;
+    if (mode.id === activeModeId) opt.selected = true;
+    dropdown.appendChild(opt);
+  });
+  dropdown.onchange = (e) => onChange(Number(e.target.value));
+  container.appendChild(dropdown);
 }
+
 
 
 
@@ -594,17 +612,21 @@ async function showHomeLeaderboard(initialModeId) {
     if (myEntryIndex !== -1) {
       highlight = `<span style="margin-left:1em;color:#ffe167;font-weight:900;font-size:1.04em;">⬇️ You're in the Top 100!</span>`;
     }
-    myRankBar.innerHTML = `
-      <span style="font-weight:800;">Your Rank</span>
-      <span class="rank-badge">#${myRank}</span>
-      <span>@${myUsername}</span>
-      <span style="color:#ffe167;font-weight:900;font-size:1.07em;">${myScore}</span>
-      ${highlight}
-    `;
-    myRankBar.style.display = 'flex';
-  } else {
-    myRankBar.style.display = 'none';
-  }
+if (myUsername && typeof myRank === 'number' && myRank > 0) {
+  myRankBar.innerHTML = `
+    <span class="my-rank-chip">Your Rank</span>
+    <span class="rank-badge">#${myRank}</span>
+    <span class="entry-username">@${myUsername}</span>
+    <span class="entry-score">${myScore}</span>
+    ${myEntryIndex !== -1
+      ? `<span style="margin-left:1em;color:#ffe167;font-weight:900;font-size:1.01em;opacity:.85;">⬇️ In Top 100</span>`
+      : ''}
+  `;
+  myRankBar.style.display = 'flex';
+} else {
+  myRankBar.style.display = 'none';
+}
+
 
   // --- Render leaderboard entries
   list.innerHTML = '';
