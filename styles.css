@@ -670,3 +670,38 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
     padding: 0.55em 0.5em;
   }
 }
+
+
+.my-rank-bar {
+  margin: 0.5em auto 0.7em auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.3em;
+  background: linear-gradient(90deg, #3EAFF6 60%, #3091E0 100%);
+  color: #fff;
+  font-weight: 900;
+  border-radius: 1.6em;
+  padding: 0.6em 2em;
+  box-shadow: 0 1px 10px #3199e466, 0 2px 8px #27c4e944;
+  font-size: 1.13rem;
+  letter-spacing: 0.02em;
+  z-index: 10;
+  min-width: 220px;
+  max-width: 92vw;
+  text-align: center;
+  animation: popIn 0.5s cubic-bezier(.2,1.4,.6,1.2);
+}
+.my-rank-bar .rank-badge {
+  background: #fff;
+  color: #229de9;
+  font-size: 1.1rem;
+  font-weight: 900;
+  box-shadow: 0 1px 6px #229de999;
+}
+@media (max-width: 600px) {
+  .my-rank-bar {
+    padding: 0.55em 0.4em;
+    font-size: 1rem;
+  }
+}

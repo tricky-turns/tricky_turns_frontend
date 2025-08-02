@@ -525,52 +525,94 @@ function fadeOut(callback, duration = 600) {
 
 let currentLeaderboardModeId = null; // Track which mode is shown in modal
 
+
 async function showHomeLeaderboard(initialModeId) {
-  // Use passed modeId, or fallback to selectedModeId or Classic
+  // --- Determine mode to show
   let modeId = initialModeId 
     || selectedModeId 
     || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id)
     || availableModes[0]?.id;
 
-  currentLeaderboardModeId = modeId; // Track for tab highlight
+  currentLeaderboardModeId = modeId;
 
-  // Build the tabs
+  // --- Build mode tabs
   buildLeaderboardModeTabs(modeId, async (newModeId) => {
-    // Re-show leaderboard with new mode
     await showHomeLeaderboard(newModeId);
   });
 
-  // Show modal
+  // --- Show modal
   const lb = document.getElementById('leaderboard-screen');
   lb.classList.remove('hidden');
   lb.style.display = 'flex';
   requestAnimationFrame(() => lb.classList.add('visible'));
 
-  // Show mode name in header
+  // --- Mode header
   const header = document.getElementById('leaderboardHeader');
   const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
   header.textContent = `Top 100 Leaderboard (${modeName})`;
 
-  // Show loading indicator
+  // --- Loading & Rank Bar
   const list = document.getElementById('leaderboardEntriesHome');
   list.innerHTML = `<li class="loading-indicator">Loading...</li>`;
+  const myRankBar = document.getElementById('myRankBar');
+  myRankBar.style.display = 'none';
+  myRankBar.innerHTML = '';
 
-  // Fetch leaderboard data
+  // --- Fetch leaderboard data
   let data = [];
   try {
     const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${modeId}`);
     if (res.ok) data = await res.json();
   } catch {}
 
-  // Replace with entries or empty
+  // --- Figure out user info
+  let myUsername = (piToken && piUsername) ? piUsername : null;
+  let myEntryIndex = -1;
+  let myRank = null, myScore = null;
+  if (myUsername && data.length) {
+    myEntryIndex = data.findIndex(e => e.username === myUsername);
+  }
+
+  // --- Always fetch the user's real rank/score, even if in top 100
+  if (myUsername) {
+    try {
+      const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${modeId}`, {
+        headers: { Authorization: `Bearer ${piToken}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        myRank = json.rank;
+        myScore = json.score;
+      }
+    } catch {}
+  }
+
+  // --- Show "My Rank" Bar if available
+  if (myUsername && typeof myRank === 'number' && myRank > 0) {
+    // If user is in top 100, add "in top 100" visual (arrow or highlight)
+    let highlight = '';
+    if (myEntryIndex !== -1) {
+      highlight = `<span style="margin-left:1em;color:#ffe167;font-weight:900;font-size:1.04em;">⬇️ You're in the Top 100!</span>`;
+    }
+    myRankBar.innerHTML = `
+      <span style="font-weight:800;">Your Rank</span>
+      <span class="rank-badge">#${myRank}</span>
+      <span>@${myUsername}</span>
+      <span style="color:#ffe167;font-weight:900;font-size:1.07em;">${myScore}</span>
+      ${highlight}
+    `;
+    myRankBar.style.display = 'flex';
+  } else {
+    myRankBar.style.display = 'none';
+  }
+
+  // --- Render leaderboard entries
   list.innerHTML = '';
   if (!data.length) {
     list.innerHTML = `<li style="text-align:center;opacity:.6;">No entries yet. Be the first!</li>`;
     return;
   }
 
-  // Show leaderboard entries, highlight user
-  let myUsername = (piToken && piUsername) ? piUsername : null;
   data.forEach((e, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
@@ -579,7 +621,6 @@ async function showHomeLeaderboard(initialModeId) {
       <span class="entry-score">${e.score}</span>`;
     li.style.setProperty('--i', i);
     li.classList.add('animated-entry');
-    // Highlight current user
     if (myUsername && e.username === myUsername) {
       li.style.background = 'linear-gradient(90deg, #3EAFF6 25%, #3091E0 100%)';
       li.style.color = '#fff';
