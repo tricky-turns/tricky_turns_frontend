@@ -1,53 +1,292 @@
-// ==========================================
-// 1. GLOBALS & DOM REFERENCES (set after DOMContentLoaded)
-// ==========================================
-const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
-
-let availableModes = [];
-let selectedModeId = null;
-let allBestScores = {};
-let currentSessionId = null;
-let piUsername = 'Guest';
-let piToken = null;
-let highScore = 0;
-let useLocalHighScore = true;
 let cachedLeaderboard = null;
 let leaderboardFetched = false;
-let isLeaderboardLoading = false;
+let spawnIntervalUpdater = null; // Add this global with other timers
 let surpassedBest = false;
-let newBestText;
+let newBestText; // For "NEW BEST" animated UI
 let newBestJustSurpassed = false;
-let spawnIntervalUpdater = null;
-let spawnEvent = null;
-let gameStarted = false, gameOver = false, gamePaused = false;
-let direction = 1, angle = 0, score = 0, speed, maxSpeed, radius;
-let laneLastObstacleXs, laneLastPointXs, lastSpawnTimestamp;
-let starfieldLayers = [];
-let piInitPromise = null;
-let muteBtnHome, isMuted = false;
-const LANES = [];
-let circle1, circle2, obstacles, points;
-let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
-let sfx = {};
-let pauseIconLocked = false;
+let currentSessionId = null;
 
-// DOM references (assigned after DOMContentLoaded)
-let userInfo, authLoading, usernameLabel, loginBtn, startScreen, debugBox;
-let leaderboardModesTabs, leaderboardScreen, leaderboardHeader, leaderboardEntriesHome, myRankBar;
 
-// ==========================================
-// 2. GAME CONFIG & HELPERS
-// ==========================================
+let allBestScores = {};  // Holds best scores per mode: { modeId: score, ... }
+
+// UI elements for login/auth flow
+// --- UI Elements (put at the top of your game.js) ---
+const authLoading   = document.getElementById('auth-loading');
+const usernameLabel = document.getElementById('username');
+const loginBtn      = document.getElementById('loginBtn');
+const userInfo      = document.getElementById('user-info');
+const startScreen   = document.getElementById('start-screen');
+
+
+function waitForPiSDK(timeout = 4000) {
+  return new Promise(resolve => {
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
+      resolve();
+      return;
+    }
+    let waited = 0;
+    const check = () => {
+      if (window.Pi && typeof window.Pi.authenticate === "function") {
+        resolve();
+      } else if ((waited += 100) >= timeout) {
+        resolve(); // Timeout, continue as guest
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
+function populateModeButtons() {
+  const container = document.getElementById("modesPicker");
+  if (!container) return;
+  container.innerHTML = '';
+  availableModes.forEach(mode => {
+    const btn = document.createElement("button");
+    btn.textContent = mode.name;
+    btn.className = "btn-primary";
+    btn.onclick = () => {
+      selectedModeId = mode.id;
+      Array.from(container.children).forEach(b => b.classList.remove('active-mode'));
+      btn.classList.add('active-mode');
+      highScore = allBestScores[selectedModeId] || 0;
+      updateBestScoreEverywhere();
+      if (mode.name.toLowerCase() === "classic") handleStartGame();
+    };
+    container.appendChild(btn);
+    if (selectedModeId === null && mode.name.toLowerCase() === "classic") {
+      selectedModeId = mode.id;
+      btn.classList.add('active-mode');
+    }
+  });
+}
+
+async function fetchAndShowModes() {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/modes`);
+    if (res.ok) {
+      availableModes = await res.json();
+    }
+  } catch (e) { /* fallback stays */ }
+  populateModeButtons();
+}
+
+function showUserInfoAuthenticating() {
+  userInfo.classList.remove('hidden');
+  userInfo.style.display = 'flex';
+  authLoading.classList.remove('hidden');
+  usernameLabel.classList.add('hidden');
+  loginBtn.classList.add('hidden');
+  userInfo.classList.remove('logged-in');
+  userInfo.classList.remove('guest');
+}
+
+
+function getLocalBestScore(modeId) {
+  return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
+}
+function setLocalBestScore(modeId, score) {
+  localStorage.setItem(`tricky_high_score_${modeId}`, score);
+}
+
+
+const BACKEND_BASE = 'https://tricky-turns-backend.onrender.com';
+
+let availableModes = [{id: 1, name: "Classic"}]; // Default fallback
+
+async function fetchGameModes() {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/modes`);
+    if (res.ok) {
+      availableModes = await res.json();
+    }
+  } catch (e) {
+    // fallback remains
+  }
+}
+
+
+let selectedModeId = null;
+
+
+function buildLeaderboardModeTabs(activeModeId, onChange) {
+  const container = document.getElementById('leaderboardModesTabs');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Desktop/Tablet: Tabs
+  availableModes.forEach(mode => {
+    const tab = document.createElement('button');
+    tab.className = 'leaderboard-mode-tab' + (mode.id === activeModeId ? ' active' : '');
+    tab.textContent = mode.name;
+    tab.onclick = () => onChange(mode.id);
+    tab.style.display = 'inline-block';
+    container.appendChild(tab);
+  });
+
+  // Mobile: Dropdown (shown via CSS, hidden on desktop)
+  const dropdown = document.createElement('select');
+  dropdown.className = 'leaderboard-mode-dropdown';
+  dropdown.style.display = 'none'; // Only visible via CSS on mobile
+  availableModes.forEach(mode => {
+    const opt = document.createElement('option');
+    opt.value = mode.id;
+    opt.textContent = mode.name;
+    if (mode.id === activeModeId) opt.selected = true;
+    dropdown.appendChild(opt);
+  });
+  dropdown.onchange = (e) => onChange(Number(e.target.value));
+  container.appendChild(dropdown);
+}
+
+
+
+
+async function startNewSession() {
+  currentSessionId = null;
+  if (!piToken) return; // guest, no session required
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/session/start`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${piToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        mode_id: selectedModeId,
+        device_id: window.navigator.userAgent,
+        platform: 'web', // or 'android', 'ios', detect as you wish
+        client_version: '1.0.0'
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      currentSessionId = data.session_id;
+      console.log("Started new session:", currentSessionId);
+    }
+  } catch (e) {
+    console.warn("Failed to start session:", e);
+  }
+}
+
+
+function populateModeButtons() {
+  const container = document.getElementById("modesPicker");
+  if (!container) return;
+  container.innerHTML = '';
+  availableModes.forEach(mode => {
+    const btn = document.createElement("button");
+    btn.textContent = mode.name;
+    btn.className = "btn-primary";
+    // Only Classic launches the game, others do nothing for now
+btn.onclick = () => {
+  selectedModeId = mode.id;
+  Array.from(container.children).forEach(b => b.classList.remove('active-mode'));
+  btn.classList.add('active-mode');
+  highScore = allBestScores[selectedModeId] || 0;  // <-- ADD THIS
+  updateBestScoreEverywhere();
+  if (mode.name.toLowerCase() === "classic") {
+    handleStartGame();
+  }
+};
+
+    container.appendChild(btn);
+    // Set Classic as default selected
+    if (selectedModeId === null && mode.name.toLowerCase() === "classic") {
+      selectedModeId = mode.id;
+      btn.classList.add('active-mode');
+    }
+  });
+}
+
+async function fetchAllBestScores() {
+  allBestScores = {};
+  if (window.piToken) {
+    // Authenticated user: fetch from backend per mode
+    for (const mode of availableModes) {
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
+          credentials: "include"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          allBestScores[mode.id] = data.score || 0;
+        } else {
+          allBestScores[mode.id] = 0;
+        }
+      } catch {
+        allBestScores[mode.id] = 0;
+      }
+    }
+  } else {
+    // Guest: fetch from localStorage per mode
+    for (const mode of availableModes) {
+      allBestScores[mode.id] = getLocalBestScore(mode.id);
+    }
+  }
+}
+
+
+function getLocalBestScore(modeId) {
+  return parseInt(localStorage.getItem(`tricky_high_score_${modeId}`), 10) || 0;
+}
+function setLocalBestScore(modeId, score) {
+  localStorage.setItem(`tricky_high_score_${modeId}`, score);
+}
+
+function isPiBrowser() {
+  return typeof window.Pi !== 'undefined';
+}
+
+
+
+async function preloadLeaderboard() {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100`)
+    cachedLeaderboard = await res.json();
+    leaderboardFetched = true;
+  } catch (err) {
+    console.warn('Failed to preload leaderboard:', err);
+  }
+}
+
+function showScreen(id, display = 'flex') {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove('hidden');
+    el.style.display = display;
+  }
+}
+
+function hideScreen(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('hidden');
+    el.style.display = 'none';
+  }
+}
+
+// ==========================
+//   TRICKY TURNS GAME CONFIG
+// ==========================
+//
+// All gameplay, FX, starfield, and UI variables are here for easy tuning!
+
 const GAME_CONFIG = {
+  // --- Core gameplay geometry ---
   NUM_LANES: 3,
   RADIUS: 100,
+  // --- Spawn mechanics ---
   SPAWN_BUFFER_X: 185,
   SPAWN_INTERVAL_MIN: 300,
   SPAWN_INTERVAL_MAX: 700,
   SPAWN_INTERVAL_BASE_SPEED: 3,
   FORCED_SPAWN_INTERVAL: 1000,
+  // --- Orb movement ---
   ANGULAR_BASE: 0.05,
   ANGULAR_SCALE: 0.005,
+  // --- Obstacle/point speed ---
   SPEED_START: 3,
   SPEED_MAX: 15,
   SPEED_RAMP: [
@@ -55,11 +294,13 @@ const GAME_CONFIG = {
     { until: 35,   perTick: 0.1 },
     { until: 9999, perTick: 0.15 }
   ],
+  // --- Point spawn probability ---
   POINT_CHANCE: [
     { until: 20,   percent: 65 },
     { until: 50,   percent: 50 },
     { until: 9999, percent: 35 }
   ],
+  // --- FX: Particle & Camera Shake ---
   PARTICLES: {
     crash: {
       color: 0xffffff,
@@ -75,245 +316,283 @@ const GAME_CONFIG = {
     crash:   { duration: 300, intensity: 0.035 },
     collect: { duration: 0,   intensity: 0 }
   },
+  // --- Parallax Twinkling Starfield ---
+  // Each layer: { speed, count, color, alpha, sizeMin, sizeMax, twinkle }
   STARFIELD_LAYERS: [
+    // Farthest, most numerous, faintest, tiny
     { speed: 0.09, count: 120, color: 0xffffff, alpha: 0.13, sizeMin: 0.7, sizeMax: 1.4, twinkle: 0.10 },
+    // Mid layer, fewer, bigger, more twinkle
     { speed: 0.24, count: 36,  color: 0xcbe8fd, alpha: 0.22, sizeMin: 1.3, sizeMax: 2.6, twinkle: 0.17 },
+    // Closest, rare, brightest, big twinkle
     { speed: 0.53, count: 8,   color: 0xffffff, alpha: 0.40, sizeMin: 2.2, sizeMax: 4.5, twinkle: 0.33 }
   ]
 };
-function getConfigRamp(arr, val) {
-  for (let i = 0; i < arr.length; i++) {
-    if (val < arr[i].until) return arr[i];
-  }
-  return arr[arr.length - 1];
-}
-function getSpawnInterval() {
-  let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
-  let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
-  let t = Math.min((speed - baseSpeed) / (GAME_CONFIG.SPEED_MAX - baseSpeed), 1);
-  let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
-  return interval + Phaser.Math.Between(-50, 50);
-}
-function getPointChance(score) {
-  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
-}
+//
+// ==========================
 
-// ==========================================
-// 3. UI ELEMENTS & SCREEN HELPERS
-// ==========================================
-function showScreen(id, display = 'flex') {
-  const el = document.getElementById(id);
-  if (el) {
-    el.classList.remove('hidden');
-    el.style.display = display;
+  function getSpawnInterval() {
+    let baseSpeed = GAME_CONFIG.SPAWN_INTERVAL_BASE_SPEED;
+    let minDelay = GAME_CONFIG.SPAWN_INTERVAL_MIN, maxDelay = GAME_CONFIG.SPAWN_INTERVAL_MAX;
+    let t = Math.min((speed - baseSpeed) / (maxSpeed - baseSpeed), 1);
+    let interval = Math.max(maxDelay - (maxDelay - minDelay) * t, minDelay);
+    return interval + Phaser.Math.Between(-50, 50);
   }
-}
-function hideScreen(id) {
-  const el = document.getElementById(id);
-  if (el) {
-    el.classList.add('hidden');
-    el.style.display = 'none';
-  }
-}
+
+const muteBtnHome = document.getElementById('muteToggleHome');
+let isLeaderboardLoading = false;
+let spawnEvent = null;
+let speed = GAME_CONFIG.SPEED_START;
+let maxSpeed = GAME_CONFIG.SPEED_MAX;
+let radius = GAME_CONFIG.RADIUS;
+
+let laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+let laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+let lastSpawnTimestamp = 0;
+
+// --- Starfield globals ---
+let starfieldLayers = [];
+
+let piInitPromise = null;
+
 function showDebug(msg) {
-  if (!debugBox) return;
-  debugBox.style.display = 'block';
-  debugBox.innerText = '[DEBUG] ' + msg;
-  setTimeout(() => { debugBox.style.display = 'none'; }, 8000);
-}
-function currentMuteIcon() {
-  return isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
+  const box = document.getElementById('debugBox');
+  if (!box) return;
+  box.style.display = 'block';
+  box.innerText = '[DEBUG] ' + msg;
 }
 
-// ==========================================
-// 4. UTILITY FUNCTIONS
-// ==========================================
-function isPiBrowser() {
-  return typeof window.Pi !== 'undefined';
-}
-function updateBestScoreEverywhere() {
-  if (window.game && window.game.scene && window.game.scene.keys.default) {
-    const scene = window.game.scene.keys.default;
-    if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
+
+function initPi() {
+  if (!piInitPromise) {
+   const isPiBrowser = window.location.hostname.includes('pi') || window.location.href.includes('pi://');
+   piInitPromise = Pi.init({ version: "2.0", sandbox: !isPiBrowser });
+
   }
-  const bestScoreDom = document.getElementById('bestScore');
-  if (bestScoreDom) bestScoreDom.innerText = highScore;
+  return piInitPromise;
 }
-function preloadLeaderboard() {
-  if (leaderboardFetched) return;
-  fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${selectedModeId || 1}`)
-    .then(res => res.json())
-    .then(data => {
-      cachedLeaderboard = data;
-      leaderboardFetched = true;
-    })
-    .catch(err => { console.warn('Failed to preload leaderboard:', err); });
+const scopes = ['username'];
+let piUsername = 'Guest';
+let piToken = null; // ⬅️ new: store Pi auth token
+let highScore = 0;
+let useLocalHighScore = true;
+
+function onIncompletePaymentFound(payment) {
+  console.log('Incomplete payment found:', payment);
+}
+// Full drop-in for initAuth in game.js
+
+async function initAuth() {
+  showUserInfoAuthenticating(); // Show bar instantly while auth starts
+
+  piUsername = '';
+  piToken = null;
+  useLocalHighScore = true;
+
+  // Modes are already fetched/populated!
+  let loginSuccess = false;
+
+  await waitForPiSDK();
+  try {
+    if (window.Pi && typeof window.Pi.init === "function") {
+      const isSandbox = !(window.location.hostname.includes('.minepi.com') || window.location.hostname.includes('pi'));
+      await window.Pi.init({ version: "2.0", sandbox: isSandbox });
+    }
+    if (window.Pi && typeof window.Pi.authenticate === "function") {
+      let timedOut = false;
+      let timeout;
+      const authPromise = window.Pi.authenticate(['username']);
+      const timeoutPromise = new Promise(resolve => {
+        timeout = setTimeout(() => {
+          timedOut = true;
+          resolve(null);
+        }, 1500);
+      });
+      const piAuthRes = await Promise.race([authPromise, timeoutPromise]);
+      clearTimeout(timeout);
+      if (piAuthRes && piAuthRes.user && piAuthRes.accessToken) {
+        piUsername = piAuthRes.user.username;
+        piToken = piAuthRes.accessToken;
+        useLocalHighScore = false;
+        loginSuccess = true;
+        window.piUsername = piUsername;
+        window.piToken = piToken;
+      }
+    }
+  } catch { /* ignore */ }
+
+  // --- Fetch all best scores (per mode) ---
+  allBestScores = {};
+  if (loginSuccess && piToken) {
+    for (const mode of availableModes) {
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${mode.id}`, {
+          headers: { Authorization: `Bearer ${piToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          allBestScores[mode.id] = data.score || 0;
+        } else {
+          allBestScores[mode.id] = 0;
+        }
+      } catch {
+        allBestScores[mode.id] = 0;
+      }
+    }
+  } else {
+    for (const mode of availableModes) {
+      allBestScores[mode.id] = getLocalBestScore(mode.id);
+    }
+    piUsername = 'Guest';
+    useLocalHighScore = true;
+    window.piUsername = null;
+    window.piToken = null;
+  }
+
+  // Update highScore for default mode
+  if (!selectedModeId) {
+    selectedModeId =
+      availableModes.find(m => m.name.toLowerCase() === 'classic')?.id ||
+      availableModes[0]?.id || 1;
+  }
+  highScore = allBestScores[selectedModeId] || 0;
+  updateBestScoreEverywhere();
+
+  // --- Update the user bar based on result ---
+  authLoading.classList.add('hidden');
+  usernameLabel.classList.remove('hidden');
+  loginBtn.classList.remove('hidden');
+  if (!useLocalHighScore) {
+    usernameLabel.innerText = `@${piUsername}`;
+    loginBtn.style.display = 'none';
+    userInfo.classList.remove('guest');
+    userInfo.classList.add('logged-in');
+  } else {
+    usernameLabel.innerText = 'Guest';
+    loginBtn.style.display = 'inline-block';
+    userInfo.classList.remove('logged-in');
+    userInfo.classList.add('guest');
+  }
+  startScreen.classList.add('ready');
 }
 
-// ==========================================
-// 5. AUTH & SESSION LOGIC
-// ==========================================
+
+
+
+
+
+  // --- Helper for guest mode ---
 function runGuestFlow() {
   piUsername = 'Guest';
   piToken = null;
   useLocalHighScore = true;
+
   usernameLabel.innerText = 'Guest';
   loginBtn.style.display = 'inline-block';
+
   userInfo.classList.remove('logged-in');
   userInfo.classList.add('guest');
-  highScore = parseInt(localStorage.getItem('tricky_high_score'), 10) || 0;
+
+  // Fetch all bests for every mode
+  allBestScores = {};
+  for (const mode of availableModes) {
+    allBestScores[mode.id] = getLocalBestScore(mode.id);
+  }
+  highScore = allBestScores[selectedModeId] || 0;
   updateBestScoreEverywhere();
+
   showDebug(`Guest mode: loaded highScore=${highScore} from localStorage`);
+
   authLoading.classList.add('hidden');
   usernameLabel.classList.remove('hidden');
   loginBtn.classList.remove('hidden');
   startScreen.classList.add('ready');
 }
-async function startNewSession() {
-  currentSessionId = null;
-  if (!piToken) return;
-  try {
-    const res = await fetch(`${BACKEND_BASE}/api/session/start`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${piToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        mode_id: selectedModeId,
-        device_id: window.navigator.userAgent,
-        platform: 'web',
-        client_version: '1.0.0'
-      })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      currentSessionId = data.session_id;
-      console.log("Started new session:", currentSessionId);
-    }
-  } catch (e) {
-    console.warn("Failed to start session:", e);
-  }
+
+
+document.getElementById('loginBtn').addEventListener('click', initAuth);
+
+function fadeInElement(el, duration = 500, displayType = 'flex') {
+  el.style.opacity = 0;
+  el.style.display = displayType;
+  requestAnimationFrame(() => {
+    el.style.transition = `opacity ${duration}ms ease`;
+    el.style.opacity = 1;
+  });
 }
-async function initAuth() {
-  userInfo.classList.remove('hidden');
-  userInfo.style.display = 'flex';
-  authLoading.classList.remove('hidden');
-  usernameLabel.classList.add('hidden');
-  loginBtn.classList.add('hidden');
-  if (typeof isPiBrowser === "function" && isPiBrowser()) {
-    let timedOut = false;
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => {
-        timedOut = true;
-        reject(new Error("Pi.authenticate timed out"));
-      }, 3000)
-    );
-    try {
-      await Pi.init({ version: "2.0", sandbox: false });
-      const auth = await Promise.race([
-        Pi.authenticate(['username'], () => {}),
-        timeout
-      ]);
-      if (!timedOut && auth?.user?.username) {
-        piUsername = auth.user.username;
-        piToken = auth.accessToken;
-        useLocalHighScore = false;
-        usernameLabel.innerText = `@${piUsername}`;
-        loginBtn.style.display = 'none';
-        userInfo.classList.remove('guest');
-        userInfo.classList.add('logged-in');
-        try {
-          showDebug("Fetching high score from API...");
-          const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=1`, {
-            headers: { Authorization: `Bearer ${piToken}` }
-          });
-          const txt = await res.clone().text();
-          showDebug(`API status: ${res.status}\nRaw: ${txt}`);
-          if (res.ok) {
-            const data = JSON.parse(txt);
-            showDebug(`Parsed: highScore=${data.score}`);
-            highScore = data.score || 0;
-          } else {
-            highScore = 0;
-            showDebug(`API error, status ${res.status}`);
-          }
-          updateBestScoreEverywhere();
-        } catch (err) {
-          showDebug("Fetch error: " + (err && err.message ? err.message : err));
-          highScore = 0;
-          updateBestScoreEverywhere();
-        }
-      } else {
-        runGuestFlow();
-        return;
-      }
-    } catch (e) {
-      runGuestFlow();
-      return;
-    }
-    authLoading.classList.add('hidden');
-    usernameLabel.classList.remove('hidden');
-    loginBtn.classList.add('hidden');
-    startScreen.classList.add('ready');
-  } else {
-    runGuestFlow();
-    return;
-  }
+function fadeOutElement(el, duration = 500) {
+  el.style.transition = `opacity ${duration}ms ease`;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, duration);
+}
+function fadeIn(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.add('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
+}
+function fadeOut(callback, duration = 600) {
+  const fade = document.getElementById('fade-screen');
+  fade.classList.remove('fade-in');
+  setTimeout(() => {
+    callback?.();
+  }, duration);
 }
 
-// ==========================================
-// 6. LEADERBOARD: MODES, UI, AND FETCHING
-// ==========================================
-function buildLeaderboardModeTabs(activeModeId, onChange) {
-  leaderboardModesTabs.innerHTML = '';
-  availableModes.forEach(mode => {
-    const tab = document.createElement('button');
-    tab.className = 'leaderboard-mode-tab' + (mode.id === activeModeId ? ' active' : '');
-    tab.textContent = mode.name;
-    tab.onclick = () => onChange(mode.id);
-    tab.style.display = 'inline-block';
-    leaderboardModesTabs.appendChild(tab);
-  });
-  const dropdown = document.createElement('select');
-  dropdown.className = 'leaderboard-mode-dropdown';
-  dropdown.style.display = 'none';
-  availableModes.forEach(mode => {
-    const opt = document.createElement('option');
-    opt.value = mode.id;
-    opt.textContent = mode.name;
-    if (mode.id === activeModeId) opt.selected = true;
-    dropdown.appendChild(opt);
-  });
-  dropdown.onchange = (e) => onChange(Number(e.target.value));
-  leaderboardModesTabs.appendChild(dropdown);
-}
+let currentLeaderboardModeId = null; // Track which mode is shown in modal
+
+
 async function showHomeLeaderboard(initialModeId) {
-  let modeId = initialModeId 
-    || selectedModeId 
-    || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id)
-    || availableModes[0]?.id;
-  selectedModeId = modeId;
+  // --- Determine mode to show
+  let modeId =
+    initialModeId ||
+    selectedModeId ||
+    (availableModes.find(m => m.name.toLowerCase() === "classic")?.id) ||
+    availableModes[0]?.id;
+
+  currentLeaderboardModeId = modeId;
+
+  // --- Build mode tabs/dropdown
   buildLeaderboardModeTabs(modeId, async (newModeId) => {
     await showHomeLeaderboard(newModeId);
   });
-  leaderboardScreen.classList.remove('hidden');
-  leaderboardScreen.style.display = 'flex';
-  requestAnimationFrame(() => leaderboardScreen.classList.add('visible'));
-  leaderboardHeader.textContent = `Top 100 Leaderboard (${availableModes.find(m => m.id === modeId)?.name || "Classic"})`;
-  leaderboardEntriesHome.innerHTML = `<li class="loading-indicator">Loading...</li>`;
+
+  // --- Show modal
+  const lb = document.getElementById('leaderboard-screen');
+  lb.classList.remove('hidden');
+  lb.style.display = 'flex';
+  requestAnimationFrame(() => lb.classList.add('visible'));
+
+  // --- Mode header
+  const header = document.getElementById('leaderboardHeader');
+  const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
+  header.textContent = `Top 100 Leaderboard (${modeName})`;
+
+  // --- Loading state
+  const list = document.getElementById('leaderboardEntriesHome');
+  list.innerHTML = `<li class="loading-indicator">Loading...</li>`;
+  const myRankBar = document.getElementById('myRankBar');
   myRankBar.style.display = 'none';
   myRankBar.innerHTML = '';
+
+  // --- Fetch leaderboard data for selected mode
   let data = [];
   try {
     const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${modeId}`);
     if (res.ok) data = await res.json();
   } catch {}
+
+  // --- Figure out user info (after data loaded!)
   let myUsername = (piToken && piUsername) ? piUsername : null;
-  let myEntryIndex = -1, myRank = null, myScore = null;
+  let myEntryIndex = -1;
+  let myRank = null, myScore = null;
   if (myUsername && data.length) {
     myEntryIndex = data.findIndex(e => e.username === myUsername);
   }
+
+  // --- Always fetch user's real rank/score, even if in top 100
   if (myUsername) {
     try {
       const res = await fetch(`${BACKEND_BASE}/api/leaderboard/rank?mode_id=${modeId}`, {
@@ -326,28 +605,38 @@ async function showHomeLeaderboard(initialModeId) {
       }
     } catch {}
   }
-  if (
-    myUsername && typeof myRank === 'number' && myRank > 0 &&
-    !(myRank === 1 && data.length === 1 && data[0].username === myUsername)
-  ) {
+
+  // --- Mini Rank Badge in Header
+  const miniBadge = document.getElementById('userRankMiniBadge');
+  if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex !== -1) {
+    miniBadge.style.display = 'inline-flex';
+    miniBadge.innerHTML = (myRank === 1
+      ? `<span class="crown">👑</span> #1`
+      : `#${myRank}`);
+  } else {
+    miniBadge.style.display = 'none';
+  }
+
+  // --- Show "My Rank" Bar only if NOT in top 100
+  if (myUsername && typeof myRank === 'number' && myRank > 0 && myEntryIndex === -1) {
     myRankBar.innerHTML = `
       <span class="my-rank-chip">Your Rank</span>
       <span class="rank-badge">#${myRank}</span>
       <span class="entry-username">@${myUsername}</span>
       <span class="entry-score">${myScore}</span>
-      ${myEntryIndex !== -1
-        ? `<span style="margin-left:1em;color:#ffe167;font-weight:900;font-size:1.01em;opacity:.85;">⬇️ In Top 100</span>`
-        : ''}
     `;
     myRankBar.style.display = 'flex';
   } else {
     myRankBar.style.display = 'none';
   }
-  leaderboardEntriesHome.innerHTML = '';
+
+  // --- Render leaderboard entries
+  list.innerHTML = '';
   if (!data.length) {
-    leaderboardEntriesHome.innerHTML = `<li style="text-align:center;opacity:.6;">No entries yet. Be the first!</li>`;
+    list.innerHTML = `<li style="text-align:center;opacity:.6;">No entries yet. Be the first!</li>`;
     return;
   }
+
   data.forEach((e, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
@@ -363,13 +652,142 @@ async function showHomeLeaderboard(initialModeId) {
       li.querySelector('.entry-username').style.fontWeight = '900';
       li.querySelector('.entry-username').textContent += ' (You)';
     }
-    leaderboardEntriesHome.appendChild(li);
+    list.appendChild(li);
   });
 }
 
-// ==========================================
-// 7. PHASER GAME LOGIC (unchanged)
-// ==========================================
+
+
+
+function updateBestScoreEverywhere() {
+  // Phaser HUD
+  if (window.game && window.game.scene && window.game.scene.keys.default) {
+    const scene = window.game.scene.keys.default;
+    if (scene.bestScoreText) scene.bestScoreText.setText('Best: ' + highScore);
+  }
+  // Game over DOM
+  const bestScoreDom = document.getElementById('bestScore');
+  if (bestScoreDom) bestScoreDom.innerText = highScore;
+}
+
+function resetGameUIState(scene) {
+  newBestJustSurpassed = false;
+  score = 0;
+  speed = GAME_CONFIG.SPEED_START;
+  direction = 1;
+  gameStarted = false;
+  gameOver = false;
+  gamePaused = false;
+  laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+  laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
+  lastSpawnTimestamp = 0;
+
+  // DOM UI reset
+['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(hideScreen);
+
+
+  // Reset result blocks
+  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
+  const bestBlock = document.getElementById('bestBlock');
+  const scoreBlock = document.getElementById('scoreBlock');
+  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
+  if (bestBlock) bestBlock.style.display = '';
+  if (scoreBlock) scoreBlock.style.display = '';
+
+  // HUD state reset
+  surpassedBest = false;
+  if (scoreText) scoreText.setVisible(true);
+  if (bestScoreText) bestScoreText.setVisible(true);
+  if (newBestText) newBestText.setVisible(false);
+
+  if (scene?.scoreText) scene.scoreText.setVisible(true);
+  if (scene?.bestScoreText) scene.bestScoreText.setVisible(true);
+  if (scene?.newBestText) scene.newBestText.setVisible(false);
+
+  if (muteBtnHome) muteBtnHome.style.display = 'none';
+  const canvas = document.querySelector('canvas');
+  if (canvas) canvas.style.visibility = 'visible';
+  window.scrollTo(0, 0);
+}
+
+
+
+const LANES = [];
+let gameStarted = false, gameOver = false, gamePaused = false;
+let direction = 1, angle = 0;
+let circle1, circle2, obstacles, points, score = 0;
+let muteIcon, bestScoreText, scoreText, pauseIcon, pauseOverlay, countdownText;
+let sfx = {}, isMuted = false;
+let pauseIconLocked = false;
+
+const currentMuteIcon = () => isMuted ? 'assets/icon-unmute.svg' : 'assets/icon-mute.svg';
+if (muteBtnHome) {
+  muteBtnHome.src = currentMuteIcon();
+  muteBtnHome.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (window.muteIcon) window.muteIcon.setTexture(isMuted ? 'iconUnmute' : 'iconMute');
+    muteBtnHome.src = currentMuteIcon();
+    if (window.game && window.game.sound) {
+      window.game.sound.mute = isMuted;
+    }
+  });
+}
+
+const config = {
+  type: Phaser.AUTO,
+  transparent: true,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default: 'arcade', arcade: { debug: false } },
+  scene: { key: 'default', preload, create, update }
+};
+window.game = new Phaser.Game(config);
+
+function getConfigRamp(arr, val) {
+  for (let i = 0; i < arr.length; i++) {
+    if (val < arr[i].until) return arr[i];
+  }
+  return arr[arr.length - 1];
+}
+
+function preload() {
+  this.load.audio('explode', 'assets/explode.wav');
+  this.load.audio('move', 'assets/move.wav');
+  this.load.audio('point', 'assets/point.wav');
+  this.load.audio('newBest', 'assets/new_best.wav');
+  this.load.audio('uiClick', 'assets/ui_click_subtle.wav');
+  this.load.audio('pauseWhoosh', 'assets/pause_whoosh_subtle.wav');
+  this.load.image('iconPause', 'assets/icon-pause.svg');
+  this.load.image('iconPlay', 'assets/icon-play.svg');
+  this.load.image('iconMute', 'assets/icon-mute.svg');
+  this.load.image('iconUnmute', 'assets/icon-unmute.svg');
+}
+function scheduleSpawnEvents(scene) {
+  if (spawnEvent) spawnEvent.remove(false);
+  spawnEvent = scene.time.addEvent({
+    delay: getSpawnInterval(),
+    loop: true,
+    callback: () => {
+      if (gameStarted && !gameOver && !gamePaused) {
+        spawnObjects.call(scene);
+        lastSpawnTimestamp = scene.time.now;
+      }
+    }
+  });
+
+  // Periodically (every 5s) update the spawn interval for smooth ramping
+  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
+  spawnIntervalUpdater = scene.time.addEvent({
+    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
+    loop: true,
+    callback: () => {
+      if (spawnEvent) {
+        let newDelay = getSpawnInterval();
+        spawnEvent.reset({ delay: newDelay, loop: true });
+      }
+    }
+  });
+}
+
 function create() {
   const cam = this.cameras.main;
   const cx = cam.centerX, cy = cam.centerY;
@@ -648,19 +1066,10 @@ this.input.on('pointerdown', (pointer, currentlyOver) => {
   this.physics.add.overlap(circle2, points, collectPoint, null, this);
 }
 
-function preload() {
-  this.load.audio('explode', 'assets/explode.wav');
-  this.load.audio('move', 'assets/move.wav');
-  this.load.audio('point', 'assets/point.wav');
-  this.load.audio('newBest', 'assets/new_best.wav');
-  this.load.audio('uiClick', 'assets/ui_click_subtle.wav');
-  this.load.audio('pauseWhoosh', 'assets/pause_whoosh_subtle.wav');
-  this.load.image('iconPause', 'assets/icon-pause.svg');
-  this.load.image('iconPlay', 'assets/icon-play.svg');
-  this.load.image('iconMute', 'assets/icon-mute.svg');
-  this.load.image('iconUnmute', 'assets/icon-unmute.svg');
-}
 
+
+
+// DELTA TIME PATCHED update
 function update(time, delta) {
   // --- Twinkling Starfield Update (always moves, even paused/gameOver) ---
   if (starfieldLayers.length) {
@@ -732,33 +1141,11 @@ function update(time, delta) {
   }
 }
 
-function scheduleSpawnEvents(scene) {
-  if (spawnEvent) spawnEvent.remove(false);
-  spawnEvent = scene.time.addEvent({
-    delay: getSpawnInterval(),
-    loop: true,
-    callback: () => {
-      if (gameStarted && !gameOver && !gamePaused) {
-        spawnObjects.call(scene);
-        lastSpawnTimestamp = scene.time.now;
-      }
-    }
-  });
-
-  // Periodically (every 5s) update the spawn interval for smooth ramping
-  if (spawnIntervalUpdater) spawnIntervalUpdater.remove(false);
-  spawnIntervalUpdater = scene.time.addEvent({
-    delay: 5000, // You can tune this to 3000ms or 7000ms, etc.
-    loop: true,
-    callback: () => {
-      if (spawnEvent) {
-        let newDelay = getSpawnInterval();
-        spawnEvent.reset({ delay: newDelay, loop: true });
-      }
-    }
-  });
+function getPointChance(score) {
+  return getConfigRamp(GAME_CONFIG.POINT_CHANCE, score).percent;
 }
 
+// --- Patch: Points and obstacles never overlap in the same lane ---
 function spawnObjects() {
   const scene = window.game.scene.keys.default;
   const camWidth = scene.cameras.main.width;
@@ -834,74 +1221,6 @@ function spawnObjects() {
   }
 
   lastSpawnTimestamp = window.game.scene.keys.default.time.now;
-}
-
-function collectPoint(_, pt) {
-  if (pt.glow) pt.glow.destroy();
-
-  let scene = window.game.scene.keys.default;
-  const plusOne = scene.add.text(pt.x, pt.y, '+1', {
-    fontFamily: 'Poppins',
-    fontSize: '32px',
-    color: '#fff',
-    stroke: '#2ed573',
-    strokeThickness: 4,
-    fontStyle: 'bold'
-  }).setOrigin(0.5).setDepth(10);
-
-  scene.tweens.add({
-    targets: plusOne,
-    y: pt.y - 40,
-    alpha: 0,
-    scale: 1.2,
-    duration: 500,
-    ease: 'Cubic.easeOut',
-    onComplete: () => plusOne.destroy()
-  });
-
-  pt.destroy();
-  score++;
-  sfx.point.play();
-
-  // ==== PREMIUM SCORE HANDLING ====
-  if (!surpassedBest && score > highScore) {
-    // First time surpassing best: switch to NEW BEST
-    surpassedBest = true;
-    scoreText.setVisible(false);
-    bestScoreText.setVisible(false);
-
-    // Place NEW BEST in the same spot as Score was
-    newBestText.setVisible(true);
-    newBestText.setText('NEW BEST: ' + score);
-
-    // One-time flourish animation & sound
-scene.tweens.add({
-  targets: newBestText,
-  scaleX: 1.27, scaleY: 1.27,
-  yoyo: true, duration: 340, ease: 'Back.easeOut'
-});
-// Always ensure the text is visible!
-newBestText.setAlpha(1);
-
-    sfx.newBest.play();
-
-  } else if (surpassedBest) {
-    // Already surpassed: just keep updating NEW BEST with no animation
-    newBestText.setVisible(true); // Ensure always visible
-    newBestText.setText('NEW BEST: ' + score);
-    // NO animation or flicker—just update number!
-  } else {
-    // Standard: show Score and Best as usual
-    scoreText.setVisible(true);
-    bestScoreText.setVisible(true);
-    scoreText.setText('Score: ' + score);
-
-    scene.tweens.add({
-      targets: scoreText,
-      scaleX: 1.1, scaleY: 1.1,
-      yoyo: true, duration: 80, ease: 'Sine.easeOut'
-    });
-  }
 }
 
 function triggerGameOver() {
@@ -1069,45 +1388,79 @@ const res = await fetch(`${BACKEND_BASE}/api/leaderboard/me?mode_id=${selectedMo
   });
 }
 
-function resetGameUIState(scene) {
-  newBestJustSurpassed = false;
-  score = 0;
-  speed = GAME_CONFIG.SPEED_START;
-  direction = 1;
-  gameStarted = false;
-  gameOver = false;
-  gamePaused = false;
-  laneLastObstacleXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-  laneLastPointXs = Array(GAME_CONFIG.NUM_LANES).fill(null);
-  lastSpawnTimestamp = 0;
-
-  // DOM UI reset
-['game-over-screen', 'leaderboard-screen', 'pause-overlay', 'start-screen'].forEach(hideScreen);
 
 
-  // Reset result blocks
-  const newHighScoreBlock = document.getElementById('newHighScoreBlock');
-  const bestBlock = document.getElementById('bestBlock');
-  const scoreBlock = document.getElementById('scoreBlock');
-  if (newHighScoreBlock) newHighScoreBlock.style.display = 'none';
-  if (bestBlock) bestBlock.style.display = '';
-  if (scoreBlock) scoreBlock.style.display = '';
+function collectPoint(_, pt) {
+  if (pt.glow) pt.glow.destroy();
 
-  // HUD state reset
-  surpassedBest = false;
-  if (scoreText) scoreText.setVisible(true);
-  if (bestScoreText) bestScoreText.setVisible(true);
-  if (newBestText) newBestText.setVisible(false);
+  let scene = window.game.scene.keys.default;
+  const plusOne = scene.add.text(pt.x, pt.y, '+1', {
+    fontFamily: 'Poppins',
+    fontSize: '32px',
+    color: '#fff',
+    stroke: '#2ed573',
+    strokeThickness: 4,
+    fontStyle: 'bold'
+  }).setOrigin(0.5).setDepth(10);
 
-  if (scene?.scoreText) scene.scoreText.setVisible(true);
-  if (scene?.bestScoreText) scene.bestScoreText.setVisible(true);
-  if (scene?.newBestText) scene.newBestText.setVisible(false);
+  scene.tweens.add({
+    targets: plusOne,
+    y: pt.y - 40,
+    alpha: 0,
+    scale: 1.2,
+    duration: 500,
+    ease: 'Cubic.easeOut',
+    onComplete: () => plusOne.destroy()
+  });
 
-  if (muteBtnHome) muteBtnHome.style.display = 'none';
-  const canvas = document.querySelector('canvas');
-  if (canvas) canvas.style.visibility = 'visible';
-  window.scrollTo(0, 0);
+  pt.destroy();
+  score++;
+  sfx.point.play();
+
+  // ==== PREMIUM SCORE HANDLING ====
+  if (!surpassedBest && score > highScore) {
+    // First time surpassing best: switch to NEW BEST
+    surpassedBest = true;
+    scoreText.setVisible(false);
+    bestScoreText.setVisible(false);
+
+    // Place NEW BEST in the same spot as Score was
+    newBestText.setVisible(true);
+    newBestText.setText('NEW BEST: ' + score);
+
+    // One-time flourish animation & sound
+scene.tweens.add({
+  targets: newBestText,
+  scaleX: 1.27, scaleY: 1.27,
+  yoyo: true, duration: 340, ease: 'Back.easeOut'
+});
+// Always ensure the text is visible!
+newBestText.setAlpha(1);
+
+    sfx.newBest.play();
+
+  } else if (surpassedBest) {
+    // Already surpassed: just keep updating NEW BEST with no animation
+    newBestText.setVisible(true); // Ensure always visible
+    newBestText.setText('NEW BEST: ' + score);
+    // NO animation or flicker—just update number!
+  } else {
+    // Standard: show Score and Best as usual
+    scoreText.setVisible(true);
+    bestScoreText.setVisible(true);
+    scoreText.setText('Score: ' + score);
+
+    scene.tweens.add({
+      targets: scoreText,
+      scaleX: 1.1, scaleY: 1.1,
+      yoyo: true, duration: 80, ease: 'Sine.easeOut'
+    });
+  }
 }
+
+
+
+
 
 async function handleStartGame() {
   highScore = allBestScores[selectedModeId] || 0;
@@ -1137,6 +1490,7 @@ async function handleStartGame() {
   }, 200);
 }
 
+
 function handleGoHome() {
   fadeIn(() => {
     const scene = window.game.scene.keys.default;
@@ -1157,6 +1511,10 @@ function handleGoHome() {
   });
 }
 
+
+
+
+
 function handlePlayAgain() {
   sfx.uiClick.play();
 
@@ -1176,66 +1534,36 @@ function handlePlayAgain() {
   });
 }
 
-// ==========================================
-// 8. UI & EVENT HANDLERS (DOMContentLoaded)
-// ==========================================
-window.addEventListener('DOMContentLoaded', () => {
 
-  let userInfo, authLoading, usernameLabel, loginBtn, startScreen, debugBox, muteBtnHome;
-  let leaderboardModesTabs, leaderboardScreen, leaderboardHeader, leaderboardEntriesHome, myRankBar;
-  // DOM refs (MUST assign after DOM ready!)
-  userInfo = document.getElementById('user-info');
-  authLoading = document.getElementById('auth-loading');
-  usernameLabel = document.getElementById('username');
-  loginBtn = document.getElementById('loginBtn');
-  startScreen = document.getElementById('start-screen');
-  debugBox = document.getElementById('debugBox');
-  muteBtnHome = document.getElementById('muteToggleHome');
-  leaderboardModesTabs = document.getElementById('leaderboardModesTabs');
-  leaderboardScreen = document.getElementById('leaderboard-screen');
-  leaderboardHeader = document.getElementById('leaderboardHeader');
-  leaderboardEntriesHome = document.getElementById('leaderboardEntriesHome');
-  myRankBar = document.getElementById('myRankBar');
 
-  // --- Hide all overlays/screens on load except start screen
-  hideScreen('leaderboard-screen');
-  hideScreen('game-over-screen');
-  hideScreen('pause-overlay');
-  // Show start screen only (unless you want a different landing)
-  showScreen('start-screen');
 
-  // --- Default to Classic if not set
-  selectedModeId = null;
-
-  // --- Fetch modes, then show leaderboard for default
-  fetch(`${BACKEND_BASE}/api/modes`)
-    .then(r => r.json())
-    .then(modes => {
-      availableModes = modes.filter(m => m.is_active);
-      // Default mode selection
-      selectedModeId = (availableModes.find(m => m.name.toLowerCase() === "classic")?.id) || availableModes[0]?.id;
-      showHomeLeaderboard(selectedModeId);
-    });
-
-  // --- Auth, UI, game event wiring
+window.addEventListener('DOMContentLoaded', async () => {
+  // --- AUTH / USER INFO ---
+  showUserInfoAuthenticating(); // Show bar immediately
+  await fetchAndShowModes();    // Populate modes immediately
   initAuth();
 
-  document.getElementById('startBtn').onclick = handleStartGame;
+  // --- Load Modes, THEN all best scores, THEN build mode picker --
+
+  // --- UI BUTTONS ---
   document.getElementById('homeBtn').onclick = handleGoHome;
-  document.getElementById('viewLeaderboardBtn').addEventListener('mouseenter', preloadLeaderboard);
-  document.getElementById('viewLeaderboardBtn').addEventListener('touchstart', preloadLeaderboard);
-  document.getElementById('viewLeaderboardBtn').addEventListener('click', () => showHomeLeaderboard(selectedModeId));
+
+  const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
+leaderboardBtn.addEventListener('click', () => {
+  showHomeLeaderboard(selectedModeId);
+});
+
   document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
     hideScreen('leaderboard-screen');
-    leaderboardScreen.classList.remove('visible');
+    document.getElementById('leaderboard-screen').classList.remove('visible');
   });
-  document.getElementById('playAgainBtn').onclick = handlePlayAgain;
+
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  if (playAgainBtn) playAgainBtn.onclick = handlePlayAgain;
+
   document.getElementById('loginBtn').addEventListener('click', initAuth);
 
-  // --- Debug
+  // --- Debug logs (optional) ---
   console.log('🌐 Detected hostname:', window.location.hostname);
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 });
-
-
-// ===== END OF FILE =====
