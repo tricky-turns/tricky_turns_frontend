@@ -1194,19 +1194,29 @@ window.addEventListener('DOMContentLoaded', () => {
   leaderboardEntriesHome = document.getElementById('leaderboardEntriesHome');
   myRankBar = document.getElementById('myRankBar');
 
-  // Default to Classic if not set
+  // --- Hide all overlays/screens on load except start screen
+  hideScreen('leaderboard-screen');
+  hideScreen('game-over-screen');
+  hideScreen('pause-overlay');
+  // Show start screen only (unless you want a different landing)
+  showScreen('start-screen');
+
+  // --- Default to Classic if not set
   selectedModeId = null;
 
-  // Fetch modes
-  fetch(`${BACKEND_BASE}/api/modes`).then(r => r.json()).then(modes => {
-    availableModes = modes.filter(m => m.is_active);
-    // Default mode selection
-    selectedModeId = (availableModes.find(m => m.name.toLowerCase() === "classic")?.id) || availableModes[0]?.id;
-    showHomeLeaderboard(selectedModeId);
-  });
+  // --- Fetch modes, then show leaderboard for default
+  fetch(`${BACKEND_BASE}/api/modes`)
+    .then(r => r.json())
+    .then(modes => {
+      availableModes = modes.filter(m => m.is_active);
+      // Default mode selection
+      selectedModeId = (availableModes.find(m => m.name.toLowerCase() === "classic")?.id) || availableModes[0]?.id;
+      showHomeLeaderboard(selectedModeId);
+    });
 
-  // Auth, UI, game event wiring
+  // --- Auth, UI, game event wiring
   initAuth();
+
   document.getElementById('startBtn').onclick = handleStartGame;
   document.getElementById('homeBtn').onclick = handleGoHome;
   document.getElementById('viewLeaderboardBtn').addEventListener('mouseenter', preloadLeaderboard);
@@ -1218,8 +1228,11 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('playAgainBtn').onclick = handlePlayAgain;
   document.getElementById('loginBtn').addEventListener('click', initAuth);
+
+  // --- Debug
   console.log('🌐 Detected hostname:', window.location.hostname);
   console.log('🧭 Pi browser detected?', window.location.hostname.includes('pi') || window.location.href.includes('pi://'));
 });
+
 
 // ===== END OF FILE =====
