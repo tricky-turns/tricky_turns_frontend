@@ -623,3 +623,50 @@ button:focus, .btn-primary:focus, .btn-secondary:focus {
   font-weight: 800;
   /* or tweak to your taste */
 }
+
+.leaderboard-modes-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 0.7rem;
+  margin-top: 0.3rem;
+}
+.leaderboard-mode-tab {
+  background: rgba(62, 175, 246, 0.14);
+  color: #e0f2ff;
+  border: none;
+  outline: none;
+  font-size: 1.13rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  padding: 0.55em 1.4em;
+  border-radius: 2.4em;
+  cursor: pointer;
+  transition: background 0.17s, color 0.13s;
+  letter-spacing: 0.03em;
+  box-shadow: 0 1px 4px #1da5f933;
+}
+.leaderboard-mode-tab.active {
+  background: linear-gradient(90deg, #3EAFF6 60%, #3091E0 100%);
+  color: #fff;
+  border: 2px solid #fff;
+  filter: brightness(1.13) drop-shadow(0 0 8px #42b5f980);
+}
+.leaderboard-mode-tab:hover:not(.active) {
+  background: #42b5f92c;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .leaderboard-modes-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .leaderboard-mode-tab {
+    width: 95vw;
+    max-width: 340px;
+    font-size: 1rem;
+    padding: 0.55em 0.5em;
+  }
+}

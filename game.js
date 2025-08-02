@@ -110,6 +110,21 @@ async function fetchGameModes() {
 let selectedModeId = null;
 
 
+function buildLeaderboardModeTabs(activeModeId, onChange) {
+  const container = document.getElementById('leaderboardModesTabs');
+  if (!container) return;
+  container.innerHTML = '';
+  availableModes.forEach(mode => {
+    const tab = document.createElement('button');
+    tab.className = 'leaderboard-mode-tab' + (mode.id === activeModeId ? ' active' : '');
+    tab.textContent = mode.name;
+    tab.onclick = () => onChange(mode.id);
+    container.appendChild(tab);
+  });
+}
+
+
+
 async function startNewSession() {
   currentSessionId = null;
   if (!piToken) return; // guest, no session required
@@ -508,19 +523,54 @@ function fadeOut(callback, duration = 600) {
   }, duration);
 }
 
-async function showHomeLeaderboard() {
+let currentLeaderboardModeId = null; // Track which mode is shown in modal
+
+async function showHomeLeaderboard(initialModeId) {
+  // Use passed modeId, or fallback to selectedModeId or Classic
+  let modeId = initialModeId 
+    || selectedModeId 
+    || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id)
+    || availableModes[0]?.id;
+
+  currentLeaderboardModeId = modeId; // Track for tab highlight
+
+  // Build the tabs
+  buildLeaderboardModeTabs(modeId, async (newModeId) => {
+    // Re-show leaderboard with new mode
+    await showHomeLeaderboard(newModeId);
+  });
+
+  // Show modal
   const lb = document.getElementById('leaderboard-screen');
   lb.classList.remove('hidden');
   lb.style.display = 'flex';
   requestAnimationFrame(() => lb.classList.add('visible'));
 
+  // Show mode name in header
+  const header = document.getElementById('leaderboardHeader');
+  const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
+  header.textContent = `Top 100 Leaderboard (${modeName})`;
+
+  // Show loading indicator
   const list = document.getElementById('leaderboardEntriesHome');
+  list.innerHTML = `<li class="loading-indicator">Loading...</li>`;
+
+  // Fetch leaderboard data
+  let data = [];
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${modeId}`);
+    if (res.ok) data = await res.json();
+  } catch {}
+
+  // Replace with entries or empty
   list.innerHTML = '';
+  if (!data.length) {
+    list.innerHTML = `<li style="text-align:center;opacity:.6;">No entries yet. Be the first!</li>`;
+    return;
+  }
 
-  // Use selectedModeId (fallback to Classic if null)
-  let modeId = selectedModeId || (availableModes.find(m => m.name.toLowerCase() === "classic")?.id);
-  const data = await fetch(`${BACKEND_BASE}/api/leaderboard?top=100&mode_id=${modeId}`).then(r => r.json());
-
+  // Show leaderboard entries, highlight user
+  let myUsername = (piToken && piUsername) ? piUsername : null;
   data.forEach((e, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
@@ -529,14 +579,18 @@ async function showHomeLeaderboard() {
       <span class="entry-score">${e.score}</span>`;
     li.style.setProperty('--i', i);
     li.classList.add('animated-entry');
+    // Highlight current user
+    if (myUsername && e.username === myUsername) {
+      li.style.background = 'linear-gradient(90deg, #3EAFF6 25%, #3091E0 100%)';
+      li.style.color = '#fff';
+      li.style.fontWeight = '900';
+      li.querySelector('.entry-username').style.fontWeight = '900';
+      li.querySelector('.entry-username').textContent += ' (You)';
+    }
     list.appendChild(li);
   });
-
-  // Show the mode in the header!
-  const header = document.getElementById('leaderboardHeader');
-  const modeName = availableModes.find(m => m.id === modeId)?.name || "Classic";
-  header.textContent = `Top 100 Leaderboard (${modeName})`;
 }
+
 
 
 function updateBestScoreEverywhere() {
@@ -1429,9 +1483,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('homeBtn').onclick = handleGoHome;
 
   const leaderboardBtn = document.getElementById('viewLeaderboardBtn');
-  leaderboardBtn.addEventListener('mouseenter', preloadLeaderboard);
-  leaderboardBtn.addEventListener('touchstart', preloadLeaderboard);
-  leaderboardBtn.addEventListener('click', showHomeLeaderboard);
+leaderboardBtn.addEventListener('click', () => {
+  showHomeLeaderboard(selectedModeId);
+});
 
   document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
     hideScreen('leaderboard-screen');
