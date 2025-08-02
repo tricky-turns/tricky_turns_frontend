@@ -626,6 +626,7 @@ if (myUsername && typeof myRank === 'number' && myRank > 0) {
 } else {
   myRankBar.style.display = 'none';
 }
+  }
 
 
   // --- Render leaderboard entries
