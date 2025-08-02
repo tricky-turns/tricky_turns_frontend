@@ -606,12 +606,7 @@ async function showHomeLeaderboard(initialModeId) {
   }
 
   // --- Show "My Rank" Bar if available
-  if (myUsername && typeof myRank === 'number' && myRank > 0) {
-    // If user is in top 100, add "in top 100" visual (arrow or highlight)
-    let highlight = '';
-    if (myEntryIndex !== -1) {
-      highlight = `<span style="margin-left:1em;color:#ffe167;font-weight:900;font-size:1.04em;">⬇️ You're in the Top 100!</span>`;
-    }
+// --- Show "My Rank" Bar if available
 if (myUsername && typeof myRank === 'number' && myRank > 0) {
   myRankBar.innerHTML = `
     <span class="my-rank-chip">Your Rank</span>
@@ -626,7 +621,7 @@ if (myUsername && typeof myRank === 'number' && myRank > 0) {
 } else {
   myRankBar.style.display = 'none';
 }
-  }
+
 
 
   // --- Render leaderboard entries
